@@ -68,7 +68,7 @@ import java.util.Objects;
  */
 // PERFORMANCE NOTE:  The methods in this class are organized and sized to promote JIT inlining.
 public final class StringTool {
-  private static ThreadLocal<CharsetDecoder> US_ASCII_THREAD_LOCAL = ThreadLocal.withInitial(() -> {
+  private static final ThreadLocal<CharsetDecoder> US_ASCII_THREAD_LOCAL = ThreadLocal.withInitial(() -> {
     CharsetDecoder cs = StandardCharsets.US_ASCII.newDecoder()
                                                  .onMalformedInput(CodingErrorAction.REPORT)
                                                  .onUnmappableCharacter(CodingErrorAction.REPORT);
@@ -169,7 +169,7 @@ public final class StringTool {
       charIndex++;
 
       /*
-       * If the decoding array has reached it's capacity, enlarge it.
+       * If the decoding array has reached its capacity, enlarge it.
        */
       if (charIndex == chars.length) {
         chars = enlargeChars(encodedLength, chars);
@@ -276,7 +276,7 @@ public final class StringTool {
     final int strLength = str.length();
     if (rawEncodedLength == strLength) {
       /*
-       * Special case -- we have a purely ASCII string so UTF-8 "encoding" is a simple cast
+       * Special case -- we have a pure ASCII string so UTF-8 "encoding" is a simple cast
        */
       putASCII(buffer, str, rawEncodedLength, strLength);
       return;
@@ -288,7 +288,7 @@ public final class StringTool {
       buffer.put((byte) 0x00).putShort((short) rawEncodedLength);
 
     } else {
-      if (rawEncodedLength < strLength * 2) {
+      if (rawEncodedLength < strLength * 2L) {
         /*
          * Encoding is larger than 65535 bytes and smaller than non-encoded String bytes
          */
@@ -475,7 +475,7 @@ public final class StringTool {
        * "short" encoding
        */
       len += 3;
-    } else if (len < strLength * 2) {
+    } else if (len < strLength * 2L) {
       /*
        * "long" encoding where encoding is shorter than chars
        */
@@ -484,7 +484,7 @@ public final class StringTool {
       /*
        * "long" non-encoded
        */
-      len = strLength * 2;
+      len = strLength * 2L;
       len += 9;
     }
 

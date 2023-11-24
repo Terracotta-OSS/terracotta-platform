@@ -58,7 +58,7 @@ public interface ManagementRegistry extends CapabilityManagementSupport {
    * Get the management context required to make use of the
    * registered objects' capabilities.
    *
-   * @return a this management registry context.
+   * @return This management registry context.
    */
   ContextContainer getContextContainer();
 

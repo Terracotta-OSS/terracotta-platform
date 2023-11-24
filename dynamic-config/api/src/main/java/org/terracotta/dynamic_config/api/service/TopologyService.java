@@ -58,7 +58,7 @@ public interface TopologyService {
 
   /**
    * @return true if some dynamic changes have been done which cannot be applied at runtime and need a restart to be applied
-   * This means that {@link #getUpcomingNodeContext()} will contains these changes whereas {@link #getRuntimeNodeContext()} wont'.
+   * This means that {@link #getUpcomingNodeContext()} will contain these changes whereas {@link #getRuntimeNodeContext()} wont'.
    */
   boolean mustBeRestarted();
 

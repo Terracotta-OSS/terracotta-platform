@@ -31,8 +31,8 @@ import java.nio.ByteBuffer;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseResponse> {
-  private static Struct messageStruct = createMessageStruct();
-  private static Struct responseStruct = createResponseStruct();
+  private static final Struct messageStruct = createMessageStruct();
+  private static final Struct responseStruct = createResponseStruct();
 
   @Override
   public byte[] encodeMessage(LeaseMessage leaseMessage) throws MessageCodecException {

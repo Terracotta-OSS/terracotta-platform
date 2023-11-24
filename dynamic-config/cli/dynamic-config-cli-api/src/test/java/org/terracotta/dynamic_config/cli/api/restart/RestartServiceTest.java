@@ -38,9 +38,9 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doNothing;
@@ -168,7 +168,6 @@ public class RestartServiceTest extends BaseTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void test_server_restart_with_unexpected_state() throws InterruptedException {
     mockSuccessfulServerRestart();
 

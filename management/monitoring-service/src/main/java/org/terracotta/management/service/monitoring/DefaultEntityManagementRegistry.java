@@ -30,7 +30,6 @@ import org.terracotta.management.service.monitoring.registry.provider.Monitoring
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -117,17 +116,17 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    List<Capability> capabilities = new ArrayList<Capability>();
+    List<Capability> capabilities = new ArrayList<>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       capabilities.add(managementProvider.getCapability());
     }
-    Collections.sort(capabilities, CAPABILITY_COMPARATOR);
+    capabilities.sort(CAPABILITY_COMPARATOR);
     return capabilities;
   }
 
   @Override
   public Collection<String> getCapabilityNames() {
-    Collection<String> names = new TreeSet<String>();
+    Collection<String> names = new TreeSet<>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       names.add(managementProvider.getCapabilityName());
     }
@@ -136,7 +135,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
 
   @Override
   public List<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    List<ManagementProvider<?>> allProviders = new ArrayList<ManagementProvider<?>>();
+    List<ManagementProvider<?>> allProviders = new ArrayList<>();
     for (ManagementProvider<?> provider : managementProviders) {
       if (provider.getCapabilityName().equals(capabilityName)) {
         allProviders.add(provider);

@@ -62,7 +62,7 @@ public class AttachCommand extends RestartCommand {
   protected boolean unlock;
 
   @Inject
-  public final AttachAction action;
+  public AttachAction action;
 
   public AttachCommand(AttachAction action) {
     this.action = action;

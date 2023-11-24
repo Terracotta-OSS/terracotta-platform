@@ -55,7 +55,7 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-force"}, description = "Force a config conversion, ignoring warnings, if any")
   private boolean force;
 
-  @Inject public final ConvertAction action;
+  @Inject public ConvertAction action;
 
   public ConvertCommand() {
     this(new ConvertAction());

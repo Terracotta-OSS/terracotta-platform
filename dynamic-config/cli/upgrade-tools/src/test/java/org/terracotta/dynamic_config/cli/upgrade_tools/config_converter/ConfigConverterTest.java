@@ -18,35 +18,36 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 import com.beust.jcommander.ParameterException;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Paths;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
+
 public class ConfigConverterTest {
   @Rule
   public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void test_conversion_fail_cluster_name_missing() {
-    exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage("Cluster name is required for conversion into a configuration directory");
-    new ConfigConverterTool().run("convert",
+    ParameterException e = assertThrows(ParameterException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/tc-config.xml",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(equalTo("Cluster name is required for conversion into a configuration directory")));
   }
 
   @Test
   public void test_conversion_fail_already_existing_dir() {
-    exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage("Please specify a non-existent directory");
-    new ConfigConverterTool().run("convert",
+    ParameterException e = assertThrows(ParameterException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(containsString("exists already. Please specify a non-existent directory")));
   }
 }

@@ -52,7 +52,7 @@ final class IStripeMonitoringDataListenerAdapter implements IStripeMonitoring {
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    LOGGER.trace("[{}] addNode({}, {})", consumerId, name, String.valueOf(value));
+    LOGGER.trace("[{}] addNode({}, {})", consumerId, name, value);
     if (parents != null && parents.length == 1 && RELIABLE_CHANNEL_KEY.equals(parents[0])) {
       if (value instanceof ManagementMessage) {
         fire((ManagementMessage) value);

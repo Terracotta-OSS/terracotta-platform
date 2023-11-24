@@ -207,7 +207,7 @@ public class NomadServerImpl<T> implements NomadServer<T> {
 
     // All nodes must have the same append log.
     // So we always run `applyStateChange` regardless of the result, which will "sync" sanskrit state with the prepared change
-    // Then, the response is sent back to the client and the client might rollback in case of rejection.
+    // Then, the response is sent back to the client and the client might roll back in case of rejection.
     // This is required so that a failover happening just after a prepare + rollback ensures that the active nodes that will restart
     // will all have the same prepared / rollback sequence in their append log.
 

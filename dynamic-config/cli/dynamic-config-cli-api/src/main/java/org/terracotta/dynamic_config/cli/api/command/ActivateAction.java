@@ -49,7 +49,7 @@ public class ActivateAction extends RemoteAction {
   private boolean restrictedActivation;
   private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
-  public void setNodess(List<HostPort> nodes) {
+  public void setNodes(List<HostPort> nodes) {
     this.nodes = nodes;
   }
 

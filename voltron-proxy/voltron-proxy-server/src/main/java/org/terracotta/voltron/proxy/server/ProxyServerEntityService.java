@@ -163,7 +163,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
   }
 
   protected ActiveProxiedServerEntity<S, R, M> reconfigureActiveEntity(ServiceRegistry registry, ActiveProxiedServerEntity<S, R, M> currentEntity, C config) throws ConfigurationException {
-    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
+    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be changed accordingly to your needs.
     Set<ClientDescriptor> clients = new HashSet<>(currentEntity.getEntityInvoker().getClients());
     currentEntity.destroy();
     ActiveProxiedServerEntity<S, R, M> entity = createActiveEntity(registry, config);
@@ -175,7 +175,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
   }
 
   protected PassiveProxiedServerEntity reconfigurePassiveEntity(ServiceRegistry registry, PassiveProxiedServerEntity currentEntity, C config) throws ConfigurationException {
-    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be change accordingly to your needs.
+    // by default, destroy the current entity and create a new one. But this behavior is up to the implementor and should be changed accordingly to your needs.
     currentEntity.destroy();
     PassiveProxiedServerEntity entity = createPassiveEntity(registry, config);
     entity.createNew();
@@ -189,7 +189,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
     }
   }
 
-  // can be overriden / implemented
+  // can be overridden / implemented
 
   protected Set<Integer> getKeysForSynchronization() {
     return Collections.emptySet();

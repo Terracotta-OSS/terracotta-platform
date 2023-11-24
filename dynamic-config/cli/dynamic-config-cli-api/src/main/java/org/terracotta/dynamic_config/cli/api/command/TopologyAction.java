@@ -44,7 +44,7 @@ public abstract class TopologyAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyAction.class);
 
   @Injector.Inject
-  public final UnlockConfigAction unlockAction = new UnlockConfigAction();
+  public UnlockConfigAction unlockAction = new UnlockConfigAction();
 
   protected OperationType operationType = OperationType.NODE;
   protected HostPort destinationHostPort;

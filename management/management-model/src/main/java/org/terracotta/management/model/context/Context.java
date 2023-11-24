@@ -30,7 +30,7 @@ public class Context extends AbstractMap<String, String> implements Serializable
 
   private static final long serialVersionUID = 1;
 
-  private final Map<String, String> back = new LinkedHashMap<String, String>();
+  private final Map<String, String> back = new LinkedHashMap<>();
 
   private Context(Map<String, String> back) {
     this.back.putAll(back);

@@ -16,9 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.sync;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -49,10 +47,13 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -66,6 +67,7 @@ import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
  * <pre>
@@ -76,9 +78,6 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
  * The numbers in the test methods reflect the use cases described in {@link DynamicConfigNomadSynchronizer}
  */
 public class DynamicConfigurationPassiveSyncTest {
-
-  @Rule
-  public ExpectedException error = ExpectedException.none();
 
   private final Instant now = Instant.now();
 
@@ -185,10 +184,8 @@ public class DynamicConfigurationPassiveSyncTest {
     this.passive.add(passiveActivation);
     this.passive.add(passive = prepared(randomUUID(), change("a", "300MB"), 2L));
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(equalTo("Node cannot sync because the configuration change history does not match: " + passive + " does not match source: " + active));
-
-    sync();
+    IllegalStateException e = assertThrows(IllegalStateException.class, this::sync);
+    assertThat(e, hasMessage(equalTo("Node cannot sync because the configuration change history does not match: " + passive + " does not match source: " + active)));
   }
 
   @Test
@@ -229,10 +226,8 @@ public class DynamicConfigurationPassiveSyncTest {
     this.passive.add(passiveActivation);
     this.passive.add(passive = committed(randomUUID(), change("a", "300MB"), 2L));
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(equalTo("Node cannot sync because the configuration change history does not match: " + passive + " does not match source: " + active));
-
-    sync();
+    IllegalStateException e = assertThrows(IllegalStateException.class, this::sync);
+    assertThat(e, hasMessage(equalTo("Node cannot sync because the configuration change history does not match: " + passive + " does not match source: " + active)));
   }
 
   @Test
@@ -381,10 +376,8 @@ public class DynamicConfigurationPassiveSyncTest {
     passive.add(passiveActivation);
     passive.add(rolledBack(uuid, change("a", "100MB"), 2L));
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(equalTo("Node cannot sync because the configuration change history does not match: " + committed + " has been rolled back on this node"));
-
-    sync();
+    IllegalStateException e = assertThrows(IllegalStateException.class, this::sync);
+    assertThat(e, hasMessage(equalTo("Node cannot sync because the configuration change history does not match: " + committed + " has been rolled back on this node")));
   }
 
   @Test
@@ -398,10 +391,8 @@ public class DynamicConfigurationPassiveSyncTest {
     passive.add(passiveActivation);
     passive.add(committed = committed(uuid, change("a", "100MB"), 2L));
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(equalTo("Node cannot sync because the configuration change history does not match: " + committed + " has been rolled back on the source"));
-
-    sync();
+    IllegalStateException e = assertThrows(IllegalStateException.class, this::sync);
+    assertThat(e, hasMessage(equalTo("Node cannot sync because the configuration change history does not match: " + committed + " has been rolled back on the source")));
   }
 
   @Test
@@ -416,10 +407,8 @@ public class DynamicConfigurationPassiveSyncTest {
     passive.add(committed(uuid, change("a", "100MB"), 2L));
     passive.add(ahead = committed(randomUUID(), change("b", "200MB"), 3L));
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(equalTo("Node cannot sync because the configuration change history does not match: this node is ahead of the source: " + ahead));
-
-    sync();
+    IllegalStateException e = assertThrows(IllegalStateException.class, this::sync);
+    assertThat(e, hasMessage(equalTo("Node cannot sync because the configuration change history does not match: this node is ahead of the source: " + ahead)));
   }
 
   @Test
@@ -523,10 +512,8 @@ public class DynamicConfigurationPassiveSyncTest {
     passiveActivation = committed(randomUUID(), new ClusterActivationNomadChange(activeTopology.getCluster().clone().putOffheapResource("a", 200, MB)), 1L);
     passive.add(passiveActivation);
 
-    error.expect(IllegalStateException.class);
-    error.expectMessage(startsWith("Unable to find any change in the source node matching the topology used to activate this node."));
-
-    sync();
+    assertThat(this::sync,
+        throwing(instanceOf(IllegalStateException.class)).andMessage(startsWith("Unable to find any change in the source node matching the topology used to activate this node.")));
   }
 
   private void check(int prepare, int commits, int rollbacks) throws NomadException {

@@ -117,7 +117,7 @@ public class DetachAction extends TopologyAction {
       // we only prevent detaching nodes if some remaining nodes must be restarted
       for (Endpoint endpoint : destinationOnlineNodes.keySet()) {
         if (!endpoint.getNodeUID().equals(source.getUID())) {
-          // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
+          // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet.
           // we only check the remaining nodes, not the departing nodes.
           validateLogOrFail(
               () -> !mustBeRestarted(endpoint),
@@ -146,7 +146,7 @@ public class DetachAction extends TopologyAction {
       // we only prevent detaching nodes if some remaining nodes must be restarted
       for (Endpoint endpoint : destinationOnlineNodes.keySet()) {
         if (!stripeToDetach.containsNode(endpoint.getNodeUID())) {
-          // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
+          // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet.
           // we only check the remaining nodes, not the departing nodes.
           validateLogOrFail(
               () -> !mustBeRestarted(endpoint),
@@ -293,7 +293,7 @@ public class DetachAction extends TopologyAction {
 
   private void markNodeForRemoval(UID nodeUID) {
     // search if this node is online, if yes, mark it for removal
-    // "onlineNodesToRemove" keeps track of the nodes to connect to
+    // "onlineNodesToRemove" keeps track of the nodes to connect to,
     // to update their topology
     destinationOnlineNodes.keySet()
         .stream()

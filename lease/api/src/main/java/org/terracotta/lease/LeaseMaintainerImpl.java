@@ -40,7 +40,7 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
   LeaseMaintainerImpl(LeaseAcquirer leaseAcquirer) {
     this.leaseAcquirer = leaseAcquirer;
     this.timeSource = TimeSourceProvider.getTimeSource();
-    this.currentLease = new AtomicReference<LeaseInternal>(new NullLease());
+    this.currentLease = new AtomicReference<>(new NullLease());
     this.hasLease = new CountDownLatch(1);
   }
 

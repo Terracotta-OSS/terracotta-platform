@@ -126,7 +126,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
           previouslyExposedTags,
           root,
           registry == null ? null : registry.getContextContainer(),
-          registry == null ? null : capabilities.toArray(new Capability[capabilities.size()]),
+          registry == null ? null : capabilities.toArray(new Capability[0]),
           new ContextualNotification(context, "CLIENT_RECONNECTED"));
     } else {
       return null;
@@ -169,7 +169,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   }
 
   /**
-   * Bridges a management registry with a NMS Agent Entity. All exposure in the registry will be propagated to the server and
+   * Bridges a management registry with a NMS Agent Entity. All exposure in the registry will be propagated to the server, and
    * it will listen for management calls also.
    */
   public void setManagementRegistry(ManagementRegistry registry) {
@@ -227,7 +227,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void setCapabilities(ContextContainer contextContainer, Collection<? extends Capability> capabilities) {
-    setCapabilities(contextContainer, capabilities.toArray(new Capability[capabilities.size()]));
+    setCapabilities(contextContainer, capabilities.toArray(new Capability[0]));
   }
 
   @Override
@@ -238,7 +238,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void setTags(Collection<String> tags) {
-    setTags(tags.toArray(new String[tags.size()]));
+    setTags(tags.toArray(new String[0]));
   }
 
   @Override
@@ -260,7 +260,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   @Override
   public void pushStatistics(Collection<ContextualStatistics> statistics) {
-    pushStatistics(statistics.toArray(new ContextualStatistics[statistics.size()]));
+    pushStatistics(statistics.toArray(new ContextualStatistics[0]));
   }
 
   @Override

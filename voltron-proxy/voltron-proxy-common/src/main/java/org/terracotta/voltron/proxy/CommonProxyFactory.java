@@ -30,20 +30,12 @@ import static java.util.Collections.unmodifiableMap;
  * @author Alex Snaps
  */
 public class CommonProxyFactory {
-  private static final Comparator<MethodDescriptor> METHOD_COMPARATOR = new Comparator<MethodDescriptor>() {
-    public int compare(final MethodDescriptor m1, final MethodDescriptor m2) {
-      return m1.toGenericString().compareTo(m2.toGenericString());
-    }
-  };
+  private static final Comparator<MethodDescriptor> METHOD_COMPARATOR = Comparator.comparing(MethodDescriptor::toGenericString);
 
-  private static final Comparator<Class<?>> CLASS_COMPARATOR = new Comparator<Class<?>>() {
-    public int compare(final Class<?> o1, final Class<?> o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<Class<?>> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
 
   public static <T, U> Map<U, T> invert(Map<T, U> map) {
-    Map<U, T> inversion = new HashMap<U, T>();
+    Map<U, T> inversion = new HashMap<>();
     for (Entry<T, U> e : map.entrySet()) {
       if (inversion.put(e.getValue(), e.getKey()) != null) {
         throw new IllegalArgumentException("Inversion is not a valid map");
@@ -55,7 +47,7 @@ public class CommonProxyFactory {
   public static Map<Byte, MethodDescriptor> createMethodMappings(final Class<?> proxyType) {
     SortedSet<MethodDescriptor> methods = getSortedMethods(proxyType);
 
-    final HashMap<Byte, MethodDescriptor> map = new HashMap<Byte, MethodDescriptor>();
+    final HashMap<Byte, MethodDescriptor> map = new HashMap<>();
     byte index = 0;
     for (final MethodDescriptor method : methods) {
       map.put(index++, method);
@@ -68,7 +60,7 @@ public class CommonProxyFactory {
   }
 
   public static Map<Class<?>, Byte> createResponseTypeMappings(Class<?> proxyType, Class<?>[] events) {
-    final HashMap<Class<?>, Byte> map = new HashMap<Class<?>, Byte>();
+    final HashMap<Class<?>, Byte> map = new HashMap<>();
     byte index = 0;
     for (MethodDescriptor m : getSortedMethods(proxyType)) {
       Class<?> responseType = m.getMessageType();
@@ -87,7 +79,7 @@ public class CommonProxyFactory {
   }
 
   private static SortedSet<MethodDescriptor> getSortedMethods(final Class<?> type) {
-    SortedSet<MethodDescriptor> methods = new TreeSet<MethodDescriptor>(METHOD_COMPARATOR);
+    SortedSet<MethodDescriptor> methods = new TreeSet<>(METHOD_COMPARATOR);
 
     if (type == null) {
       return methods;
@@ -110,7 +102,7 @@ public class CommonProxyFactory {
   }
 
   private static SortedSet<Class<?>> getSortedTypes(Class<?>[] types) {
-    final TreeSet<Class<?>> classes = new TreeSet<Class<?>>(CLASS_COMPARATOR);
+    final TreeSet<Class<?>> classes = new TreeSet<>(CLASS_COMPARATOR);
     if (types != null) {
       classes.addAll(asList(types));
     }

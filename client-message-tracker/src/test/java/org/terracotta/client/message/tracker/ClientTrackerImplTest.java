@@ -16,13 +16,13 @@
 package org.terracotta.client.message.tracker;
 
 import org.junit.Test;
-
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.Matchers.sameInstance;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 
 public class ClientTrackerImplTest {
 

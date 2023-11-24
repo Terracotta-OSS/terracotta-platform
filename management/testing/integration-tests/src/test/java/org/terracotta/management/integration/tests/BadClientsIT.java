@@ -24,7 +24,7 @@ import java.net.URI;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Mathieu Carbou

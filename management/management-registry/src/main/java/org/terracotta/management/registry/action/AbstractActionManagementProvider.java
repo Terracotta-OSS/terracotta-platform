@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,13 +41,8 @@ import java.util.concurrent.ExecutionException;
  */
 public abstract class AbstractActionManagementProvider<T> extends AbstractManagementProvider<T> {
 
-  private static final Map<String, Class<?>> PRIMITIVE_MAP = new HashMap<String, Class<?>>();
-  private static final Comparator<CallDescriptor> CALL_DESCRIPTOR_COMPARATOR = new Comparator<CallDescriptor>() {
-    @Override
-    public int compare(CallDescriptor o1, CallDescriptor o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Map<String, Class<?>> PRIMITIVE_MAP = new HashMap<>();
+  private static final Comparator<CallDescriptor> CALL_DESCRIPTOR_COMPARATOR = Comparator.comparing(CallDescriptor::getName);
 
   static {
     for (Class<?> c : new Class<?>[]{
@@ -64,11 +58,11 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
 
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
-    Collection<CallDescriptor> descriptors = new HashSet<CallDescriptor>();
+    Collection<CallDescriptor> descriptors = new HashSet<>();
     for (ExposedObject<T> o : getExposedObjects()) {
       for (Method method : o.getClass().getMethods()) {
         if (method.isAnnotationPresent(Exposed.class)) {
-          List<CallDescriptor.Parameter> parameters = new ArrayList<CallDescriptor.Parameter>();
+          List<CallDescriptor.Parameter> parameters = new ArrayList<>();
           for (MethodParameter parameter : getParameters(method)) {
             parameters.add(new CallDescriptor.Parameter(parameter.getName(), parameter.getType().getName()));
           }
@@ -76,8 +70,8 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
         }
       }
     }
-    List<CallDescriptor> list = new ArrayList<CallDescriptor>(descriptors);
-    Collections.sort(list, CALL_DESCRIPTOR_COMPARATOR);
+    List<CallDescriptor> list = new ArrayList<>(descriptors);
+    list.sort(CALL_DESCRIPTOR_COMPARATOR);
     return list;
   }
 
@@ -131,7 +125,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
 
   private static Collection<MethodParameter> getParameters(Method m) {
     Class<?>[] types = m.getParameterTypes();
-    Collection<MethodParameter> parameters = new ArrayList<MethodParameter>(types.length);
+    Collection<MethodParameter> parameters = new ArrayList<>(types.length);
     for (int i = 0; i < types.length; i++) {
       parameters.add(new MethodParameter(m, i));
     }
@@ -140,8 +134,8 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
 
   private static class MethodParameter {
 
-    private Method m;
-    private int idx;
+    private final Method m;
+    private final int idx;
 
     public MethodParameter(Method m, int idx) {
       this.m = m;

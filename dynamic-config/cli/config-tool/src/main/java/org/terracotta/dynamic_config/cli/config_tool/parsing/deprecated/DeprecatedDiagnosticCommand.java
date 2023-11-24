@@ -34,7 +34,7 @@ public class DeprecatedDiagnosticCommand extends Command {
   private HostPort node;
 
   @Inject
-  public final DiagnosticAction action;
+  public DiagnosticAction action;
 
   public DeprecatedDiagnosticCommand() {
     this(new DiagnosticAction());

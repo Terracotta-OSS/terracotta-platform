@@ -20,9 +20,9 @@ import org.junit.Test;
 import java.time.Duration;
 import java.time.Instant;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 public class Jsr310Test {
   @Test

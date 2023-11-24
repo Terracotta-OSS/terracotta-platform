@@ -19,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
-import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.StatisticType;
+import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.observer.OperationObserver;
 
 import java.util.Arrays;
@@ -48,7 +48,7 @@ public class ServerCache implements Cache {
   private final Random random = new Random();
   private final String name;
 
-  private Collection<Listener> listeners = new CopyOnWriteArrayList<>();
+  private final Collection<Listener> listeners = new CopyOnWriteArrayList<>();
 
   ServerCache(String name, Map<String, String> data) {
     this.name = name;

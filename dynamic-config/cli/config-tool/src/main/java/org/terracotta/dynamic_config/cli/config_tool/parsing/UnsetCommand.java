@@ -44,7 +44,7 @@ public class UnsetCommand extends RestartCommand {
   boolean autoRestart = false;
 
   @Inject
-  public final UnsetAction action;
+  public UnsetAction action;
 
   public UnsetCommand() {
     this(new UnsetAction());

@@ -44,7 +44,7 @@ public class FieldDecoder {
     if (field == null) {
       return null;
     }
-    return new StructArrayDecoder<P>(((StructField) field.subField()), readBuffer, parent);
+    return new StructArrayDecoder<>(((StructField) field.subField()), readBuffer, parent);
   }
 
   public <P> StructDecoder<P> decodeStruct(String name, P parent) {
@@ -52,7 +52,7 @@ public class FieldDecoder {
     if (field == null) {
       return null;
     }
-    return new StructDecoder<P>(field, readBuffer, parent);
+    return new StructDecoder<>(field, readBuffer, parent);
   }
 
   @SuppressWarnings("unchecked")

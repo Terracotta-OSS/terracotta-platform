@@ -18,7 +18,6 @@ package org.terracotta.config.data_roots;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.util.ParameterSubstitutor;
@@ -36,10 +35,14 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,9 +51,6 @@ public class DataDirsConfigImplTest {
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void getRoot() throws Exception {
@@ -97,9 +97,7 @@ public class DataDirsConfigImplTest {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
     DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
-
-    expectedException.expect(NullPointerException.class);
-    dataRootConfig.getRoot(null);
+    assertThrows(NullPointerException.class, () -> dataRootConfig.getRoot(null));
   }
 
   @Test
@@ -107,19 +105,15 @@ public class DataDirsConfigImplTest {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
     DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
-
-    expectedException.expect(IllegalArgumentException.class);
-    dataRootConfig.getRoot("this_id_does_not_exists");
+    assertThrows(IllegalArgumentException.class, () -> dataRootConfig.getRoot("this_id_does_not_exists"));
   }
 
   @Test
   public void testDuplicateRootIdentifiers() throws Exception {
     String[] ids = {"a", "a"};
     String[] dataRootPaths = new String[ids.length];
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("already exists");
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(equalTo("A data directory with name: a already exists")));
   }
 
   @Test
@@ -128,11 +122,8 @@ public class DataDirsConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     dataRootPaths[0] = "./dataroot/../dataroot";
     dataRootPaths[1] = "dataroot";
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("overlap");
-
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(containsString("overlaps with the existing data directory path")));
   }
 
   @Test
@@ -141,10 +132,8 @@ public class DataDirsConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     dataRootPaths[0] = "/tmp/dataroot/dir/dir";
     dataRootPaths[1] = "/tmp/dataroot/dir";
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("overlap");
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(containsString("overlaps with the existing data directory path")));
   }
 
   @Test
@@ -153,10 +142,8 @@ public class DataDirsConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     dataRootPaths[0] = "/tmp/dataroot/dir/dir";
     dataRootPaths[1] = "/tmp/dataroot/dir";
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("overlap");
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(containsString("overlaps with the existing data directory path")));
   }
 
   @Test
@@ -166,10 +153,8 @@ public class DataDirsConfigImplTest {
     String sameDataPath = folder.newFolder().getAbsolutePath();
     dataRootPaths[0] = sameDataPath;
     dataRootPaths[1] = sameDataPath;
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("overlap");
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(containsString("overlaps with the existing data directory path")));
   }
 
   @Test
@@ -178,10 +163,8 @@ public class DataDirsConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     dataRootPaths[0] = "dir";
     dataRootPaths[1] = Paths.get("dir").toAbsolutePath().toString();
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("overlap");
-    configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(ids, dataRootPaths));
+    assertThat(e, hasMessage(containsString("overlaps with the existing data directory path")));
   }
 
   @Test
@@ -247,9 +230,8 @@ public class DataDirsConfigImplTest {
     dataRootMapping.setUseForPlatform(true);
     dataRootMappings[1] = dataRootMapping;
 
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("More than one");
-    configureDataRoot(dataRootMappings);
+    DataDirsConfigurationException e = assertThrows(DataDirsConfigurationException.class, () -> configureDataRoot(dataRootMappings));
+    assertThat(e, hasMessage(equalTo("More than one data directory is configured to be used by platform")));
   }
 
   private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths) throws IOException {

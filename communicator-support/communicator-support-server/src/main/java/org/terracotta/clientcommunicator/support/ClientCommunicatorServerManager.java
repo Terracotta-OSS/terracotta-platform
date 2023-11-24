@@ -43,7 +43,7 @@ public interface ClientCommunicatorServerManager<M extends EntityMessage, R exte
      * Note that Entity should call {@link #handleClientAck} with client ack when it receives
      *
      * @param toClients Set of clients to which given message will be sent
-     * @param message   the message to be send
+     * @param message   the message to be sent
      * @param source    the client which initiated current Entity request
      * @return a {@link EntityResponse}
      * @throws MessageCodecException
@@ -56,7 +56,7 @@ public interface ClientCommunicatorServerManager<M extends EntityMessage, R exte
      * Sends a message to given set of clients
      *
      * @param toClients Set of clients to which given message will be sent
-     * @param message  the message to be send
+     * @param message  the message to be sent
      * @throws MessageCodecException
      */
     void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message) throws MessageCodecException;

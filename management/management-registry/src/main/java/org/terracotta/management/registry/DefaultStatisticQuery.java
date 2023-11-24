@@ -75,7 +75,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
 
   @Override
   public ResultSet<ContextualStatistics> execute() {
-    Map<Context, ContextualStatistics> contextualStatistics = new LinkedHashMap<Context, ContextualStatistics>(contexts.size());
+    Map<Context, ContextualStatistics> contextualStatistics = new LinkedHashMap<>(contexts.size());
     Collection<ManagementProvider<?>> managementProviders = capabilityManagement.getManagementProvidersByCapability(capabilityName);
 
     for (Context context : contexts) {

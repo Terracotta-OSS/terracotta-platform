@@ -89,14 +89,14 @@ public class RestartService {
 
     // trigger a restart request for all nodes
     for (Node.Endpoint endpoint : endpoints) {
-      // this call should be pretty fast and should not timeout if restart delay is long enough
+      // this call should be pretty fast and should not time out if restart delay is long enough
       try {
         // do not close DiagnosticService: connection is used after to detect when server is stopped
         DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getHostPort().createInetSocketAddress());
         restartRequested.put(endpoint, diagnosticService);
         restart.accept(diagnosticService.getProxy(DynamicConfigService.class), restartDelay);
       } catch (Exception e) {
-        // timeout should not occur with a restart delay. Any error is recorded an we won't wait for this node to restart
+        // timeout should not occur with a restart delay. Any error is recorded, and we won't wait for this node to restart
         restartRequestFailed.put(endpoint, e);
         LOGGER.debug("Failed asking node {} to restart: {}", endpoint, e.getMessage(), e);
       }
@@ -178,7 +178,7 @@ public class RestartService {
       @Override
       public void onRestarted(BiConsumer<Node.Endpoint, LogicalServerState> c) {
         progressCallback.set(c);
-        // call the callback with previously restarted servers if the callback was setup after some servers were recorded
+        // call the callback with previously restarted servers if the callback was set up after some servers were recorded
         restartedNodes.forEach(c);
       }
 
@@ -204,7 +204,7 @@ public class RestartService {
    * Poll a node to see if it has restarted.
    * We should specify ideally a connect timeout that is in relation with the restart delay.
    * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
-   * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
+   * Using the default connect timeout provided by user should be enough. If not, the user can increase it, and it will apply to all connections.
    */
   private LogicalServerState isRestarted(Node.Endpoint endpoint, Collection<LogicalServerState> acceptedStates) {
     LOGGER.debug("Checking if node: {} has restarted", endpoint);

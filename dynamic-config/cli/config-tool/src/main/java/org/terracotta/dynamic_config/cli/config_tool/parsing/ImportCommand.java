@@ -40,7 +40,7 @@ public class ImportCommand extends Command {
   private Path configFile;
 
   @Inject
-  public final ImportAction action;
+  public ImportAction action;
 
   public ImportCommand() {
     this(new ImportAction());

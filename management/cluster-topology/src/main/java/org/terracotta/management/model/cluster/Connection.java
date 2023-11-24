@@ -31,7 +31,7 @@ public final class Connection extends AbstractNode<Client> {
   public static final String KEY = "connectionId";
 
   // There is no validation done on the content of this field, except when using #fetchedServerEntityStream and #getFetchedServerEntityCount.
-  // So at other places where this map is used, you could see wrong values (i.e. it is possible to add a entity if that is not in the topology)
+  // So at other places where this map is used, you could see wrong values (i.e. it is possible to add an entity if that is not in the topology)
   private final Map<String, Long> serverEntityIds = new TreeMap<>();
   private final Endpoint clientEndpoint;
   private final String stripeId;

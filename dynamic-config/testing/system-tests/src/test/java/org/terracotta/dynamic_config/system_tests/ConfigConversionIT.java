@@ -20,7 +20,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
@@ -48,17 +47,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 public class ConfigConversionIT {
   @Rule
   public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target", "test-data"), false);
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void test_basic_conversion() {
@@ -167,27 +167,25 @@ public class ConfigConversionIT {
 
   @Test
   public void testBadClusterName() {
-    exceptionRule.expect(MalformedClusterException.class);
-    exceptionRule.expectMessage("Invalid character in cluster name: ':'");
-    new ConfigConverterTool().run("convert",
+    MalformedClusterException e = assertThrows(MalformedClusterException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-8.xml",
         "-n", "my:cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(equalTo("Invalid character in cluster name: ':'")));
   }
 
   @Test
   public void testBadStripeName() {
-    exceptionRule.expect(MalformedClusterException.class);
-    exceptionRule.expectMessage("Invalid character in stripe name: ':'");
-    new ConfigConverterTool().run("convert",
+    MalformedClusterException e = assertThrows(MalformedClusterException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-8.xml",
         "-n", "my-cluster",
         "-s", "my:stripe",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(equalTo("Invalid character in stripe name: ':'")));
   }
 
   @Test
@@ -211,35 +209,32 @@ public class ConfigConversionIT {
 
   @Test
   public void testWithoutServerNameAndHost() {
-    exceptionRule.expect(ConfigConversionException.class);
-    exceptionRule.expectMessage("Unexpected error while migrating the configuration files: Conversion process requires a valid server name or hostname");
-    new ConfigConverterTool().run("convert",
+    ConfigConversionException e = assertThrows(ConfigConversionException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-7.xml",
         "-n", "my-cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(equalTo("Unexpected error while migrating the configuration files: Conversion process requires a valid server name or hostname")));
   }
 
   @Test
   public void test_conversion_fail_due_to_relative_paths_and_not_forcing_conversion() {
-    exceptionRule.expect(RuntimeException.class);
-    new ConfigConverterTool().run("convert",
+    assertThrows(RuntimeException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
-        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString());
+        "-d", tmpDir.getRoot().toAbsolutePath().toString()));
   }
 
   @Test
   public void test_conversion_no_server_element() {
-    exceptionRule.expect(RuntimeException.class);
-    exceptionRule.expectMessage("No server specified.");
-    new ConfigConverterTool().run("convert",
+    RuntimeException e = assertThrows(RuntimeException.class, () -> new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_no_server_element.xml",
         "-n", "my-cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
-        "-f");
+        "-f"));
+    assertThat(e, hasMessage(equalTo("No server specified.")));
   }
 
   @Test

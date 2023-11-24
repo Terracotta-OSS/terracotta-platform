@@ -45,19 +45,16 @@ class Defaults {
     Arrays.fill(NO_MAC, b);
   }
 
-  static final NodeIdSource MAC_PID_NODE_ID_SOURCE = new NodeIdSource() {
-    @Override
-    public long getNodeId() {
-      // at least 6 bytes
-      byte[] mac = readMacAddress();
-      long nodeId = 0;
-      // we consider the 6 last bytes only,
-      for (int i = Math.max(0, mac.length - 6); i < mac.length; i++) {
-        nodeId = (nodeId << 8) | (mac[i] & 0XFF);
-      }
-      // keeps a positive node id with the 0x7fffffffffffffffL mask
-      return ((nodeId << PID_BITLENGTH) & Long.MAX_VALUE) | (readPID() & PID_BITMASK);
+  static final NodeIdSource MAC_PID_NODE_ID_SOURCE = () -> {
+    // at least 6 bytes
+    byte[] mac = readMacAddress();
+    long nodeId = 0;
+    // we consider the 6 last bytes only,
+    for (int i = Math.max(0, mac.length - 6); i < mac.length; i++) {
+      nodeId = (nodeId << 8) | (mac[i] & 0XFF);
     }
+    // keeps a positive node id with the 0x7fffffffffffffffL mask
+    return ((nodeId << PID_BITLENGTH) & Long.MAX_VALUE) | (readPID() & PID_BITMASK);
   };
 
   static final NodeIdSource BEST_NODE_ID_SOURCE = new NodeIdSource() {
@@ -69,12 +66,7 @@ class Defaults {
     }
   };
 
-  static final TimeSource SYSTEM_TIME_SOURCE = new TimeSource() {
-    @Override
-    public long getTimestamp() {
-      return System.currentTimeMillis();
-    }
-  };
+  static final TimeSource SYSTEM_TIME_SOURCE = System::currentTimeMillis;
 
   static final TimeSource BEST_TIME_SOURCE = new TimeSource() {
     final TimeSource delegate = findBest(TimeSource.class, SYSTEM_TIME_SOURCE);
@@ -85,12 +77,7 @@ class Defaults {
     }
   };
 
-  private static final Comparator<NetworkInterface> NETWORK_INTERFACE_COMPARATOR = new Comparator<NetworkInterface>() {
-    @Override
-    public int compare(NetworkInterface o1, NetworkInterface o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<NetworkInterface> NETWORK_INTERFACE_COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
   static byte[] readMacAddress() {
     return MacAddress.MAC_ADDRESS;
@@ -158,7 +145,7 @@ class Defaults {
       }
 
       // order interfaces by name
-      Collections.sort(networkInterfaces, NETWORK_INTERFACE_COMPARATOR);
+      networkInterfaces.sort(NETWORK_INTERFACE_COMPARATOR);
 
       // find the first accessible non-loopback interface having a mac address
       // we try first to skip all virtual interfaces since they can be easily dynamically created on-demand

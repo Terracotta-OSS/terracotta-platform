@@ -97,7 +97,7 @@ public class DefaultStatisticCollector implements StatisticCollector {
 
             // We set the time of last collect after the collector is called.
             // Thus, if any exception occurs (such as temporary network failure),
-            // the next sending of stat will contains the samples of the last collect.
+            // the next sending of stat will contain the samples of the last collect.
             lastCollectTime = systemTimeSupplier.getAsLong();
           }
         }

@@ -15,7 +15,7 @@
  */
 package org.terracotta.client.message.tracker;
 
-import java.util.ArrayList;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.entity.ClientSourceId;
@@ -23,19 +23,19 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeContext;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
-import java.util.stream.Stream;
-import org.hamcrest.Matchers;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -112,7 +112,6 @@ public class OOOMessageHandlerImplTest {
     assertThat(entityResponse2, sameInstance(entityResponse1));
   }
 
-  @SuppressWarnings("deprecation")
   @Test
   public void testSegmentation() throws Exception {
     EntityMessage message1 = mock(EntityMessage.class);
@@ -206,7 +205,6 @@ public class OOOMessageHandlerImplTest {
     };
   }
 
-  @SuppressWarnings("deprecation")
   @Test
   public void testLoadTrackedResponsesForSegment() throws Exception {
     List<EntityMessage> seg1 = new ArrayList<>(2);

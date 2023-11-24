@@ -20,9 +20,10 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceConfiguration;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotSame;
 import static org.mockito.Mockito.mock;
 
 public class OOOMessageHandlerProviderTest {

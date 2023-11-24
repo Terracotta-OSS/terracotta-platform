@@ -27,7 +27,7 @@ import java.util.Map;
 public class EnumMappingBuilder<E> {
 
   private final Map<E, Integer> enumToInteger;
-  private final Map<Integer, E> integerToEnum = new HashMap<Integer, E>();
+  private final Map<Integer, E> integerToEnum = new HashMap<>();
   private final Class<E> enumClass;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -36,12 +36,12 @@ public class EnumMappingBuilder<E> {
     if (Enum.class.isAssignableFrom(enumClass)) {
       this.enumToInteger = new EnumMap(enumClass);
     } else {
-      this.enumToInteger = new HashMap<E, Integer>();
+      this.enumToInteger = new HashMap<>();
     }
   }
 
   public static <E> EnumMappingBuilder<E> newEnumMappingBuilder(Class<E> enumClass) {
-    return new EnumMappingBuilder<E>(enumClass);
+    return new EnumMappingBuilder<>(enumClass);
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls", "unchecked", "rawtypes"})
@@ -53,7 +53,7 @@ public class EnumMappingBuilder<E> {
         throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
       }
     }
-    return new EnumMapping<E>(enumToInteger, integerToEnum);
+    return new EnumMapping<>(enumToInteger, integerToEnum);
   }
 
   public EnumMappingBuilder<E> mapping(E e, int value) {

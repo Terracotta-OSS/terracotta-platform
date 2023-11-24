@@ -93,7 +93,7 @@ public class CustomJCommander extends JCommander {
       }
 
       // Display all the names and descriptions
-      if (sorted.size() > 0) {
+      if (!sorted.isEmpty()) {
         for (ParameterDescription pd : sorted) {
           if (pd.getParameter().hidden()) continue;
 

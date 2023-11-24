@@ -58,7 +58,7 @@ public class DefaultStatisticQueryBuilder implements StatisticQuery.Builder {
   @Override
   public StatisticQuery.Builder on(Context context) {
     if (!contexts.contains(context)) {
-      List<Context> contexts = new ArrayList<Context>(this.contexts);
+      List<Context> contexts = new ArrayList<>(this.contexts);
       contexts.add(context);
       return new DefaultStatisticQueryBuilder(capabilityManagement, capabilityName, statisticNames, contexts, since);
     }

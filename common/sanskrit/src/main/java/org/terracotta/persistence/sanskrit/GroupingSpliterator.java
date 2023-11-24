@@ -51,7 +51,7 @@ public class GroupingSpliterator implements Spliterator<Deque<String>> {
 
     while (!stopBatch) {
       boolean more = lines.tryAdvance(line -> {
-        if (line.equals("")) {
+        if (line.isEmpty()) {
           batchFull.set(true);
           LOGGER.trace("end of batch");
         } else {

@@ -32,7 +32,7 @@ public class UnlockConfigCommand extends Command {
   HostPort node;
 
   @Inject
-  public final UnlockConfigAction action;
+  public UnlockConfigAction action;
 
   public UnlockConfigCommand() {
     this(new UnlockConfigAction());

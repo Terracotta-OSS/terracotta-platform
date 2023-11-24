@@ -19,10 +19,10 @@ import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class TrackerImplTest {

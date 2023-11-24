@@ -184,7 +184,7 @@ public class ClusterValidator {
         .filter(node -> !node.getPublicHostPort().isPresent())
         .map(Node::getName)
         .collect(toList());
-    if (nodesWithNoPublicAddresses.size() != 0 && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
+    if (!nodesWithNoPublicAddresses.isEmpty() && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
       throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses +
           " don't have public addresses " + "defined, but other nodes in the cluster do." +
           " Mutative operations on public addresses must be done simultaneously on every node in the cluster");
@@ -303,7 +303,7 @@ public class ClusterValidator {
         .filter(node -> node.getBackupDir().isConfigured())
         .map(Node::getName)
         .collect(toList());
-    if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
+    if (!nodesWithBackupDirs.isEmpty() && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
       throw new MalformedClusterException("Nodes: " + nodesWithBackupDirs +
           " currently have (or will have) backup directories defined, while some nodes in the cluster do not (or will not)." +
           " Within a cluster, all nodes must have a backup directory defined or no backup directory defined.");

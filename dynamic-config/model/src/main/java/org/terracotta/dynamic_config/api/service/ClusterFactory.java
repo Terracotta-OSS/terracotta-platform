@@ -80,7 +80,7 @@ public class ClusterFactory {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
     Cluster cluster = create(properties, defaultsAdded::add);
 
-    // keep that in trace because DynamicConfigConfiguration is responsible of the logging
+    // keep that in trace because DynamicConfigConfiguration is responsible for the logging
     LOGGER.debug(
         String.format(
             "%sRead the following configurations: %s%sAdded the following defaults: %s",
@@ -111,7 +111,7 @@ public class ClusterFactory {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
     Cluster cluster = ConfigurationParser.parseCommandLineParameters(paramValueMap, parameterSubstitutor, defaultsAdded::add);
 
-    // keep that in trace because DynamicConfigConfiguration is responsible of the logging
+    // keep that in trace because DynamicConfigConfiguration is responsible for the logging
     LOGGER.trace(
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
@@ -166,7 +166,7 @@ public class ClusterFactory {
 
   private String toDisplayParams(Collection<Configuration> configurations) {
     String suppliedParameters = configurations.stream()
-        .filter(c -> c.hasValue())
+        .filter(Configuration::hasValue)
         .map(Configuration::toString)
         .sorted()
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));

@@ -35,7 +35,7 @@ public class LockConfigCommand extends Command {
   String lockContext;
 
   @Inject
-  public final LockConfigAction action;
+  public LockConfigAction action;
 
   public LockConfigCommand() {
     this(new LockConfigAction());

@@ -75,14 +75,14 @@ public class StopService {
 
     // trigger a stop request for all nodes
     for (Node.Endpoint addr : endpoints) {
-      // this call should be pretty fast and should not timeout if stop delay is long enough
+      // this call should be pretty fast and should not time out if stop delay is long enough
       try {
         // do not close DiagnosticService: connection is used after to detect when server is stopped
         DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getHostPort().createInetSocketAddress());
         stopRequested.put(addr, diagnosticService);
         diagnosticService.getProxy(DynamicConfigService.class).stop(stopDelay);
       } catch (Exception e) {
-        // timeout should not occur with a stop delay. Any error is recorded and we won't wait for this node to stop
+        // timeout should not occur with a stop delay. Any error is recorded, and we won't wait for this node to stop
         stopRequestFailed.put(addr, e);
         LOGGER.debug("Failed asking node {} to stop: {}", addr, e.getMessage(), e);
       }
@@ -149,7 +149,7 @@ public class StopService {
       @Override
       public void onStopped(Consumer<Node.Endpoint> c) {
         progressCallback.set(c);
-        // call the callback with previously stopped servers if the callback was setup after some servers were recorded
+        // call the callback with previously stopped servers if the callback was set up after some servers were recorded
         stoppedNodes.forEach(c);
       }
 

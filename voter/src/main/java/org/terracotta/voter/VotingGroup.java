@@ -15,11 +15,12 @@
  */
 package org.terracotta.voter;
 
-import java.util.Arrays;
-import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionException;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.terracotta.connection.ConnectionException;
 
 
 /**
@@ -159,7 +159,7 @@ public class VotingGroup implements AutoCloseable {
       }
     }, 0, REG_RETRY_INTERVAL, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
 
-    LOGGER.info("waiting to get registered with the active in group", voterManagers.stream().map(ClientVoterManager::getTargetHostPort).collect(Collectors.joining(",")));
+    LOGGER.info("waiting to get registered with the active in group {}", voterManagers.stream().map(ClientVoterManager::getTargetHostPort).collect(Collectors.joining(",")));
     try {
       ClientVoterManager mgr = registrationLatch.join();
       LOGGER.info("Vote owner state: {}", mgr.getServerState());
@@ -193,7 +193,7 @@ public class VotingGroup implements AutoCloseable {
     } catch (Throwable c) {
       thread.close();
       nodes.remove(mgr.getTargetHostPort());
-      LOGGER.info("Unexcepted exception.  Unable to register with target {}", mgr.getTargetHostPort(), c);
+      LOGGER.info("Unexpected exception.  Unable to register with target {}", mgr.getTargetHostPort(), c);
     }
   }
   
@@ -282,15 +282,11 @@ public class VotingGroup implements AutoCloseable {
           // Start heartbeating with new servers
           Set<String> addedServers = getAddedServers(existingTopology, newTopology);
 
-          addedServers.forEach(server -> {
-            addClientVoterNode(factory.apply(server), connectionProps);
-          });
+          addedServers.forEach(server -> addClientVoterNode(factory.apply(server), connectionProps));
 
           // Do removal of old servers from topology
           Set<String> removedServers = getRemovedServers(existingTopology, newTopology);
-          removedServers.forEach(server -> {
-            nodes.remove(server).close();
-          });
+          removedServers.forEach(server -> nodes.remove(server).close());
         }
         existingTopo = newTopology.stream().toArray(String[]::new);
         setTargets(existingTopo);

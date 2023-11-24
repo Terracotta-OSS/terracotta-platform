@@ -15,20 +15,19 @@
  */
 package org.terracotta.voter;
 
-import com.tc.util.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.connection.Diagnostics;
 
 import java.util.concurrent.TimeoutException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.terracotta.voter.ClientVoterManager.INVALID_VOTER_RESPONSE;
-import static org.terracotta.voter.ClientVoterManagerImpl.REQUEST_TIMEOUT;
 import static org.terracotta.voter.ClientVoterManagerImpl.MBEAN_NAME;
+import static org.terracotta.voter.ClientVoterManagerImpl.REQUEST_TIMEOUT;
 
 public class ClientVoterManagerImplTest {
 

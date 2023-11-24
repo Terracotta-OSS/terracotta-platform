@@ -40,7 +40,6 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   @Override
   public NomadActiveServerEntity<T> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
-      @SuppressWarnings("unchecked")
       DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
       return new NomadActiveServerEntity<>(nomadServer);
     } catch (ServiceException e) {
@@ -51,7 +50,6 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   @Override
   public NomadPassiveServerEntity<T> createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
-      @SuppressWarnings("unchecked")
       DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
       Server server = registry.getService(new BasicServiceConfiguration<>(Server.class));
       return new NomadPassiveServerEntity<>(server, nomadServer);

@@ -37,7 +37,7 @@ public interface DynamicConfigExtension {
   /**
    * Implement this method to add configurations.
    * <p>
-   * It is possible to access eagerly some platform information and exposed services to help creating this configurations.
+   * It is possible to access eagerly some platform information and exposed services to help creating these configurations.
    * Example of services that are available:
    * <ul>
    *   <li>{@link org.terracotta.dynamic_config.api.service.IParameterSubstitutor}: enables the substitution of placeholders</li>

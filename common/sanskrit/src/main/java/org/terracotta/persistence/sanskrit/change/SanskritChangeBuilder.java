@@ -24,7 +24,7 @@ import java.util.List;
  * Allows construction of a change to be applied atomically to the append log.
  */
 public class SanskritChangeBuilder {
-  private List<SanskritChange> changes = new ArrayList<>();
+  private final List<SanskritChange> changes = new ArrayList<>();
 
   public static SanskritChangeBuilder newChange() {
     return new SanskritChangeBuilder();

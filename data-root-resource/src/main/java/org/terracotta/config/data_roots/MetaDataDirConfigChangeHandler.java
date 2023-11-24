@@ -82,7 +82,7 @@ public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
             throw new InvalidConfigChangeException("Path for metadata-dir cannot be updated because " +
                 "the new path overlaps with the existing path: " + metaDirPath);
           }
-          // For handling cases where multiple nodes are using same parent metadata-dir path but we want to 
+          // For handling cases where multiple nodes are using same parent metadata-dir path, but we want to
           // change metadata-dir for specific node.
           String nodeName = baseConfig.getNode().getName();
           new MoveOperation(substitutedNewMetaDirPath).prepare(substitutedExistingPath.resolve(nodeName));

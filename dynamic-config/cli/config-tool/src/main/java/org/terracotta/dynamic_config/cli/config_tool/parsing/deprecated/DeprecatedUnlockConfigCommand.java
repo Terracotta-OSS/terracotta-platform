@@ -32,7 +32,7 @@ public class DeprecatedUnlockConfigCommand extends Command {
   HostPort node;
 
   @Inject
-  public final UnlockConfigAction action;
+  public UnlockConfigAction action;
 
   public DeprecatedUnlockConfigCommand() {
     this(new UnlockConfigAction());

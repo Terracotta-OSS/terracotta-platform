@@ -15,8 +15,6 @@
  */
 package org.terracotta.voter;
 
-import java.util.concurrent.Future;
-
 public interface TCVoter {
 
   /**

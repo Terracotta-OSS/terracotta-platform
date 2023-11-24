@@ -59,8 +59,8 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
     // this call will always load the current nomad version (which can be increased) to find the information
     // on the node we are running into
     Node currentNode = nodeContextSupplier.get().getNode();
-    // this.node is the node informaiton that was initially used to build this ServerConfiguration
-    // it can be the same node we run into but it can also be another node of the stripe
+    // this.node is the node information that was initially used to build this ServerConfiguration
+    // it can be the same node we run into, but it can also be another node of the stripe
     int groupPort = groupPortMapper.getPeerGroupPort(this.node, currentNode);
     return InetSocketAddress.createUnresolved(substitutor.substitute(this.node.getGroupBindAddress().orDefault()), groupPort);
   }

@@ -16,7 +16,7 @@
 package org.terracotta.voltron.proxy.server;
 
 /**
- * This interface can be extened by a proxy interface, and the proxy interface be implemented by entities.
+ * This interface can be extended by a proxy interface, and the proxy interface be implemented by entities.
  * <p>
  * This allows an entity to use the {@link org.terracotta.entity.IEntityMessenger} capabilities through a
  * defined proxy interface

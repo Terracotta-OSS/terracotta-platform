@@ -22,10 +22,10 @@ import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
 import static org.terracotta.dynamic_config.api.model.Testing.S_UIDS;

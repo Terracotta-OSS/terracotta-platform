@@ -57,7 +57,7 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
     }
 
     for (Configuration change : changes.expand()) {
-      Map<String, RawPath> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue()));
+      Map<String, RawPath> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
       LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
       String dataDirectoryName = change.getKey();
@@ -110,7 +110,7 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
           Path substitutedExistingPath = substitute(dataDirs.get(dataDirectoryName).toPath());
           if (!substitutedExistingPath.equals(substitutedDataDirPath)) {
             try {
-              // For handling cases where multiple nodes are using same parent data-dir path but we want to 
+              // For handling cases where multiple nodes are using same parent data-dir path, but we want to
               // change data-dir for specific node.
               String nodeName = baseConfig.getNode().getName();
               new MoveOperation(substitutedDataDirPath).prepare(substitutedExistingPath.resolve(nodeName));

@@ -69,8 +69,8 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTcConfigMapper.class);
 
-  private static String NS_DATA_ROOT = "http://www.terracottatech.com/config/data-roots";
-  private static String NS_PLATFORM_PERSISTENCE = "http://www.terracottatech.com/config/platform-persistence";
+  private static final String NS_DATA_ROOT = "http://www.terracottatech.com/config/data-roots";
+  private static final String NS_PLATFORM_PERSISTENCE = "http://www.terracottatech.com/config/platform-persistence";
 
   static final String TERRACOTTA_CONFIG_NAMESPACE = "http://www.terracotta.org/config";
   static final String NAME_NODE_NAME = "name";
@@ -126,11 +126,11 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile = buildConfigurationFilePluginNodeMap();
 
     /*
-    Validates all files have same number and type of plugin configuration (e.g.. one off-heap, one backup)
+    Validates all files have same number and type of plugin configuration (e.g. one off-heap, one backup)
      */
     Set<String> namespaces = validateAllConfigurationFilesHaveSamePluginTypes(configAndServiceNodesPerConfigFile);
     /*
-    Validates values inside each plugins are same/equivalent (e.g. all the configuration files have same number of
+    Validates values inside each plugin are same/equivalent (e.g. all the configuration files have same number of
     off-heap resources and off-heap resource values are same in each configuration)
      */
     List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams =
@@ -441,7 +441,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     }
 
     Collection<String> mismatched = mismatchedServers(hostConfigMapNode, allServers);
-    if (mismatched.size() > 0) {
+    if (!mismatched.isEmpty()) {
       String mismatchedString = join(",", mismatched);
       throw new InvalidInputException(
           ErrorCode.MISMATCHED_SERVERS,
@@ -467,7 +467,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
 
   protected Cluster getCluster(String clusterName, Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, List<String> stripeNames) {
     validateProvidedConfiguration(nodeNameNodeConfigMap, allServers);
-    /* We want to eventually create cluster object so we can remove repeated parsing since all servers
+    /* We want to eventually create cluster object, so we can remove repeated parsing since all servers
      in same stripe will have same stripe level configuration. */
 
     Map<Integer, Node> oneConfigPerStripe = new HashMap<>();

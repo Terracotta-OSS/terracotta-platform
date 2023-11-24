@@ -52,7 +52,7 @@ public class DeprecatedUnsetCommand extends Command {
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Inject
-  public final UnsetAction action;
+  public UnsetAction action;
 
   public DeprecatedUnsetCommand() {
     this(new UnsetAction());

@@ -30,7 +30,7 @@ import java.util.Optional;
  * <p>
  * If TC nodes are deployed in a separate network, recommendation is to configure public hostname/port on the
  * nodes and have all clients reach the nodes by using only public endpoints. The user will be responsible to
- * setup his networks (NAT, DNS ,etc) accordingly so that public endpoints can resolve to the nodes whether the
+ * set up his networks (NAT, DNS, etc) accordingly so that public endpoints can resolve to the nodes whether the
  * clients are "inside" or "outside" of the TC node network.
  * <p>
  * This is not possible to correctly support a mix of clients connecting to the cluster, some with public

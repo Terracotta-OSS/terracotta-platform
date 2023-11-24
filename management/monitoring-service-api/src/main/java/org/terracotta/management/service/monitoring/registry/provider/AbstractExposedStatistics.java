@@ -45,8 +45,7 @@ public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBind
     return statisticRegistry;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName, long since) {
+  public <U extends Serializable> Optional<Statistic<U>> queryStatistic(String fullStatisticName, long since) {
     return statisticRegistry.queryStatistic(fullStatisticName, since);
   }
 

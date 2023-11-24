@@ -18,6 +18,7 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 
 import java.time.Clock;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -290,12 +291,12 @@ public final class Server extends AbstractNode<Stripe> {
     if (activateTime != server.activateTime) return false;
     if (!serverEntities.equals(server.serverEntities)) return false;
     if (!serverName.equals(server.serverName)) return false;
-    if (hostName != null ? !hostName.equals(server.hostName) : server.hostName != null) return false;
-    if (hostAddress != null ? !hostAddress.equals(server.hostAddress) : server.hostAddress != null) return false;
-    if (bindAddress != null ? !bindAddress.equals(server.bindAddress) : server.bindAddress != null) return false;
+    if (!Objects.equals(hostName, server.hostName)) return false;
+    if (!Objects.equals(hostAddress, server.hostAddress)) return false;
+    if (!Objects.equals(bindAddress, server.bindAddress)) return false;
     if (state != server.state) return false;
-    if (version != null ? !version.equals(server.version) : server.version != null) return false;
-    return buildId != null ? buildId.equals(server.buildId) : server.buildId == null;
+    if (!Objects.equals(version, server.version)) return false;
+    return Objects.equals(buildId, server.buildId);
 
   }
 
@@ -318,9 +319,10 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
-    map.put("serverEntities", serverEntityStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(ServerEntity::toMap).collect(Collectors.toList()));
+    map.put("serverEntities", serverEntityStream().sorted(Comparator.comparing(AbstractNode::getId)).map(ServerEntity::toMap).collect(Collectors.toList()));
     map.put("serverName", this.getServerName());
     map.put("hostName", this.hostName);
     map.put("hostAddress", this.hostAddress);

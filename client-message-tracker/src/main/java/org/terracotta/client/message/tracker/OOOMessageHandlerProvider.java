@@ -15,6 +15,7 @@
  */
 package org.terracotta.client.message.tracker;
 
+import com.tc.classloader.BuiltinService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PlatformConfiguration;
@@ -23,8 +24,6 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
-
-import com.tc.classloader.BuiltinService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 @BuiltinService
 public class OOOMessageHandlerProvider implements ServiceProvider {
 
-  private ConcurrentMap<String, OOOMessageHandler<EntityMessage, EntityResponse>> serviceMap = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, OOOMessageHandler<EntityMessage, EntityResponse>> serviceMap = new ConcurrentHashMap<>();
 
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {

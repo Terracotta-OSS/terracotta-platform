@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * @author Mathieu Carbou

@@ -144,7 +144,7 @@ public class ConfigPropertiesTranslator {
     // Validate each property (against the established stripe/node namespaces), collecting all syntax errors.
 
     inputConfigSettings.keySet().forEach(this::validateProperty);
-    if (errors.size() > 0) {
+    if (!errors.isEmpty()) {
       throw errors();
     }
 
@@ -184,7 +184,7 @@ public class ConfigPropertiesTranslator {
       }
     });
 
-    if (errors.size() > 0) {
+    if (!errors.isEmpty()) {
       throw errors();
     }
 
@@ -207,7 +207,7 @@ public class ConfigPropertiesTranslator {
       throw errorsWith(ERR_NO_STRIPES_IDENTIFIED);
     }
     List<String> stripes = split(csvStripeNames, NAMES_LIST_DELIM);
-    if (stripes.size() == 0) {
+    if (stripes.isEmpty()) {
       throw errorsWith(ERR_NO_STRIPES_IDENTIFIED);
     }
     //Passed
@@ -232,7 +232,7 @@ public class ConfigPropertiesTranslator {
     if (nodesNamespace.isEmpty()) {
       addError(ERR_NO_NODES_IDENTIFIED);
     }
-    if (errors.size() > 0) {
+    if (!errors.isEmpty()) {
       throw errors();
     }
   }
@@ -368,7 +368,7 @@ public class ConfigPropertiesTranslator {
 
   private String getIndexNamespaceForStripeOrNodeName(String stripeOrNodeName, String scope) throws IllegalArgumentException  {
 
-    String indexNamespace = ""; // remains empty for cluster-wide
+    String indexNamespace; // remains empty for cluster-wide
     String stripeNamespace = stripesNamespace.getOrDefault(stripeOrNodeName, "");
     String nodeNamespace = nodesNamespace.getOrDefault(stripeOrNodeName, "");
     if (scope.isEmpty()) {
@@ -477,7 +477,7 @@ public class ConfigPropertiesTranslator {
 
     if (!(defaultProperties == null)) {
       writeHeader(defaultPropertiesHeader);
-      if (defaultProps.size() == 0) {
+      if (defaultProps.isEmpty()) {
         appendl("# No default properties in use.");
       } else {
         writeProperties(defaultProps, WriteScope.BOTH, false);
@@ -486,7 +486,7 @@ public class ConfigPropertiesTranslator {
     }
     if (!(hiddenProperties == null)) {
       writeHeader(hiddenPropertiesHeader);
-      if (hiddenProps.size() == 0) {
+      if (hiddenProps.isEmpty()) {
         appendl("# No hidden properties found.");
       } else {
         writeProperties(hiddenProps, WriteScope.BOTH, false);

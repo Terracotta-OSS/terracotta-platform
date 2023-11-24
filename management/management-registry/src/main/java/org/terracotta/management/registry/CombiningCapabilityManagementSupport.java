@@ -44,7 +44,7 @@ public class CombiningCapabilityManagementSupport implements CapabilityManagemen
 
   @Override
   public Collection<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    ArrayList<ManagementProvider<?>> list = new ArrayList<ManagementProvider<?>>();
+    ArrayList<ManagementProvider<?>> list = new ArrayList<>();
     for (CapabilityManagementSupport capabilityManagementSupport : capabilityManagementSupports) {
       list.addAll(capabilityManagementSupport.getManagementProvidersByCapability(capabilityName));
     }
@@ -53,7 +53,7 @@ public class CombiningCapabilityManagementSupport implements CapabilityManagemen
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    ArrayList<Capability> list = new ArrayList<Capability>();
+    ArrayList<Capability> list = new ArrayList<>();
     for (CapabilityManagementSupport capabilityManagementSupport : capabilityManagementSupports) {
       list.addAll(capabilityManagementSupport.getCapabilities());
     }
@@ -62,7 +62,7 @@ public class CombiningCapabilityManagementSupport implements CapabilityManagemen
 
   @Override
   public Collection<String> getCapabilityNames() {
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     for (CapabilityManagementSupport capabilityManagementSupport : capabilityManagementSupports) {
       list.addAll(capabilityManagementSupport.getCapabilityNames());
     }

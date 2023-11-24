@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 public interface ConfigChangeHandler {
 
   /**
-   * Validate a change a change and throw if invalid
+   * Validate a change and throw if invalid
    */
   default void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {}
 

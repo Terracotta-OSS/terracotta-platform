@@ -30,10 +30,10 @@ import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 

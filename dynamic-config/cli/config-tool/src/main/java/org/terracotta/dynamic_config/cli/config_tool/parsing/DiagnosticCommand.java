@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.cli.api.command.DiagnosticAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
@@ -29,6 +30,7 @@ import java.util.List;
 
 @Parameters(commandDescription = "Diagnose a cluster configuration")
 @Usage("-connect-to <hostname[:port]> [-output-format <text|json>]")
+@SuppressFBWarnings("SS_SHOULD_BE_STATIC")
 public class DiagnosticCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
@@ -38,7 +40,7 @@ public class DiagnosticCommand extends Command {
   private String outputFormat = "text";
 
   @Inject
-  public final DiagnosticAction action;
+  public DiagnosticAction action;
 
   public DiagnosticCommand() {
     this(new DiagnosticAction());

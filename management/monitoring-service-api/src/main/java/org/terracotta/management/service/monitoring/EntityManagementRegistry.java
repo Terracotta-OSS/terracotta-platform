@@ -44,7 +44,7 @@ public interface EntityManagementRegistry extends CapabilityManagementSupport, C
    * Get the management context required to make use of the
    * registered objects' capabilities.
    *
-   * @return a this management registry context.
+   * @return this management registry context.
    */
   ContextContainer getContextContainer();
 

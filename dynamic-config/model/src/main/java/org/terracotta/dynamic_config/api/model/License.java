@@ -26,7 +26,7 @@ import static java.util.Collections.emptyMap;
 
 public class License {
 
-  // Mapping between capability name and corresponding limit value
+  // Mapping between capability name and corresponding limit value.
   // Value as 0 means absent and > 0 means present and represents its limit.
   private final Map<String, Long> capabilities;
 
@@ -100,7 +100,7 @@ public class License {
     sb.append("Capabilities:").append(lineSeparator());
     Map<String, Long> capabilities = new HashMap<>(this.capabilities);
     capabilities.remove("OffHeap"); // handle this separately
-    capabilities.forEach((k, v) -> sb.append(k + ": ").append(hasCapability(k)).append(lineSeparator()));
+    capabilities.forEach((k, v) -> sb.append(k).append(": ").append(hasCapability(k)).append(lineSeparator()));
     sb.append("OffHeap: ").append(getLimit("OffHeap"));
     return sb.toString();
   }

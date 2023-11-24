@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.startup;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -36,10 +35,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -61,8 +63,6 @@ public class CommandLineProcessorChainTest {
 
   @Rule
   public final TemporaryFolder tempFolder = new TemporaryFolder();
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   private final Node node1 = Testing.newTestNode("node-1", "localhost", 19410);
   private final Node node2 = Testing.newTestNode("node-2", "localhost", 9411);
@@ -299,9 +299,8 @@ public class CommandLineProcessorChainTest {
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
 
-    expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("Cluster name is required with license file");
-    mainCommandLineProcessor.process();
+    NullPointerException e = assertThrows(NullPointerException.class, mainCommandLineProcessor::process);
+    assertThat(e, hasMessage(equalTo("Cluster name is required with license file")));
   }
 
   @Test

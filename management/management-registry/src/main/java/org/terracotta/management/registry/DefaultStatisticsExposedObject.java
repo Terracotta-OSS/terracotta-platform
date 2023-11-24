@@ -47,7 +47,7 @@ public class DefaultStatisticsExposedObject<T> extends DefaultExposedObject<T> {
     return statisticRegistry;
   }
 
-  public <T extends Serializable> Optional<Statistic<T>> queryStatistic(String fullStatisticName, long since) {
+  public <U extends Serializable> Optional<Statistic<U>> queryStatistic(String fullStatisticName, long since) {
     return statisticRegistry.queryStatistic(fullStatisticName, since);
   }
 

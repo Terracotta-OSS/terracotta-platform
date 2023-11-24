@@ -87,7 +87,7 @@ public class TmpDir extends ExtendedTestRule {
 
   private boolean empty() {
     try (Stream<Path> walk = Files.walk(root)) {
-      return walk.allMatch(path -> Files.isDirectory(path));
+      return walk.allMatch(Files::isDirectory);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

@@ -36,7 +36,7 @@ public class SelectingConfigChangeHandler<T> implements ConfigChangeHandler {
   // the selector to generate a key. By default, does nothing and forward to the fallback.
   private Function<Configuration, T> selector = change -> null;
 
-  // by default we reject the change if no handler is found, or the key is null
+  // by default, we reject the change if no handler is found, or the key is null
   private ConfigChangeHandler fallback = ConfigChangeHandler.reject("Change rejected");
 
   /**

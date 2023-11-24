@@ -183,7 +183,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
   }
 
   /**
-   * Constructs a {@code Map} containing only the parameters relevant to {@code Node} object with longest parameter name
+   * Constructs a {@code Map} containing only the parameters relevant to {@code Node} object with the longest parameter name
    * as the key and user-specified-value as the value.
    *
    * @param jCommander jCommander instance
@@ -243,7 +243,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
       filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
       filteredOptions.remove("-r");
 
-      if (filteredOptions.size() != 0) {
+      if (!filteredOptions.isEmpty()) {
         throw new IllegalArgumentException(
             String.format(
                 "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",

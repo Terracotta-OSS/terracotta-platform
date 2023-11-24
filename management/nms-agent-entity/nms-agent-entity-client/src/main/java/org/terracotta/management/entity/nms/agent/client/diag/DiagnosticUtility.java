@@ -44,7 +44,7 @@ public class DiagnosticUtility {
    */
   public String getThreadDump() {
     final StringBuilder sb = new StringBuilder(100 * 1024);
-    sb.append(new Date().toString());
+    sb.append(new Date());
     sb.append('\n');
     sb.append("Full thread dump ");
     sb.append(System.getProperty("java.vm.name"));
@@ -85,7 +85,7 @@ public class DiagnosticUtility {
       }
     } catch (final Exception e) {
       LOGGER.error("Cannot take thread dumps - " + e.getMessage(), e);
-      sb.append(e.toString());
+      sb.append(e);
     }
     return sb.toString();
   }
@@ -103,8 +103,8 @@ public class DiagnosticUtility {
       final String lockName = threadInfo.getLockName();
       final String lockOwnerName = threadInfo.getLockOwnerName();
       final Long lockOwnerId = threadInfo.getLockOwnerId();
-      final Boolean isSuspended = threadInfo.isSuspended();
-      final Boolean isInNative = threadInfo.isInNative();
+      final boolean isSuspended = threadInfo.isSuspended();
+      final boolean isInNative = threadInfo.isInNative();
 
       sb.append(" ");
       sb.append(threadState);

@@ -37,7 +37,7 @@ public class DelegatingStatistic<T extends Serializable> implements Statistic<T>
 
   public DelegatingStatistic(StatisticType type, Sample<T> sample) {
     this.delegate = new org.terracotta.statistics.registry.Statistic<>(convert(type),
-      new org.terracotta.statistics.Sample<T>(sample.getTimestamp(), sample.getSample()));
+        new org.terracotta.statistics.Sample<>(sample.getTimestamp(), sample.getSample()));
   }
 
   public DelegatingStatistic(StatisticType type, List<Sample<T>> samples) {
@@ -56,7 +56,7 @@ public class DelegatingStatistic<T extends Serializable> implements Statistic<T>
 
   @Override
   public List<Sample<T>> getSamples() {
-    return delegate.getSamples().stream().map(x -> new DelegatingSample<T>(x.getTimestamp(), x.getSample())).collect(Collectors.toList());
+    return delegate.getSamples().stream().map(x -> new DelegatingSample<>(x.getTimestamp(), x.getSample())).collect(Collectors.toList());
   }
 
   @Override
@@ -74,7 +74,7 @@ public class DelegatingStatistic<T extends Serializable> implements Statistic<T>
   }
 
   public static <U extends Serializable> org.terracotta.statistics.registry.Statistic<U> convertStats(Statistic<U> statistic) {
-    return new org.terracotta.statistics.registry.Statistic<U>(convert(statistic.getType()), list(statistic.getSamples()));
+    return new org.terracotta.statistics.registry.Statistic<>(convert(statistic.getType()), list(statistic.getSamples()));
   }
 
 }

@@ -22,9 +22,9 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
@@ -33,7 +33,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_restart_active_in_diagnostic_mode() {
     int activeNodeId = waitForActive(1);

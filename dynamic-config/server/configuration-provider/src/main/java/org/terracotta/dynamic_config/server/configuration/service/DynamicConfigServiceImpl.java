@@ -433,7 +433,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           .map(LockContext::getOwnerTags)
           .filter(isEqual(DENY_SCALE_IN).or(isEqual(DENY_SCALE_OUT)).or(isEqual(ALLOW_SCALING)))
           .findFirst() // get the most recently committed marker: either deny or allow or nothing
-          .filter(isEqual(DENY_SCALE_IN).or(isEqual(DENY_SCALE_OUT))) // check if the last one is a deny
+          .filter(isEqual(DENY_SCALE_IN).or(isEqual(DENY_SCALE_OUT))) // check if the last one is deny
           .isPresent(); // true if last one is deny, false if last one is allow or no marker
     } catch (NomadException e) {
       throw new IllegalStateException(e);

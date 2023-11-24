@@ -15,10 +15,11 @@
  */
 package org.terracotta.voter;
 
+import org.terracotta.connection.ConnectionException;
+
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.connection.ConnectionException;
 
 public interface ClientVoterManager {
 
@@ -109,7 +110,7 @@ public interface ClientVoterManager {
    * De-register the voter with the given id from the server.
    *
    * @param id the voter id
-   * @return true if de-registration succeeds. Otherwise false.
+   * @return true if de-registration succeeds, otherwise false.
    */
   boolean deregisterVoter(String id) throws TimeoutException;
 }

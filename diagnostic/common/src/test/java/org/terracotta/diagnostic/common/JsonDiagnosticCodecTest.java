@@ -30,7 +30,8 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
 /**
@@ -92,8 +93,7 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
   @Test
   public void test_deserialize_fails() {
-    exception.expect(DiagnosticCodecException.class);
-    codec.deserialize("foo", getClass());
+    assertThrows(DiagnosticCodecException.class, () -> codec.deserialize("foo", getClass()));
   }
 
   @Test

@@ -135,9 +135,9 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
   protected void onReconnect(ClientDescriptor clientDescriptor, R state) {
   }
 
-  protected final <M> void fireMessage(Class<M> type, M message, boolean echo) {entityInvoker.fireMessage(type, message, echo);}
+  protected final <T> void fireMessage(Class<T> type, T message, boolean echo) {entityInvoker.fireMessage(type, message, echo);}
 
-  protected final <M> void fireMessage(Class<M> type, M message, ClientDescriptor... clients) {entityInvoker.fireMessage(type, message, clients);}
+  protected final <T> void fireMessage(Class<T> type, T message, ClientDescriptor... clients) {entityInvoker.fireMessage(type, message, clients);}
 
   protected final Collection<ClientDescriptor> getClients() {return entityInvoker.getClients();}
 

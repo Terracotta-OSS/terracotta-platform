@@ -26,9 +26,9 @@ import org.terracotta.json.Json;
 import java.util.Objects;
 import java.util.Properties;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;

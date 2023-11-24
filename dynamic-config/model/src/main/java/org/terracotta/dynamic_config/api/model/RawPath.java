@@ -30,7 +30,7 @@ import static java.util.Objects.requireNonNull;
  * The problems with Path are:
  * <p>
  * 1. Parsing: Paths.get() will parse some user input into some segments.
- * The input and parsing is per-platform so it can lead to
+ * The input and parsing is per-platform, so it can lead to
  * different outcomes in both parsing and toString()
  * <p>
  * - On Win: Paths.get("a/b") and Paths.get("a\\b") give 2 segments
@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * 2. User input is lost: when parsed, we loose the path separator that was initially used.
  * As a consequence, all serializations could lead to different results that is different
- * than the user input since it depends on the system where we are calling toString().
+ * from the user input since it depends on the system where we are calling toString().
  * <p>
  * So this class aims at resolving all of that, by keeping the user input,
  * that will be used for equality checks, serialization and deserialization,

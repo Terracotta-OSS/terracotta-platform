@@ -104,7 +104,6 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     this.statisticService.close();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();

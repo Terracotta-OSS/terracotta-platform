@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
  * Adapts the API-wanted {@link PlatformListener} into the current existing ({@link org.terracotta.monitoring.IStripeMonitoring}),
  * that is still currently using addNode / removeNode methods linked to a tree structure
  * <p>
- * This class's goal is to receive platform0only events (consumer id 0)
+ * This class's goal is to receive only platform events (consumer id 0)
  *
  * @author Mathieu Carbou
  */

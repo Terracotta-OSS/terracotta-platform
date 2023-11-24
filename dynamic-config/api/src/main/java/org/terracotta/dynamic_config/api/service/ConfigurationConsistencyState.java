@@ -48,7 +48,7 @@ public enum ConfigurationConsistencyState {
   ONLINE_PREPARED,
 
   /**
-   * All nodes are online and they are all in diagnostic mode, being configured or being repaired.
+   * All nodes are online, and they are all in diagnostic mode, being configured or being repaired.
    */
   ALL_UNINITIALIZED,
 
@@ -112,5 +112,5 @@ public enum ConfigurationConsistencyState {
   /**
    * Unable to determine the configuration state of the cluster
    */
-  UNKNOWN;
+  UNKNOWN
 }

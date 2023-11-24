@@ -37,7 +37,7 @@ public class DeprecatedRepairCommand extends Command {
   RepairMethod forcedRepairMethod = RepairMethod.AUTO;
 
   @Inject
-  public final RepairAction action;
+  public RepairAction action;
 
   public DeprecatedRepairCommand() {
     this(new RepairAction());

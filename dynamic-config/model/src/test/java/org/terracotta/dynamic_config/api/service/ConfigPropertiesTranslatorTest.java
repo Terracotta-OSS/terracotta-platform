@@ -31,11 +31,11 @@ import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator.ERR_NODE_NAMES_PROPERTY_MISSING;
 import static org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator.ERR_NO_NODES_IDENTIFIED;
 import static org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator.ERR_NO_STRIPES_IDENTIFIED;

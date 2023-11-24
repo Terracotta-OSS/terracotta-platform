@@ -23,9 +23,9 @@ import org.terracotta.runnel.encoding.StructEncoder;
 import java.nio.ByteBuffer;
 
 public class LeaseReconnectData {
-  private static Struct reconnectStruct = createStruct();
+  private static final Struct reconnectStruct = createStruct();
 
-  private long connectionSequenceNumber;
+  private final long connectionSequenceNumber;
 
   public LeaseReconnectData(long connectionSequenceNumber) {
     this.connectionSequenceNumber = connectionSequenceNumber;

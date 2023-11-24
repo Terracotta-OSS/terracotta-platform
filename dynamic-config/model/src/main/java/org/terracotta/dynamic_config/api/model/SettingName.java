@@ -17,7 +17,7 @@ package org.terracotta.dynamic_config.api.model;
 
 /**
  * Contains the parameter values of the settings.
- * Theses values are used both in the config file and CLI and are the same in both cases.
+ * These values are used both in the config file and CLI and are the same in both cases.
  */
 public class SettingName {
   public static final String CLUSTER_NAME = "cluster-name";

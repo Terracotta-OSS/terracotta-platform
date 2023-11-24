@@ -240,7 +240,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
     if (!clientIdentifier.equals(client.clientIdentifier)) return false;
     if (!tags.equals(client.tags)) return false;
     if (!properties.equals(client.properties)) return false;
-    return hostName != null ? hostName.equals(client.hostName) : client.hostName == null;
+    return Objects.equals(hostName, client.hostName);
   }
 
   @Override

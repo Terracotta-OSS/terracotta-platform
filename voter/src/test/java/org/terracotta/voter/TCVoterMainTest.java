@@ -15,9 +15,7 @@
  */
 package org.terracotta.voter;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -26,16 +24,16 @@ import org.terracotta.voter.cli.TCVoterMain;
 
 import java.util.Properties;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.terracotta.dynamic_config.api.model.UID.newUID;
 
 public class TCVoterMainTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testOverrideVote() {
@@ -111,29 +109,23 @@ public class TCVoterMainTest {
     };
 
     String[] args = new String[]{"-s", "foo:1234", "-s", "bar:2345"};
-
-    expectedException.expect(RuntimeException.class);
-    expectedException.expectMessage("Usage of multiple stripes is not supported");
-    voterMain.processArgs(args);
+    RuntimeException e = assertThrows(RuntimeException.class, () -> voterMain.processArgs(args));
+    assertThat(e, hasMessage(equalTo("Usage of multiple stripes is not supported")));
   }
 
   @Test
   public void testZeroArguments() {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[0];
-
-    expectedException.expect(RuntimeException.class);
-    expectedException.expectMessage("Neither the -vote-for option nor the regular -connect-to option provided");
-    voterMain.processArgs(args);
+    RuntimeException e = assertThrows(RuntimeException.class, () -> voterMain.processArgs(args));
+    assertThat(e, hasMessage(equalTo("Neither the -vote-for option nor the regular -connect-to option provided")));
   }
 
   @Test
   public void testInvalidTargetHostPort() {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[]{"-s", "bar:baz"};
-
-    expectedException.expect(RuntimeException.class);
-    expectedException.expectMessage("Invalid host:port combination provided");
-    voterMain.processArgs(args);
+    RuntimeException e = assertThrows(RuntimeException.class, () -> voterMain.processArgs(args));
+    assertThat(e, hasMessage(equalTo("Invalid host:port combination provided: bar:baz")));
   }
 }

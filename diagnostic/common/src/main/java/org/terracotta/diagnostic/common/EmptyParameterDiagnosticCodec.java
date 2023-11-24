@@ -38,7 +38,7 @@ public class EmptyParameterDiagnosticCodec extends DiagnosticCodecSkeleton<Strin
   @Override
   public String serialize(Object o) throws DiagnosticCodecException {
     requireNonNull(o);
-    return o.toString() + EOF;
+    return o + EOF;
   }
 
   @Override

@@ -58,7 +58,7 @@ public final class DefaultCapability implements Capability, Serializable {
 
   @Override
   public <T extends Descriptor> Collection<T> getDescriptors(Class<T> descriptorType) {
-    Collection<T> list = new ArrayList<T>();
+    Collection<T> list = new ArrayList<>();
     for (Descriptor descriptor : descriptors) {
       if (descriptorType.isInstance(descriptor)) {
         list.add(descriptorType.cast(descriptor));

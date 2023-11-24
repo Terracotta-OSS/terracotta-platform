@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -27,11 +25,11 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
@@ -48,9 +46,6 @@ public class ClusterValidatorTest {
   private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
   private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
   private static final String auditLogDirDisallowedError = "When no security root directories are configured audit-log-dir should also be unconfigured (unset) for all nodes in the cluster";
-
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
 
   private final Random random = new Random();
 

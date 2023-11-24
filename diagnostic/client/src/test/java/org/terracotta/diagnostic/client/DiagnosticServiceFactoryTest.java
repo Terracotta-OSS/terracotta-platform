@@ -16,9 +16,7 @@
 package org.terracotta.diagnostic.client;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -44,8 +42,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -57,8 +56,6 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DiagnosticServiceFactoryTest {
-
-  @Rule public ExpectedException exception = ExpectedException.none();
   @Mock public ConnectionService connectionService;
   @Mock public Connection connection;
   @Mock public Diagnostics diagnostics;
@@ -97,16 +94,14 @@ public class DiagnosticServiceFactoryTest {
   public void test_connection_closed_on_ref_failure() throws ConnectionException, EntityNotProvidedException, IOException {
     when(connection.<Diagnostics, Object, Properties>getEntityRef(eq(Diagnostics.class), eq(1L), eq("root"))).thenThrow(new EntityNotProvidedException("", ""));
 
-    exception.expect(ConnectionException.class);
-
-    DiagnosticServiceFactory.fetch(
+    assertThrows(ConnectionException.class, () -> DiagnosticServiceFactory.fetch(
         connectionService,
         InetSocketAddress.createUnresolved("localhost", 9410),
         "ConnectionName",
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
         null,
-        new DefaultJsonFactory());
+        new DefaultJsonFactory()));
 
     verify(connection, times(1)).close();
   }
@@ -116,16 +111,14 @@ public class DiagnosticServiceFactoryTest {
     when(connection.<Diagnostics, Object, Properties>getEntityRef(eq(Diagnostics.class), eq(1L), eq("root"))).thenReturn(entityRef);
     when(entityRef.fetchEntity(any(Properties.class))).thenThrow(new EntityNotFoundException("", ""));
 
-    exception.expect(ConnectionException.class);
-
-    DiagnosticServiceFactory.fetch(
+    assertThrows(ConnectionException.class, () -> DiagnosticServiceFactory.fetch(
         connectionService,
         InetSocketAddress.createUnresolved("localhost", 9410),
         "ConnectionName",
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
         null,
-        new DefaultJsonFactory());
+        new DefaultJsonFactory()));
 
     verify(connection, times(1)).close();
   }

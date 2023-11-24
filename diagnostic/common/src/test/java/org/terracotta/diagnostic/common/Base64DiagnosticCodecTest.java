@@ -20,7 +20,9 @@ import org.junit.Test;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 /**
  * @author Mathieu Carbou
@@ -61,9 +63,8 @@ public class Base64DiagnosticCodecTest extends CommonCodecTest<String> {
 
   @Test
   public void test_deserialize_type_wrong() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage("Target type must be assignable from String");
-    assertThat(codec.deserialize("", getClass()), is(equalTo("")));
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> codec.deserialize("", getClass()));
+    assertThat(e, hasMessage(equalTo("Target type must be assignable from String or byte[]")));
   }
 
 }

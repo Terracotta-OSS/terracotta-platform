@@ -25,10 +25,10 @@ import java.util.stream.Stream;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 

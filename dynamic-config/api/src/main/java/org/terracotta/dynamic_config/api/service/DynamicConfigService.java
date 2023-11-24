@@ -51,7 +51,7 @@ public interface DynamicConfigService {
   /**
    * Reset
    * <p>
-   * This method will backup and reset the configurations and Nomad append log,
+   * This method will back up and reset the configurations and Nomad append log,
    * <p>
    * The node will restart in diagnostic mode if restarted.
    */
@@ -92,7 +92,7 @@ public interface DynamicConfigService {
   Optional<String> getLicenseContent();
 
   /**
-   * Reset and sync this node's append log with the provided nomad changes and update the its configurations accordingly.
+   * Reset and sync this node's append log with the provided nomad changes and update the configurations accordingly.
    */
   void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster);
 }

@@ -38,10 +38,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Testing.replaceUIDs;

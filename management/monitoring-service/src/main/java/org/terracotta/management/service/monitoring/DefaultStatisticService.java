@@ -70,7 +70,7 @@ class DefaultStatisticService implements StatisticService, Closeable {
     long consumerId = registry.getMonitoringService().getConsumerId();
     LOGGER.info("[{}] Adding ability to collect statistics to entity management registry", consumerId);
 
-    // The context for the collector is created from the the registry of the entity wanting server-side providers.
+    // The context for the collector is created from the registry of the entity wanting server-side providers.
     // We create a provider that will receive management calls to control the global voltron's statistic collector.
     // This provider will thus be on top of the entity wanting to collect server-side stats
     ContextContainer contextContainer = registry.getContextContainer();
@@ -88,7 +88,7 @@ class DefaultStatisticService implements StatisticService, Closeable {
         list -> {
           // Add a marker on the statistics to know which statistics collector has collected them (from which NMS entity)
           list.forEach(stats -> stats.setContext(stats.getContext().with("collectorId", "" + consumerId)));
-          monitoringService.pushStatistics(list.toArray(new ContextualStatistics[list.size()]));
+          monitoringService.pushStatistics(list.toArray(new ContextualStatistics[0]));
         },
         timeSource::getTimestamp
     );

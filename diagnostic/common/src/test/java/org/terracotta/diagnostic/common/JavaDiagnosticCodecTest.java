@@ -23,7 +23,8 @@ import java.util.Objects;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 
 /**
  * @author Mathieu Carbou
@@ -36,14 +37,12 @@ public class JavaDiagnosticCodecTest extends CommonCodecTest<byte[]> {
 
   @Test
   public void test_serialize_failure() {
-    exception.expect(DiagnosticCodecException.class);
-    codec.serialize(this);
+    assertThrows(DiagnosticCodecException.class, () -> codec.serialize(this));
   }
 
   @Test
   public void test_deserialize_failure() {
-    exception.expect(DiagnosticCodecException.class);
-    codec.deserialize(new byte[0], getClass());
+    assertThrows(DiagnosticCodecException.class, () -> codec.deserialize(new byte[0], getClass()));
   }
 
   @Test

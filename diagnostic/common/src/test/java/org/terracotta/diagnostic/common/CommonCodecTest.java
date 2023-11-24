@@ -15,21 +15,17 @@
  */
 package org.terracotta.diagnostic.common;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
  */
 public abstract class CommonCodecTest<E> {
-
-  @Rule public ExpectedException exception = ExpectedException.none();
 
   final String name;
   final DiagnosticCodec<E> codec;

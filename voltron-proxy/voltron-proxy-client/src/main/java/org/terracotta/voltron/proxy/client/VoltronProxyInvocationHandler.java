@@ -74,7 +74,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     this.entityClientEndpoint = entityClientEndpoint;
     handler = Executors.newSingleThreadExecutor(r -> new Thread(r, "Message Handler for " + entityClientEndpoint));
     this.listeners = new ConcurrentHashMap<>();
-    if (events.size() > 0) {
+    if (!events.isEmpty()) {
       for (Class<?> aClass : events) {
         listeners.put(aClass, new CopyOnWriteArrayList<>());
       }
@@ -96,7 +96,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
               }
             });
           } catch (RejectedExecutionException e) {
-            // do nothing: this is normal in case the executor is closed
+            // do nothing: this is normal in case the executor is closed,
             // and we can forget the message because the caller wants to close anyway
           }
         }

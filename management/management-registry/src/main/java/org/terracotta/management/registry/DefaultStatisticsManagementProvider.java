@@ -19,8 +19,8 @@ import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.Statistic;
-import org.terracotta.management.registry.collect.StatisticProvider;
 import org.terracotta.management.model.stats.StatisticRegistry;
+import org.terracotta.management.registry.collect.StatisticProvider;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -30,7 +30,6 @@ import java.util.Objects;
 import java.util.function.LongSupplier;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 @StatisticProvider
 public class DefaultStatisticsManagementProvider<T> extends AbstractManagementProvider<T> {
@@ -38,24 +37,21 @@ public class DefaultStatisticsManagementProvider<T> extends AbstractManagementPr
   protected final LongSupplier timeSource;
   protected final Context parentContext;
 
-  @SuppressWarnings("unchecked")
   public DefaultStatisticsManagementProvider(Class<T> type, LongSupplier timeSource, Context parentContext) {
     super(type);
     this.timeSource = timeSource;
     this.parentContext = Objects.requireNonNull(parentContext);
   }
 
-  @SuppressWarnings("unchecked")
   public DefaultStatisticsManagementProvider(Class<T> type, LongSupplier timeSource) {
     this(type, timeSource, Context.empty());
   }
 
   @Override
   protected DefaultStatisticsExposedObject<T> wrap(T o) {
-    return new DefaultStatisticsExposedObject<T>(o, timeSource, parentContext);
+    return new DefaultStatisticsExposedObject<>(o, timeSource, parentContext);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public final Collection<? extends Descriptor> getDescriptors() {
     // To keep ordering because these objects end up in an immutable

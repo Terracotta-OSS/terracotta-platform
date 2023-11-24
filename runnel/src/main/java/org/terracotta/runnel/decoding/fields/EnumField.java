@@ -42,7 +42,7 @@ public class EnumField<E> extends AbstractValueField<Enm<E>> {
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
     E e = enumMapping.toEnum(intValue);
-    return new Enm<E>(name(), intValue, e);
+    return new Enm<>(name(), intValue, e);
   }
 
   @Override

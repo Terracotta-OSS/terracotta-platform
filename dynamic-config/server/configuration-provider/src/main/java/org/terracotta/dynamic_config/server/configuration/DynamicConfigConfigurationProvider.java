@@ -104,7 +104,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       synCodec = new DynamicConfigSyncData.Codec(jsonFactory);
 
       // CLI parsing
-      Options options = null;
+      Options options;
       try {
         options = parseCommandLineOrExit(args);
         if (options.isHelp()) {
@@ -131,7 +131,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
 
       // Configuration generator class
-      // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
+      // Initialized when processing the CLI depending on the user input, and called to generate a configuration
       ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, jsonFactory, server);
 
       // processors for the CLI

@@ -51,7 +51,7 @@ public class ExportCommand extends Command {
   private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   @Inject
-  public final ExportAction action;
+  public ExportAction action;
 
   public ExportCommand() {
     this(new ExportAction());

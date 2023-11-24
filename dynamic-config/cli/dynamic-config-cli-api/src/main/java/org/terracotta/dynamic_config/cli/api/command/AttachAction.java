@@ -144,9 +144,9 @@ public class AttachAction extends TopologyAction {
     /*
      We can only attach some nodes if these conditions are met:
      - either the source node is alone in its own cluster
-     - either the source node is part of a 1-stripe cluster and we attach the whole stripe
+     - either the source node is part of a 1-stripe cluster, and we attach the whole stripe
 
-     We should't allow the user to attach to another "cluster B" a node that is already part of a "cluster A" (containing several nodes),
+     We shouldn't allow the user to attach to another "cluster B" a node that is already part of a "cluster A" (containing several nodes),
      except if all the nodes of this "cluster A" are attached to "cluster B".
 
      The goal is to not have some leftover nodes potentially having wrong information about their topology.
@@ -305,9 +305,7 @@ public class AttachAction extends TopologyAction {
 
   @Override
   protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
-    tryFinally(() -> {
-      activate(nomadChange);
-    }, () -> {
+    tryFinally(() -> activate(nomadChange), () -> {
       if (isUnlockRequired()) {
         unlock(nomadChange);
       }

@@ -123,7 +123,7 @@ public class ExportAction extends RemoteAction {
         if (outputFormat == ConfigFormat.PROPERTIES) {
           try (StringWriter out = new StringWriter()) {
             out.write("# " + fileHeader + Props.EOL);
-            // this one is always non empty since we have at least failover-priority
+            // this one is always non-empty since we have at least failover-priority
             Props.store(out, userDefined, userDefinedHeader);
             if (!defaults.isEmpty() && includeDefaultValues) {
               out.write(Props.EOL);

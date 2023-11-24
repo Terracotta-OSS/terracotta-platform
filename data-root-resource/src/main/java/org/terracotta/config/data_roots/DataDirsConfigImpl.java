@@ -71,9 +71,9 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
       this.platformRootIdentifier = null;
 
     } else {
-      // backward compat': it was possible to define the same data root id for both platform persistence and user entities...
+      // backward compatibility: it was possible to define the same data root id for both platform persistence and user entities...
       // so we need to search if we have a data dir that contains the metadataDir
-      // otherwise, we are using dynamic config and we would generate an ID.
+      // otherwise, we are using dynamic config, and we would generate an ID.
       this.platformRootIdentifier = dataDirectories.entrySet()
           .stream()
           .filter(e -> e.getValue().equals(metadataDir))

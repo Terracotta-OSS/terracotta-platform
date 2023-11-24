@@ -56,7 +56,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   private final P parent;
 
   public StructEncoder(StructField structField) {
-    this(structField, new ArrayList<DataHolder>(), null);
+    this(structField, new ArrayList<>(), null);
   }
 
   StructEncoder(StructField structField, List<DataHolder> values, P parent) {
@@ -83,7 +83,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
   @Override
   public <E> StructEncoder<P> enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);
-    data.add(new EnumDataHolder<E>(value, field.index(), field.getEnumMapping()));
+    data.add(new EnumDataHolder<>(value, field.index(), field.getEnumMapping()));
     return this;
   }
 
@@ -133,9 +133,9 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public StructEncoder<StructEncoder<P>> struct(String name) {
     StructField field = fieldSearcher.findField(name, StructField.class, null);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new StructDataHolder(values, field.index()));
-    return new StructEncoder<StructEncoder<P>>(field, values, this);
+    return new StructEncoder<>(field, values, this);
   }
 
   public P end() {
@@ -147,7 +147,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<Boolean, StructEncoder<P>> bools(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, BoolField.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Boolean, StructEncoder<P>>(values, this) {
       @Override
@@ -159,7 +159,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<Character, StructEncoder<P>> chrs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, CharField.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Character, StructEncoder<P>>(values, this) {
       @Override
@@ -171,7 +171,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<Integer, StructEncoder<P>> int32s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int32Field.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer, StructEncoder<P>>(values, this) {
       @Override
@@ -183,7 +183,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<Long, StructEncoder<P>> int64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, Int64Field.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long, StructEncoder<P>>(values, this) {
       @Override
@@ -195,7 +195,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<Double, StructEncoder<P>> fp64s(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, FloatingPoint64Field.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Double, StructEncoder<P>>(values, this) {
       @Override
@@ -207,7 +207,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<String, StructEncoder<P>> strings(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StringField.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String, StructEncoder<P>>(values, this) {
       @Override
@@ -219,7 +219,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public ArrayEncoder<ByteBuffer, StructEncoder<P>> byteBuffers(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, ByteBufferField.class);
-    List<DataHolder> values = new ArrayList<DataHolder>();
+    List<DataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<ByteBuffer, StructEncoder<P>>(values, this) {
       @Override
@@ -231,9 +231,9 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   public StructArrayEncoder<StructEncoder<P>> structs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
-    List<StructDataHolder> values = new ArrayList<StructDataHolder>();
+    List<StructDataHolder> values = new ArrayList<>();
     data.add(new ArrayDataHolder(values, field.index()));
-    return new StructArrayEncoder<StructEncoder<P>>(values, this, ((StructField) field.subField()));
+    return new StructArrayEncoder<>(values, this, ((StructField) field.subField()));
   }
 
   public <T> StructEncoder<P> structs(String name, T[] array, StructEncoderFunction<T> function) {
@@ -251,7 +251,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
 
   /**
-   * Encode the structure in the passed byte buffer.
+   * Encode the structure in the given byte buffer.
    * @param bb the byte buffer to fill with the encoded structure.
    * @return the passed-in byte buffer.
    */

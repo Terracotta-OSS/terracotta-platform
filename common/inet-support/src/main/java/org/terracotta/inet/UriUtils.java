@@ -39,7 +39,7 @@ public class UriUtils {
       String path = parsePath(uri);
       if (path != null) {
         for (String segment : path.split("/")) {
-          if (segment.length() > 0)
+          if (!segment.isEmpty())
             segments.add(URLDecoder.decode(segment, "UTF-8"));
         }
       }

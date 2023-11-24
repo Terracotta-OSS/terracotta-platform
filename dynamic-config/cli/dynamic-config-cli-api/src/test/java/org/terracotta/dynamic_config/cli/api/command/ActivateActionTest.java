@@ -43,13 +43,13 @@ import java.util.stream.IntStream;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -244,7 +244,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_activate_from_node_and_cluster_name() {
     ActivateAction command = command();
-    command.setNodess(asList(HostPort.create("localhost", 9411)));
+    command.setNodes(asList(HostPort.create("localhost", 9411)));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }

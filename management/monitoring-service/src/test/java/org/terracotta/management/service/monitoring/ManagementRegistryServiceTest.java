@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
@@ -49,7 +49,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"unchecked"})
 public class ManagementRegistryServiceTest {
 
   MonitoringServiceProvider provider = new MonitoringServiceProvider();

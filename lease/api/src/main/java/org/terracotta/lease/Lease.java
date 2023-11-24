@@ -23,7 +23,7 @@ public interface Lease {
    * If this method returns true then a valid lease has been held for the entire time between the two leases. If it
    * returns false then it indicates that there was a period out of lease. An out of lease period does not necessarily
    * mean that the server treated this client as gone, but a valid and contiguous lease means that the server will treat
-   * this client as continuously available. Note that passing the this lease as the previous lease will return true
+   * this client as continuously available. Note that passing the lease as the previous lease will return true
    * if and only if the lease is valid.
    * @param previousLease a Lease object obtained at an earlier time
    * @return true if a valid lease has been held for the entire time between the two leases

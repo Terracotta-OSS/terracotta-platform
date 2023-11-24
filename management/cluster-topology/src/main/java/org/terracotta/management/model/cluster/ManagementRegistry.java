@@ -124,7 +124,6 @@ public final class ManagementRegistry implements Serializable {
     return map;
   }
 
-  @SuppressWarnings("ConstantConditions")
   private Context getRootContext() {
     // rootContext could be null after an old object is deserialized.
     // This field was added after.

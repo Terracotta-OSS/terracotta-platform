@@ -16,6 +16,7 @@
 package org.terracotta.testing.config;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 
 public class ConfigFileStartupBuilder extends AbstractStartupCommandBuilder {
   private String[] builtCommand;
@@ -108,6 +108,6 @@ public class ConfigFileStartupBuilder extends AbstractStartupCommandBuilder {
   }
 
   protected static void executeCommand(List<String> command) {
-    new ConfigConverterTool().run(command.toArray(new String[command.size()]));
+    new ConfigConverterTool().run(command.toArray(new String[0]));
   }
 }

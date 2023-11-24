@@ -108,7 +108,7 @@ public class SettingNomadChange extends FilteredNomadChange {
     final boolean requiresThisTargetedNodeToRestart = thisNodeIsTargeted && setting.requires(NODE_RESTART);
     if (requiresThisTargetedNodeToRestart) {
       // We cannot apply at runtime on this node a change that targets this node and requires a restart.
-      // Yeah you've read it... Complex ;-)
+      // Yes, you've read it... Complex ;-)
       // Here is an example with a cluster of 2 nodes node1 and node2.
       // You run: set stripe.1.node.1.log-dir=foo (which targets node1 and log dir requires a restart)
       // What you want:

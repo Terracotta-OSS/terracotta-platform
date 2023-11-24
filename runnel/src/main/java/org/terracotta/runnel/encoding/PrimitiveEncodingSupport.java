@@ -43,7 +43,7 @@ public interface PrimitiveEncodingSupport<T extends PrimitiveEncodingSupport<T>>
    * Encode an enumeration.
    * @param name the field name.
    * @param value the boolean value to encode.
-   * @param <E> the enumration's actual type.
+   * @param <E> the enumeration's actual type.
    * @return this.
    */
   <E> T enm(String name, E value);

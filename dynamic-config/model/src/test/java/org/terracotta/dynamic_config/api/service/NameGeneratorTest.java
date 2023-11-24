@@ -27,9 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.STRIPE_NAME;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;

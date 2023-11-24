@@ -27,7 +27,7 @@ public class GroupPortSimulateHandler implements ConfigChangeHandler {
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     Cluster cluster = nodeContext.getCluster();
     String configVal = change.getValue().get();
-    String tmpConfig[] = configVal.split("#");
+    String[] tmpConfig = configVal.split("#");
     String serverName = tmpConfig[0];
     String groupPort = tmpConfig[1];
     Node node = cluster.getNodeByName(serverName).get();

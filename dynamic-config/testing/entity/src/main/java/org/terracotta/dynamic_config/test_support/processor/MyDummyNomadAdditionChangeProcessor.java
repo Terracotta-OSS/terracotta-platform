@@ -28,7 +28,6 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
-import javax.management.JMException;
 import javax.management.MBeanServer;
 
 import static java.util.Objects.requireNonNull;

@@ -71,7 +71,7 @@ class Check {
     // - either the passive node has been started with a topology not matching at all the active node, and we must fail
     if (pos == -1) {
       if (topologyMatches(sourceTopology, currentCluster)) {
-        // if we have found that the active node last change result matches this passive topology, we are fine and we need to force sync of all the append log entries
+        // if we have found that the active node last change result matches this passive topology, we are fine, and we need to force sync of all the append log entries
         pos = sourceNomadChanges.size() - 1;
 
       } else {

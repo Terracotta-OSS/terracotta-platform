@@ -55,7 +55,7 @@ public enum Requirement {
   CONFIG,
 
   /**
-   * A system setting that is hidden from the user but should be persisted an reloading in the configuration repository
+   * A system setting that is hidden from the user but should be persisted and reloading in the configuration repository
    */
   HIDDEN
 }

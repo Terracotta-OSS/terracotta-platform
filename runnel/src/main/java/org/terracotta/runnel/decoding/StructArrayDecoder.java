@@ -15,19 +15,9 @@
  */
 package org.terracotta.runnel.decoding;
 
-import org.terracotta.runnel.decoding.fields.BoolField;
-import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.CharField;
-import org.terracotta.runnel.decoding.fields.EnumField;
-import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
-import org.terracotta.runnel.decoding.fields.Int32Field;
-import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.metadata.FieldDecoder;
 import org.terracotta.runnel.utils.ReadBuffer;
 
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -73,7 +63,7 @@ public class StructArrayDecoder<P> implements Iterator<StructDecoder<StructArray
     if (arrayReadBuffer.limitReached()) {
       throw new NoSuchElementException();
     } else {
-      return current = new StructDecoder<StructArrayDecoder<P>>(field, arrayReadBuffer, this);
+      return current = new StructDecoder<>(field, arrayReadBuffer, this);
     }
   }
 

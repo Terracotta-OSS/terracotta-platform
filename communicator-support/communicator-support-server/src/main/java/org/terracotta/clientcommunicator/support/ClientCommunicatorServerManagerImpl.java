@@ -37,7 +37,7 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
     private final ClientCommunicator clientCommunicator;
     private final ClientCommunicatorMessageFactory<M, R> clientCommunicatorMessageFactory;
     private final AtomicInteger requestSequence = new AtomicInteger(0);
-    private final ConcurrentMap<Integer, ClientRequestInfo> pendingRequests = new ConcurrentHashMap<Integer, ClientRequestInfo>();
+    private final ConcurrentMap<Integer, ClientRequestInfo> pendingRequests = new ConcurrentHashMap<>();
 
     public ClientCommunicatorServerManagerImpl(ClientCommunicator clientCommunicator, ClientCommunicatorMessageFactory<M, R> clientCommunicatorMessageFactory) {
         this.clientCommunicator = clientCommunicator;
@@ -93,11 +93,11 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
     private static class ClientRequestInfo {
         private final ClientDescriptor clientDescriptor;
         private final Set<ClientDescriptor> connectedClients;
-        private final Set<ClientDescriptor> ackedClients = new HashSet<ClientDescriptor>();
+        private final Set<ClientDescriptor> ackedClients = new HashSet<>();
 
         private ClientRequestInfo(ClientDescriptor clientDescriptor, Set<ClientDescriptor> connectedClients) {
             this.clientDescriptor = clientDescriptor;
-            this.connectedClients = new HashSet<ClientDescriptor>(connectedClients);
+            this.connectedClients = new HashSet<>(connectedClients);
         }
 
         public ClientDescriptor getClientDescriptor() {
