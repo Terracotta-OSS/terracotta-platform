@@ -51,8 +51,8 @@ public class CommonMapper {
 
   private static final String WILDCARD_IP = "0.0.0.0";
 
-  private Map<String, ExtendedConfigParser> configParsers = new HashMap<>();
-  private Map<String, ServiceConfigParser> serviceConfigParsers = new HashMap<>();
+  private final Map<String, ExtendedConfigParser> configParsers = new HashMap<>();
+  private final Map<String, ServiceConfigParser> serviceConfigParsers = new HashMap<>();
 
   public CommonMapper(ClassLoader classLoader) {
     for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, classLoader)) {

@@ -15,28 +15,10 @@
  */
 package org.terracotta.runnel.encoding;
 
-import org.terracotta.runnel.decoding.fields.BoolField;
-import org.terracotta.runnel.decoding.fields.CharField;
-import org.terracotta.runnel.decoding.fields.EnumField;
-import org.terracotta.runnel.decoding.fields.FloatingPoint64Field;
 import org.terracotta.runnel.decoding.fields.StructField;
-import org.terracotta.runnel.encoding.dataholders.BoolDataHolder;
-import org.terracotta.runnel.encoding.dataholders.ByteBufferDataHolder;
-import org.terracotta.runnel.encoding.dataholders.CharDataHolder;
 import org.terracotta.runnel.encoding.dataholders.DataHolder;
-import org.terracotta.runnel.encoding.dataholders.EnumDataHolder;
-import org.terracotta.runnel.encoding.dataholders.FloatingPoint64DataHolder;
-import org.terracotta.runnel.encoding.dataholders.Int32DataHolder;
-import org.terracotta.runnel.encoding.dataholders.Int64DataHolder;
-import org.terracotta.runnel.encoding.dataholders.StringDataHolder;
 import org.terracotta.runnel.encoding.dataholders.StructDataHolder;
-import org.terracotta.runnel.decoding.fields.ByteBufferField;
-import org.terracotta.runnel.decoding.fields.Int32Field;
-import org.terracotta.runnel.decoding.fields.Int64Field;
-import org.terracotta.runnel.metadata.FieldSearcher;
-import org.terracotta.runnel.decoding.fields.StringField;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,14 +36,14 @@ public class StructArrayEncoder<P> {
     this.structField = structField;
     this.values = values;
     this.parent = parent;
-    this.currentData = new ArrayList<DataHolder>();
+    this.currentData = new ArrayList<>();
   }
 
   public StructEncoder<StructArrayEncoder<P>> add() {
     if (!currentData.isEmpty()) {
       values.add(new StructDataHolder(currentData, -1));
     }
-    return new StructEncoder<StructArrayEncoder<P>>(structField, currentData = new ArrayList<DataHolder>(), this);
+    return new StructEncoder<>(structField, currentData = new ArrayList<>(), this);
   }
 
   public P end() {

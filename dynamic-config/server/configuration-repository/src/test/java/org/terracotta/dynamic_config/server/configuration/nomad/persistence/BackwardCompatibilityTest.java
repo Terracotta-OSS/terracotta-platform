@@ -37,12 +37,12 @@ import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
 public class BackwardCompatibilityTest {

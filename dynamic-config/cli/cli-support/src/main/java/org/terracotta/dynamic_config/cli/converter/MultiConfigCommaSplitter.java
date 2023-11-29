@@ -29,7 +29,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * A splitter which splits the input about a comma, and transforms it into a multi-config representation.
  * <p>
- * The splitter is only applied in case of a map setting " ({@link Setting#isMap() == true}
+ * The splitter is only applied in case of a map setting ({@link Setting#isMap() == true}
  * <p>
  * For example, data-dirs=foo:bar,foo2:bar2 becomes {data-dirs.foo=bar, data-dirs.foo2=bar2}
  * -setting stripe:backup-dir=foo,node1:name=bar

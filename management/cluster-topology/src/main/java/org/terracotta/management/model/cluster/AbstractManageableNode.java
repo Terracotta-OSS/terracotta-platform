@@ -18,6 +18,7 @@ package org.terracotta.management.model.cluster;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -60,7 +61,7 @@ public abstract class AbstractManageableNode<P extends Contextual> extends Abstr
 
     AbstractManageableNode<?> that = (AbstractManageableNode<?>) o;
 
-    return managementRegistry != null ? managementRegistry.equals(that.managementRegistry) : that.managementRegistry == null;
+    return Objects.equals(managementRegistry, that.managementRegistry);
   }
 
   @Override

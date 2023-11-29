@@ -107,7 +107,7 @@ public class NonSubstitutingTCConfigurationParser {
     final Element config = domBuilder.parse(in).getDocumentElement();
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
-    if (parseErrors.size() != 0) {
+    if (!parseErrors.isEmpty()) {
       StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
       int i = 1;
       for (SAXParseException parseError : parseErrors) {
@@ -194,7 +194,7 @@ public class NonSubstitutingTCConfigurationParser {
     final Element config = domBuilder.parse(in).getDocumentElement();
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
-    if (parseErrors.size() != 0) {
+    if (!parseErrors.isEmpty()) {
       StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
       int i = 1;
       for (SAXParseException parseError : parseErrors) {
@@ -247,7 +247,7 @@ public class NonSubstitutingTCConfigurationParser {
   }
 
   private static void initializeNameAndHost(Server server) {
-    if (server.getHost() == null || server.getHost().trim().length() == 0) {
+    if (server.getHost() == null || server.getHost().trim().isEmpty()) {
       if (server.getName() == null) {
         throw new IllegalStateException("Conversion process requires at least a server name or host name to be defined");
       } else {
@@ -255,7 +255,7 @@ public class NonSubstitutingTCConfigurationParser {
       }
     }
 
-    if (server.getName() == null || server.getName().trim().length() == 0) {
+    if (server.getName() == null || server.getName().trim().isEmpty()) {
       // host at least will be defined
       int tsaPort = server.getTsaPort().getValue();
       // DC does not support : in server name
@@ -266,7 +266,7 @@ public class NonSubstitutingTCConfigurationParser {
   }
 
   private static void setDefaultBind(Server s) {
-    if (s.getBind() == null || s.getBind().trim().length() == 0) {
+    if (s.getBind() == null || s.getBind().trim().isEmpty()) {
       s.setBind(WILDCARD_IP);
     }
     s.setBind(s.getBind());

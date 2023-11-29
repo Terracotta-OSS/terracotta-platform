@@ -36,7 +36,7 @@ class ExecutorUtil {
         try {
           r.run();
         } catch (Throwable t) {
-          LOGGER.warn("Exception executing task left in {}: {}", executor, t);
+          LOGGER.warn("Exception executing task left in {}: {}", executor, r, t);
         }
       }
     }

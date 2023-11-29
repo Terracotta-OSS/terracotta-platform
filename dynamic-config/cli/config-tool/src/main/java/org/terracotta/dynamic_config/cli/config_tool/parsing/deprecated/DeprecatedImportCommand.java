@@ -41,7 +41,7 @@ public class DeprecatedImportCommand extends Command {
   private Path configFile;
 
   @Inject
-  public final ImportAction action;
+  public ImportAction action;
 
   public DeprecatedImportCommand() {
     this(new ImportAction());

@@ -25,9 +25,9 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.dynamic_config.api.model.LockTag.DENY_SCALE_OUT;
@@ -49,7 +49,6 @@ public class Scaling2x1IT extends DynamicConfigIT {
     waitForActive(1);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void test_normalAttachDetach() {
     assertThat(configTool("attach", "-lock", "-unlock", "-to-cluster", getNodeHostPort(1, 1).toString(), "-stripe-shape", getNodeHostPort(2, 1).toString()), is(successful()));

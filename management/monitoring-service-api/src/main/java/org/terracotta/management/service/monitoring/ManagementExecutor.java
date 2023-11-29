@@ -25,9 +25,9 @@ import org.terracotta.management.model.message.Message;
  * {@link EntityMonitoringService#answerManagementCall(String, ContextualReturn)}.
  * <p>
  * Management call execution can be done directly through the callback, or could also be redirected to the right server
- * with {@link org.terracotta.entity.IEntityMessenger}
+ * with {@link org.terracotta.entity.IEntityMessenger}.
  * <p>
- * Also responsible to handle async messaging back to clients. The implementation can choose whether to directly use the
+ * Also, responsible to handle async messaging back to clients. The implementation can choose whether to directly use the
  * {@link org.terracotta.entity.ClientCommunicator} to send messages, or to delay this messages and use the
  * {@link org.terracotta.entity.IEntityMessenger} to callback the entity in a method that will do the messaging
  *

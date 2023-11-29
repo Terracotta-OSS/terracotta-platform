@@ -52,7 +52,7 @@ public class DeprecatedSetCommand extends Command {
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Inject
-  public final SetAction action;
+  public SetAction action;
 
   public DeprecatedSetCommand() {
     this(new SetAction());

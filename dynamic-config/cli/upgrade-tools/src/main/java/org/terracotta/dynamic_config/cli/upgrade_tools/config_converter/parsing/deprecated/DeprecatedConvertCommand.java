@@ -55,7 +55,7 @@ public class DeprecatedConvertCommand extends Command {
   @Parameter(names = {"-f"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
 
-  @Inject public final ConvertAction action;
+  @Inject public ConvertAction action;
 
   public DeprecatedConvertCommand() {
     this(new ConvertAction());

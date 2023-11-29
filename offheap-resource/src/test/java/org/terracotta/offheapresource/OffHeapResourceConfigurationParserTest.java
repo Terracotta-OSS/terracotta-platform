@@ -15,24 +15,23 @@
  */
 package org.terracotta.offheapresource;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.terracotta.offheapresource.config.MemoryUnit;
+import org.w3c.dom.Document;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.w3c.dom.Document;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import org.junit.Assert;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
 import static org.terracotta.offheapresource.OffHeapResourcesProvider.convert;
 import static org.terracotta.offheapresource.OffHeapResourcesProvider.longValueExact;

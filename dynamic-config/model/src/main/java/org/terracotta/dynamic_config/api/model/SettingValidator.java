@@ -54,7 +54,7 @@ class SettingValidator {
     if (s.mustBePresent() && !s.allows(Operation.UNSET) && (kv.t2 == null || kv.t2.trim().isEmpty())) {
       throw new IllegalArgumentException(s + " cannot be null or empty");
     }
-    if (kv.t2 != null && kv.t2.length() > 0 && kv.t2.trim().isEmpty()) {
+    if (kv.t2 != null && !kv.t2.isEmpty() && kv.t2.trim().isEmpty()) {
       throw new IllegalArgumentException(s + " cannot be null or empty");
     }
     // if we have something set by user, then check with the allowed values

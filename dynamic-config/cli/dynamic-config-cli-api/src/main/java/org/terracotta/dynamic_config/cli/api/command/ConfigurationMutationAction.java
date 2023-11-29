@@ -86,7 +86,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
   @Override
   public void run() {
     validate();
-    if (configurations.size() == 0) {
+    if (configurations.isEmpty()) {
       // no remaining configuration changes left to process
       output.info("Command successful!");
       return;
@@ -130,7 +130,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     }
 
     // get the current state of the nodes
-    // this call can take some time and we can have some timeout
+    // this call can take some time, and we can have some timeout
     Map<Endpoint, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
     LOGGER.debug("Online nodes: {}", onlineNodes);
 
@@ -303,7 +303,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     // We except the nodes to be restarted in either active or passive state.
     // If not, the restart will throw.
     // This is required because next step is to restart the remaining nodes...
-    // Which are active so we have to ensure that a passive not will be there to take over the active role
+    // Which are active, so we have to ensure that a passive not will be there to take over the active role
     LOGGER.info("Restarting non active nodes: {}...", toString(others));
     restartNodesIfPassives(
         others,
@@ -325,7 +325,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           try {
             return mustBeRestarted(endpoint);
           } catch (RuntimeException e) {
-            LOGGER.warn("Node: {} is not reachable anymore: {}", e.getMessage(), e);
+            LOGGER.warn("Node: {} is not reachable anymore: {}", endpoint, e.getMessage(), e);
             return true;
           }
         }).forEach(cannotRestart::add);

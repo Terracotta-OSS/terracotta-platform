@@ -52,7 +52,7 @@ public class DeprecatedAttachCommand extends Command {
   protected HostPort sourceHostPort;
 
   @Inject
-  public final AttachAction action;
+  public AttachAction action;
 
   public DeprecatedAttachCommand() {
     this(new AttachAction());

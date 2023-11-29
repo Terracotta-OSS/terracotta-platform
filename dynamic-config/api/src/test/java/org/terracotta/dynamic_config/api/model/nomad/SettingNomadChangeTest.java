@@ -23,12 +23,12 @@ import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Testing;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
@@ -137,7 +137,7 @@ public class SettingNomadChangeTest {
     assertTrue(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster1, N_UIDS[2])));
 
     // set command executed (for apply and after commit) on cluster2 / node1 to update backup dir of cluster2 / node1
-    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => we should not apply the change at runtime, and we should not update the runtime topology after commit
     // => because we need a restart!
     assertFalse(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
 
@@ -146,7 +146,7 @@ public class SettingNomadChangeTest {
     assertTrue(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
 
     // unset command executed (for apply and after commit) on cluster2 / node1 to update backup dir of cluster2 / node1
-    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => we should not apply the change at runtime, and we should not update the runtime topology after commit
     // => because we need a restart!
     assertFalse(unset(node(N_UIDS[1]), NODE_BACKUP_DIR).canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
 
@@ -187,7 +187,7 @@ public class SettingNomadChangeTest {
             .setLogDir(RawPath.valueOf("dir"))));
 
     // set command executed (for apply and after commit) on cluster2 / node1 to update log dir of cluster2 / node1
-    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => we should not apply the change at runtime, and we should not update the runtime topology after commit
     // => because we need a restart!
     assertFalse(set(node(N_UIDS[1]), NODE_LOG_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
 

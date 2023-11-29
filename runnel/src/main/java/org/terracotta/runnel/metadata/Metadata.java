@@ -29,11 +29,11 @@ import java.util.Map;
  */
 public class Metadata {
 
-  private final List<Field> fields = new ArrayList<Field>();
-  private final Map<String, Field> fieldsByName = new HashMap<String, Field>();
+  private final List<Field> fields = new ArrayList<>();
+  private final Map<String, Field> fieldsByName = new HashMap<>();
   private volatile boolean initialized = false;
   private volatile boolean initializationFullyChecked = false;
-  private final ThreadLocal<Boolean> checkingForFullInitialization = new ThreadLocal<Boolean>();
+  private final ThreadLocal<Boolean> checkingForFullInitialization = new ThreadLocal<>();
 
   public Metadata() {
   }
@@ -86,7 +86,7 @@ public class Metadata {
   }
 
   public Map<Integer, Field> buildFieldsByIndexMap() {
-    Map<Integer, Field> map = new HashMap<Integer, Field>();
+    Map<Integer, Field> map = new HashMap<>();
     for (Field field : fieldsByName.values()) {
       map.put(field.index(), field);
     }

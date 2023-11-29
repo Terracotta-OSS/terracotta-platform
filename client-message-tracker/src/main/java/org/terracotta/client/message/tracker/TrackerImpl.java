@@ -15,10 +15,10 @@
  */
 package org.terracotta.client.message.tracker;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import org.terracotta.entity.StateDumpCollector;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -34,7 +34,6 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
    *
    * @param trackerPolicy defines if a source is tracked or not
    */
-  @SuppressWarnings("unchecked")
   TrackerImpl() {
     this.trackedValues = new TreeMap<>();
   }

@@ -56,7 +56,7 @@ import static java.util.Objects.requireNonNull;
  * Gson uses the declared type to determine how to deserialize.
  * But some classes do not declare a specific type (i.e. raw collections, raw types like Object or Object[]).
  * For such cases, jackson was automatically appending the `@class` information next to the serialized data and was doing a classloader call when deserializing.
- * Gson does not support this, because is prevents serialising something "unknown", and does not support class loading (one of the reason why there is so few security issues with Gson).
+ * Gson does not support this, because it prevents serialising something "unknown", and does not support class loading (one of the reason why there is so few security issues with Gson).
  * So this class allows to mark some types or annotated fields on mixins to support adding the class information next to the serialized object exactly like Jackson was doing.
  * <p>
  * This class can be used on a mixin with {@link com.google.gson.annotations.JsonAdapter}

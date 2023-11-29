@@ -54,7 +54,7 @@ public class DeprecatedDetachCommand extends Command {
   protected Identifier sourceIdentifier;
 
   @Inject
-  public final DetachAction action;
+  public DetachAction action;
 
   public DeprecatedDetachCommand() {
     this(new DetachAction());

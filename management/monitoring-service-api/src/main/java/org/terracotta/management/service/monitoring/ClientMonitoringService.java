@@ -34,16 +34,16 @@ import java.io.Closeable;
 public interface ClientMonitoringService extends Closeable {
 
   /**
-   * Push a new client-side notification coming from a client descriptor in the monitoring service. This will be put in a best effort-buffer.
+   * Push a new client-side notification coming from a client descriptor in the monitoring service. This will be put in a best-effort buffer.
    * <p>
    * Can be called from active entity only
    */
   void pushNotification(ClientDescriptor from, ContextualNotification notification);
 
   /**
-   * Push some client statistics coming fro
+   * Push some client statistics coming from a client descriptor into the service. This will be put in a best-effort buffer.
    * <p>
-   * Can be called from active entity onlym a client descriptor into the service. This will be put in a best effort-buffer.
+   * Can be called from active entity only
    */
   void pushStatistics(ClientDescriptor from, ContextualStatistics... statistics);
 

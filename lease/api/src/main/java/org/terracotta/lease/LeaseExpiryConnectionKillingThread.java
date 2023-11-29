@@ -23,7 +23,7 @@ import java.io.Closeable;
 import java.io.IOException;
 
 public class LeaseExpiryConnectionKillingThread extends Thread implements Closeable {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseExpiryConnectionKillingThread.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseExpiryConnectionKillingThread.class);
 
   private final LeaseMaintainer leaseMaintainer;
   private final Connection connection;
@@ -74,7 +74,7 @@ public class LeaseExpiryConnectionKillingThread extends Thread implements Closea
 
   @Override
   public void close() throws IOException {
-    // Only need to shutdown as there are no blocking calls
+    // Only need to shut down as there are no blocking calls
     // and no interrupt as we do not want to interrupt the connection.close() call
     shutdown = true;
   }

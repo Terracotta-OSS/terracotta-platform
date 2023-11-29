@@ -18,24 +18,9 @@ package org.terracotta.lease;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 public enum LeaseResponseType {
-  LEASE_REQUEST_RESULT(new LeaseResponseDecoder() {
-    @Override
-    public LeaseResponse decode(StructDecoder<Void> parentDecoder) {
-      return LeaseRequestResult.decode(parentDecoder);
-    }
-  }),
-  LEASE_ACQUIRER_AVAILABLE(new LeaseResponseDecoder() {
-    @Override
-    public LeaseResponse decode(StructDecoder<Void> parentDecoder) {
-      return LeaseAcquirerAvailable.decode(parentDecoder);
-    }
-  }),
-  IGNORED_LEASE_RESPONSE(new LeaseResponseDecoder() {
-    @Override
-    public LeaseResponse decode(StructDecoder<Void> parentDecoder) {
-      return IgnoredLeaseResponse.decode(parentDecoder);
-    }
-  });
+  LEASE_REQUEST_RESULT(LeaseRequestResult::decode),
+  LEASE_ACQUIRER_AVAILABLE(LeaseAcquirerAvailable::decode),
+  IGNORED_LEASE_RESPONSE(IgnoredLeaseResponse::decode);
 
   private final LeaseResponseDecoder leaseResponseDecoder;
 

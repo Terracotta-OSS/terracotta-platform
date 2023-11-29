@@ -39,14 +39,9 @@ import java.util.concurrent.ExecutionException;
  */
 public abstract class AbstractManagementProvider<T> implements ManagementProvider<T> {
 
-  protected static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = new Comparator<StatisticDescriptor>() {
-    @Override
-    public int compare(StatisticDescriptor o1, StatisticDescriptor o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  protected static final Comparator<StatisticDescriptor> STATISTIC_DESCRIPTOR_COMPARATOR = Comparator.comparing(StatisticDescriptor::getName);
 
-  private final Queue<ExposedObject<T>> exposedObjects = new ConcurrentLinkedQueue<ExposedObject<T>>();
+  private final Queue<ExposedObject<T>> exposedObjects = new ConcurrentLinkedQueue<>();
 
   private final String capabilityName;
   private final Class<? extends T> managedType;
@@ -128,7 +123,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   public Collection<? extends Descriptor> getDescriptors() {
     // LinkedHashSet to keep ordering because these objects end up in an immutable
     // topology so this is easier for testing to compare with json payloads
-    Collection<Descriptor> capabilities = new LinkedHashSet<Descriptor>();
+    Collection<Descriptor> capabilities = new LinkedHashSet<>();
     for (ExposedObject<?> o : exposedObjects) {
       capabilities.addAll(((ExposedObject<T>) o).getDescriptors());
     }
@@ -142,7 +137,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
 
   // first try to find annotation on managedType, which might not be there, in this case tries to find from this subclass
   protected CapabilityContext buildCapabilityContext() {
-    Collection<CapabilityContext.Attribute> attrs = new ArrayList<CapabilityContext.Attribute>();
+    Collection<CapabilityContext.Attribute> attrs = new ArrayList<>();
     RequiredContext requiredContext = getManagedType().getAnnotation(RequiredContext.class);
     if (requiredContext == null) {
       requiredContext = getClass().getAnnotation(RequiredContext.class);

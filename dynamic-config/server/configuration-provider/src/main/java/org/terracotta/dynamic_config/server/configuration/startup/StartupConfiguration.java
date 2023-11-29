@@ -16,6 +16,8 @@
 package org.terracotta.dynamic_config.server.configuration.startup;
 
 import com.tc.text.PrettyPrintable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
@@ -47,8 +49,6 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
@@ -77,7 +77,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.json = jsonFactory.create();
     Collection<Class<? extends GroupPortMapper>> mappers = server.getImplementations(GroupPortMapper.class);
     Class<? extends GroupPortMapper> gi = mappers.iterator().next();
-    GroupPortMapper mapper = null;
+    GroupPortMapper mapper;
     try {
       mapper = gi.newInstance();
     } catch (IllegalAccessException | InstantiationException i) {

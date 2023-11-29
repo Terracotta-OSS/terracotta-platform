@@ -21,10 +21,10 @@ import org.terracotta.context.query.Matchers;
 import org.terracotta.context.query.Query;
 import org.terracotta.management.entity.sample.CacheOperationOutcomes;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.stats.StatisticRegistry;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticProvider;
-import org.terracotta.management.model.stats.StatisticRegistry;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractExposedStatistics;
 import org.terracotta.management.service.monitoring.registry.provider.AbstractStatisticsManagementProvider;
 import org.terracotta.statistics.OperationStatistic;
@@ -107,7 +107,6 @@ class ServerCacheStatisticsManagementProvider extends AbstractStatisticsManageme
    * @throws RuntimeException if 0 or more than 1 result is found
    */
   static <T extends Enum<T>> OperationStatistic<T> findOperationStatisticOnChildren(Object context, Class<T> type, String statName) {
-    @SuppressWarnings("unchecked")
     Query query = queryBuilder()
         .children()
         .filter(context(attributes(Matchers.allOf(hasAttribute("name", statName), hasAttribute("type", type)))))

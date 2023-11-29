@@ -24,9 +24,9 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * Created by Anthony Dahanne on 2015-12-01.
@@ -368,29 +368,29 @@ public class UriUtilsTest {
   @Test
   public void testParseSegments_emptyPath() {
     String input = "scheme://host?simulation-freq=10&max-servers=2&timeout=2";
-    List<String> pathSegements = UriUtils.parseSegments(input);
-    assertThat(input, pathSegements.size(), is(0));
+    List<String> pathSegments = UriUtils.parseSegments(input);
+    assertThat(input, pathSegments.size(), is(0));
   }
 
   @Test
   public void testParseSegments_ok_1() {
     String input = "/path/to/resource?simulation-freq=10&max-servers=2&timeout=2";
-    List<String> pathSegements = UriUtils.parseSegments(input);
-    assertThat(input, pathSegements, hasItems("path", "to", "resource"));
+    List<String> pathSegments = UriUtils.parseSegments(input);
+    assertThat(input, pathSegments, hasItems("path", "to", "resource"));
   }
 
   @Test
   public void testParseSegments_ok_2() {
     String input = "scheme:///path/to/resource#simulation-freq=10&max-servers=2&timeout=2";
-    List<String> pathSegements = UriUtils.parseSegments(input);
-    assertThat(input, pathSegements, hasItems("path", "to", "resource"));
+    List<String> pathSegments = UriUtils.parseSegments(input);
+    assertThat(input, pathSegments, hasItems("path", "to", "resource"));
   }
 
   @Test
   public void testParseSegments_ok_3() {
     String input = "scheme://host/some/path#simulation-freq=10&max-servers=2&timeout=2";
-    List<String> pathSegements = UriUtils.parseSegments(input);
-    assertThat(input, pathSegements, hasItems("some", "path"));
+    List<String> pathSegments = UriUtils.parseSegments(input);
+    assertThat(input, pathSegments, hasItems("some", "path"));
   }
 
   @Test

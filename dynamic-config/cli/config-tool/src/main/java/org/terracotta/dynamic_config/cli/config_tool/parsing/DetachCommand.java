@@ -62,7 +62,7 @@ public class DetachCommand extends Command {
   protected boolean unlock;
 
   @Inject
-  public final DetachAction action;
+  public DetachAction action;
 
   public DetachCommand() {
     this(new DetachAction());

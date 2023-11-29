@@ -25,7 +25,7 @@ import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.lease.service.config.LeaseConfiguration;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
 
 public class LeaseConfigChangeHandlerTest {

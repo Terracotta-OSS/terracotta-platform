@@ -17,6 +17,7 @@ package org.terracotta.management.model.cluster;
 
 import org.terracotta.management.model.context.Context;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -168,10 +169,11 @@ public final class Stripe extends AbstractNode<Cluster> {
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
     map.put("name", getName());
-    map.put("servers", serverStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(Server::toMap).collect(Collectors.toList()));
+    map.put("servers", serverStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Server::toMap).collect(Collectors.toList()));
     return map;
   }
 

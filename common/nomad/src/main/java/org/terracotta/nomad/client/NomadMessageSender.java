@@ -158,17 +158,15 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     for (NomadEndpoint<T> server : preparedServers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
-          () -> {
-            return server.commit(
-                new CommitMessage(
-                    mutativeMessageCount + 1,
-                    host,
-                    user,
-                    now,
-                    changeUuid
-                )
-            );
-          },
+          () -> server.commit(
+              new CommitMessage(
+                  mutativeMessageCount + 1,
+                  host,
+                  user,
+                  now,
+                  changeUuid
+              )
+          ),
           response -> {
             if (response.isAccepted()) {
               results.committed(server.getHostPort());
@@ -297,9 +295,9 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     preparedServers.add(servers.stream().filter(s -> s.getHostPort().equals(address)).findAny().get());
   }
 
-  private <T> void runSync(Callable<T> callable, Consumer<T> onSuccess, Consumer<Throwable> onError) {
+  private <U> void runSync(Callable<U> callable, Consumer<U> onSuccess, Consumer<Throwable> onError) {
     try {
-      T result = callable.call();
+      U result = callable.call();
       if (result == null) {
         throw new AssertionError("Response expected. Bug or wrong mocking ?");
       }

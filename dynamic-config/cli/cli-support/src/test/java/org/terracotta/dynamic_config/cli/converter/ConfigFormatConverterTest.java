@@ -20,10 +20,10 @@ import com.beust.jcommander.ParameterException;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.ConfigFormat;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.ConfigFormat.CONFIG;
 import static org.terracotta.dynamic_config.api.model.ConfigFormat.JSON;
 import static org.terracotta.dynamic_config.api.model.ConfigFormat.PROPERTIES;

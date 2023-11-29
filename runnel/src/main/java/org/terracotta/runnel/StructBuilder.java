@@ -35,7 +35,7 @@ import java.util.Set;
 public class StructBuilder {
 
   private final StructField structField = new StructField("root", -1);
-  private final Set<String> names = new HashSet<String>();
+  private final Set<String> names = new HashSet<>();
   private int lastIndex = -1;
 
   public Struct build() {

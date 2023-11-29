@@ -39,7 +39,6 @@ public abstract class NomadClientProcess<C, R> {
 
   protected abstract boolean act(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data);
 
-  @SuppressWarnings("unchecked")
   protected void runProcess(AllResultsReceiver<R> results, NomadDecider<R> decider, NomadMessageSender<R> messageSender, C data) {
     ClusterConsistencyChecker<R> consistencyChecker = new ClusterConsistencyChecker<>();
     results = wrap(Arrays.asList(results, decider, messageSender, consistencyChecker));

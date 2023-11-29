@@ -27,9 +27,9 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.json.Json;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**

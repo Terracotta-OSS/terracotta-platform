@@ -15,9 +15,9 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
-import java.util.stream.Collectors;
 import org.terracotta.client.message.tracker.OOOMessageHandler;
 import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
+import org.terracotta.client.message.tracker.RecordedMessage;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
@@ -31,8 +31,8 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.terracotta.client.message.tracker.RecordedMessage;
 
 public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
@@ -83,7 +83,6 @@ public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, Entit
     };
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void synchronizeKeyToPassive(PassiveSynchronizationChannel<EntityMessage> passiveSynchronizationChannel, int concurrencyKey) {
     // Sync entity data for the given concurrency key

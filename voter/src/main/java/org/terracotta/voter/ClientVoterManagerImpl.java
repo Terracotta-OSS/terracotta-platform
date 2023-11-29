@@ -22,11 +22,11 @@ import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsFactory;
 
 import java.net.InetSocketAddress;
-import java.util.Properties;
-import java.util.concurrent.TimeoutException;
-
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 public class ClientVoterManagerImpl implements ClientVoterManager {
 
@@ -156,13 +156,9 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public Set<String> getTopology() throws TimeoutException {
-    Set<String> resServers = new HashSet<>();
     String res = processInvocation(diagnostics.invoke("TopologyMBean", "getTopology"));
     String[] resHostPorts = res.split(",");
-    for (int i = 0; i < resHostPorts.length; ++i) {
-      resServers.add(resHostPorts[i]);
-    }
-    return resServers;
+    return new HashSet<>(Arrays.asList(resHostPorts));
   }
 
   String processInvocation(String invocation) throws TimeoutException {

@@ -21,6 +21,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
@@ -29,7 +30,6 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.testing.ExceptionMatcher.throwing;

@@ -22,7 +22,7 @@ import org.terracotta.lease.service.closer.ClientConnectionCloser;
 /**
  * The object that a LeaseService client can pass to the ServiceRegistry to get a LeaseService. Note that the
  * ClientConnectionCloser should be a ClientConnectionCloserImpl, i.e. it uses ClientCommunicator to close the
- * client connection. This object is only necessary because services cannot directly lookup their own dependencies.
+ * client connection. This object is only necessary because services cannot directly look up their own dependencies.
  */
 @CommonComponent
 public class LeaseServiceConfiguration implements ServiceConfiguration<LeaseService> {

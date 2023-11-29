@@ -15,21 +15,21 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.InlineServers;
+import org.terracotta.voter.VotingGroup;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import org.junit.Assert;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import org.slf4j.Logger;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import org.terracotta.voter.VotingGroup;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {

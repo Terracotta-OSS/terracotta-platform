@@ -102,8 +102,8 @@ public class NomadServerManager {
     this.licenseService = requireNonNull(licenseService);
     this.server = server;
 
-    // the eventFiringService is used by callers to fire events
-    // events are received by the DC service, processed, and fired back to the listeners registered in the event service
+    // the eventFiringService is used by callers to fire events.
+    // Events are received by the DC service, processed, and fired back to the listeners registered in the event service
     DynamicConfigEventServiceImpl eventService = new DynamicConfigEventServiceImpl();
     this.eventRegistrationService = eventService;
     this.eventFiringService = eventService;

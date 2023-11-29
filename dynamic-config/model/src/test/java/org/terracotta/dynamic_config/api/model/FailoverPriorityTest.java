@@ -19,11 +19,11 @@ import org.junit.Test;
 
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.ERR_MSG;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.AVAILABILITY;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;

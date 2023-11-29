@@ -32,11 +32,11 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
@@ -205,7 +205,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
 
-    // Active has prepare changes for node removal
+    // Active has prepared changes for node removal
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
     assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));

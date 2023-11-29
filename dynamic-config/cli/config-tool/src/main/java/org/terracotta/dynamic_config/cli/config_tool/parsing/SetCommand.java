@@ -44,7 +44,7 @@ public class SetCommand extends RestartCommand {
   boolean autoRestart = false;
 
   @Inject
-  public final SetAction action;
+  public SetAction action;
 
   public SetCommand() {
     this(new SetAction());

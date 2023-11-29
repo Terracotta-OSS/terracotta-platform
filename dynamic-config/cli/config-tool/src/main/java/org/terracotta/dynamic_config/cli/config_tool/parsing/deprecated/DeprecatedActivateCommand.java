@@ -58,7 +58,7 @@ public class DeprecatedActivateCommand extends Command {
   protected boolean restrictedActivation = false;
 
   @Inject
-  public final ActivateAction action;
+  public ActivateAction action;
 
   public DeprecatedActivateCommand(ActivateAction action) {
     this.action = action;
@@ -82,7 +82,7 @@ public class DeprecatedActivateCommand extends Command {
     if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
-    action.setNodess(singletonList(node));
+    action.setNodes(singletonList(node));
     action.setConfigPropertiesFile(configPropertiesFile);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);

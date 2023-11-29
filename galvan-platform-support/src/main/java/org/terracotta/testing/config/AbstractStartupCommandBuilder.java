@@ -15,7 +15,6 @@
  */
 package org.terracotta.testing.config;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -23,9 +22,9 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import java.util.Properties;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 public abstract class AbstractStartupCommandBuilder implements StartupCommandBuilder {
@@ -101,7 +100,7 @@ public abstract class AbstractStartupCommandBuilder implements StartupCommandBui
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
     Properties props = new Properties();
     props.setProperty("serverWorkingDir", serverWorkingDir.toAbsolutePath().toString());
-    try (Writer w = new OutputStreamWriter(new FileOutputStream(serverWorkingDir.resolve("logbackVars.properties").toFile()), StandardCharsets.UTF_8)) {
+    try (Writer w = new OutputStreamWriter(Files.newOutputStream(serverWorkingDir.resolve("logbackVars.properties").toFile().toPath()), StandardCharsets.UTF_8)) {
       props.store(w, "logging variables");
     }
     if (logConfigExt != null) {

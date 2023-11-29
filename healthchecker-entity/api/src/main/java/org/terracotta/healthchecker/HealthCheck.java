@@ -15,12 +15,13 @@
  */
 package org.terracotta.healthchecker;
 
-import java.util.Timer;
-import java.util.concurrent.Future;
 import org.terracotta.connection.entity.Entity;
 
+import java.util.Timer;
+import java.util.concurrent.Future;
+
 interface HealthCheck extends Entity {
-  static final long VERSION = 1;
+  long VERSION = 1;
 
   /**
    *  Ping a message to the server to make sure it is up and running

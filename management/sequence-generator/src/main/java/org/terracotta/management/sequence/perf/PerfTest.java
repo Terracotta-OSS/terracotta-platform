@@ -29,7 +29,7 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class PerfTest {
 
-  private static BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
+  private static final BoundaryFlakeSequenceGenerator generator = new BoundaryFlakeSequenceGenerator(TimeSource.BEST, NodeIdSource.BEST);
 
   public static void main(String[] args) throws InterruptedException {
     {

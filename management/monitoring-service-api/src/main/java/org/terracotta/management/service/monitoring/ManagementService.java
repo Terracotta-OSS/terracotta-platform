@@ -24,7 +24,7 @@ import org.terracotta.management.model.context.Context;
 import java.io.Closeable;
 
 /**
- * Class used by the active NMS Entity to monitor the stripe ans send management calls
+ * Class used by the active NMS Entity to monitor the stripe and send management calls
  *
  * @author Mathieu Carbou
  */

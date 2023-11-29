@@ -30,13 +30,11 @@ import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.nomad.server.NomadException;
 
-import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;

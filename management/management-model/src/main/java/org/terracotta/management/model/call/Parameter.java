@@ -55,7 +55,7 @@ public final class Parameter implements Serializable {
 
     Parameter parameter = (Parameter) o;
 
-    if (value != null ? !value.equals(parameter.value) : parameter.value != null) return false;
+    if (!Objects.equals(value, parameter.value)) return false;
     return className.equals(parameter.className);
 
   }

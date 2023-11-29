@@ -37,7 +37,7 @@ public class RepairCommand extends Command {
   RepairMethod repairMethod = RepairMethod.AUTO;
 
   @Inject
-  public final RepairAction action;
+  public RepairAction action;
 
   public RepairCommand() {
     this(new RepairAction());

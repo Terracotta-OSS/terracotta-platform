@@ -179,7 +179,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   }
 
   /**
-   * Constructs a {@code Map} containing only the parameters relevant to {@code Node} object with longest parameter name
+   * Constructs a {@code Map} containing only the parameters relevant to {@code Node} object with the longest parameter name
    * as the key and user-specified-value as the value.
    *
    * @param jCommander jCommander instance

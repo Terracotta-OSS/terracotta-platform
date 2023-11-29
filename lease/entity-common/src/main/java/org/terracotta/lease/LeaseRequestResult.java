@@ -21,7 +21,7 @@ import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 /**
- * A message sent from the the server entity to the client entity to indicate the response to the LeaseRequest.
+ * A message sent from the server entity to the client entity to indicate the response to the LeaseRequest.
  */
 public class LeaseRequestResult implements LeaseResponse {
   private final boolean connectionGood;

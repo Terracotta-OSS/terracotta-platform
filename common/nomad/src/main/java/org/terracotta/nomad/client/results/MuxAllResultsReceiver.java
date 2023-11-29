@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
-  private List<AllResultsReceiver<T>> receivers;
+  private final List<AllResultsReceiver<T>> receivers;
 
   public MuxAllResultsReceiver(List<AllResultsReceiver<T>> receivers) {
     this.receivers = receivers;

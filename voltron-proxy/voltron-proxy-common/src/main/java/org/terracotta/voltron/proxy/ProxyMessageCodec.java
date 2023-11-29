@@ -15,9 +15,9 @@
  */
 package org.terracotta.voltron.proxy;
 
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-import org.terracotta.entity.EntityUserException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -30,10 +30,10 @@ import java.util.Map;
  */
 public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, ProxyEntityResponse> {
 
-  private final EnumMap<MessageType, Map<Byte, MethodDescriptor>> methodMappings = new EnumMap<MessageType, Map<Byte, MethodDescriptor>>(MessageType.class);
-  private final EnumMap<MessageType, Map<MethodDescriptor, Byte>> reverseMethodMappings = new EnumMap<MessageType, Map<MethodDescriptor, Byte>>(MessageType.class);
-  private final EnumMap<MessageType, Map<Class<?>, Byte>> responseMappings = new EnumMap<MessageType, Map<Class<?>, Byte>>(MessageType.class);
-  private final EnumMap<MessageType, Map<Byte, Class<?>>> reverseResponseMappings = new EnumMap<MessageType, Map<Byte, Class<?>>>(MessageType.class);
+  private final EnumMap<MessageType, Map<Byte, MethodDescriptor>> methodMappings = new EnumMap<>(MessageType.class);
+  private final EnumMap<MessageType, Map<MethodDescriptor, Byte>> reverseMethodMappings = new EnumMap<>(MessageType.class);
+  private final EnumMap<MessageType, Map<Class<?>, Byte>> responseMappings = new EnumMap<>(MessageType.class);
+  private final EnumMap<MessageType, Map<Byte, Class<?>>> reverseResponseMappings = new EnumMap<>(MessageType.class);
 
   private Codec codec = new SerializationCodec();
 

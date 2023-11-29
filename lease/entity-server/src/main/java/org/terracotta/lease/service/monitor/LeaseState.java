@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * allows updates to that state in a thread-safe way.
  */
 public class LeaseState implements StateDumpable {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseState.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseState.class);
 
   private final TimeSource timeSource;
   private final ClientConnectionCloser clientConnectionCloser;

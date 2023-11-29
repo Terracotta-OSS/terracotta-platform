@@ -39,8 +39,8 @@ public class DefaultHashComputer implements HashComputer {
   @Override
   public void checkHash(Config config, String expectedHash) throws NomadException {
     if (config.getVersion() == Version.V1) {
-      // we cannot check the hash of a V1 config because the V1 hash was computed based on the a json output
-      // that was not controlled (field ordering, etc) and non deterministic.
+      // we cannot check the hash of a V1 config because the V1 hash was computed based on the json output
+      // that was not controlled (field ordering, etc) and non-deterministic.
       return;
     }
 

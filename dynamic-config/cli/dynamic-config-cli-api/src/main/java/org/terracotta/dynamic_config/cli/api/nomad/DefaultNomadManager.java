@@ -166,7 +166,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
       }
     }
 
-    // connect to each stripes and get the Nomad entity
+    // connect to each stripe and get the Nomad entity
     final Map<UID, NomadEntity<T>> nomadEntities = new HashMap<>(onlineNodesPerStripe.size());
     final Runnable cleanup = () -> nomadEntities.values().forEach(Entity::close); // close() implementation is not expected to throw. See implementation code.
     for (Map.Entry<UID, List<Endpoint>> entry : onlineNodesPerStripe.entrySet()) {
@@ -183,7 +183,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
     // create a nomad endpoint per stripe for the commit phase
     final Map<UID, NomadEndpoint<T>> stripeEndpoints = onlineNodesPerStripe.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> {
       final HostPort firstAddress = e.getValue().get(0).getHostPort();
-      return new NomadEndpoint<T>(firstAddress, nomadEntities.get(e.getKey()));
+      return new NomadEndpoint<>(firstAddress, nomadEntities.get(e.getKey()));
     }));
 
     // create normal diagnostic endpoints for the prepare phase

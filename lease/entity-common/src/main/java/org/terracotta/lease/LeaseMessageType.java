@@ -18,18 +18,8 @@ package org.terracotta.lease;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 enum LeaseMessageType {
-  LEASE_REQUEST(new LeaseMessageDecoder() {
-    @Override
-    public LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-      return LeaseRequest.decode(parentDecoder);
-    }
-  }),
-  LEASE_RECONNECT_FINISHED(new LeaseMessageDecoder() {
-    @Override
-    public LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-      return LeaseReconnectFinished.decode(parentDecoder);
-    }
-  });
+  LEASE_REQUEST(LeaseRequest::decode),
+  LEASE_RECONNECT_FINISHED(LeaseReconnectFinished::decode);
 
   private final LeaseMessageDecoder leaseMessageDecoder;
 

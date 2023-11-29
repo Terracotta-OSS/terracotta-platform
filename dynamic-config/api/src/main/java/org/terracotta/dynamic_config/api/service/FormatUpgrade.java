@@ -51,9 +51,7 @@ public class FormatUpgrade {
       upgraded.setUID(upgraded.newUID(random));
       upgraded.getStripes().forEach(stripe -> {
         stripe.setUID(upgraded.newUID(random));
-        stripe.getNodes().forEach(node -> {
-          node.setUID(upgraded.newUID(random));
-        });
+        stripe.getNodes().forEach(node -> node.setUID(upgraded.newUID(random)));
       });
 
       // Generate only stripe names when migrating from V1 to V2.

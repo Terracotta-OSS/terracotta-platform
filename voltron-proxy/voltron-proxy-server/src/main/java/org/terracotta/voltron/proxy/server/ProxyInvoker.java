@@ -19,7 +19,6 @@ import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
@@ -90,7 +89,7 @@ class ProxyInvoker<T> implements MessageFiring {
   }
 
   @Override
-  public <T> void fireMessage(Class<T> type, T message, boolean echo) {
+  public <U> void fireMessage(Class<U> type, U message, boolean echo) {
     if (!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
     }
@@ -108,7 +107,7 @@ class ProxyInvoker<T> implements MessageFiring {
   }
 
   @Override
-  public <T> void fireMessage(Class<T> type, T message, ClientDescriptor[] clients) {
+  public <U> void fireMessage(Class<U> type, U message, ClientDescriptor[] clients) {
     if (!messageTypes.contains(type)) {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
     }

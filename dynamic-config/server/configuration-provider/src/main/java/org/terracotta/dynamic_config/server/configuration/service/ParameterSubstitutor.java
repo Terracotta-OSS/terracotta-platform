@@ -106,7 +106,7 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
               value = System.getProperty(prop);
               if (value == null) value = defaultValue;
             } else {
-              value = "%(" + propertyName.toString();
+              value = "%(" + propertyName;
             }
             break;
 

@@ -15,15 +15,15 @@
  */
 package org.terracotta.healthchecker;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Properties;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.MessageCodec;
 
-@SuppressWarnings("rawtypes")
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 public class HealthCheckClientService implements EntityClientService<HealthCheck, Properties, HealthCheckReq, HealthCheckRsp, Object>  {
   private final HealthCheckerCodec CODEC = new HealthCheckerCodec();
 
@@ -37,8 +37,7 @@ public class HealthCheckClientService implements EntityClientService<HealthCheck
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
       configuration.store(bos, "");
-    } catch (IOException ioe) {
-
+    } catch (IOException ignored) {
     }
     return bos.toByteArray();
   }
@@ -49,8 +48,7 @@ public class HealthCheckClientService implements EntityClientService<HealthCheck
     Properties props = new Properties();
     try {
       props.load(bis);
-    } catch (IOException ioe) {
-
+    } catch (IOException ignored) {
     }
     return props;
   }

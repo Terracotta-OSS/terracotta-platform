@@ -37,6 +37,7 @@ import org.terracotta.management.model.message.Message;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 import org.terracotta.testing.rules.Cluster;
 
 import java.nio.file.Paths;
@@ -45,12 +46,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import org.terracotta.testing.config.ConfigConstants;
-import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
 /**

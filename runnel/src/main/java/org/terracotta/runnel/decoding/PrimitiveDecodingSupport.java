@@ -46,7 +46,7 @@ public interface PrimitiveDecodingSupport {
   /**
    * Decode an enumeration.
    * @param name the field name.
-   * @param <E> the enumration's actual type.
+   * @param <E> the enumeration's actual type.
    * @return the decoded enumeration representation which can never be null.
    */
   <E> Enm<E> enm(String name);

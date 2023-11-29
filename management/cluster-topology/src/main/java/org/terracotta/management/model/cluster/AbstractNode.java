@@ -110,7 +110,7 @@ public abstract class AbstractNode<P extends Contextual> implements Node {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AbstractNode<?> that = (AbstractNode<?>) o;
-    return id != null ? id.equals(that.id) : that.id == null;
+    return Objects.equals(id, that.id);
   }
 
   @Override

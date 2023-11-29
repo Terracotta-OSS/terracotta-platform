@@ -37,7 +37,7 @@ public enum ClusterState {
 
   /**
    * Represents a node that is in configuring state. The node has started in diagnostic mode, either because this is a new node
-   * that has just been created and it is pending activation, or because this is an already activated node that has been started
+   * that has just been created, and it is pending activation, or because this is an already activated node that has been started
    * with -repair-mode (to be repaired)
    */
   CONFIGURING(GET, SET, UNSET, IMPORT);

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Mathieu Carbou
@@ -40,7 +40,7 @@ public class PassiveStartupIT extends AbstractHATest {
   public void setUp() throws Exception {
     System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".setUp()");
 
-    // this sequence is so tha twe can have a stripe of 2 servers bu starting with only 1 active
+    // this sequence is so tha twe can have a stripe of 2 servers but starting with only 1 active
     // galvan does not have an easier way to do that
     voltron.getClusterControl().waitForActive();
     voltron.getClusterControl().waitForRunningPassivesInStandby();

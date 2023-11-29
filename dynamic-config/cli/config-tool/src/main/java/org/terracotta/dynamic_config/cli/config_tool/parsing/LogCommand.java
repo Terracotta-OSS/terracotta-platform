@@ -31,7 +31,7 @@ public class LogCommand extends Command {
   private HostPort node;
 
   @Inject
-  public final LogAction action;
+  public LogAction action;
 
   public LogCommand() {
     this(new LogAction());

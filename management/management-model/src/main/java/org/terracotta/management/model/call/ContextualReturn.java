@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutionException;
  * If a call was not possible to make on a context, because the context was not supported or the capability not found,
  * then the method {@link #hasExecuted()} will return false.
  * <p>
- * You an call {@link #getValue()} only if there has been a result, event if it is null.
+ * You call {@link #getValue()} only if there has been a result, event if it is null.
  *
  * @author Mathieu Carbou
  */
@@ -89,16 +89,15 @@ public final class ContextualReturn<T> implements Contextual {
   }
 
   public static <T> ContextualReturn<T> of(String capability, Context context, String methodName, T result) {
-    return new ContextualReturn<T>(capability, context, methodName, result, null, true);
+    return new ContextualReturn<>(capability, context, methodName, result, null, true);
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> ContextualReturn<T> notExecuted(String capability, Context context, String methodName) {
-    return new ContextualReturn<T>(capability, context, methodName, null, null, false);
+    return new ContextualReturn<>(capability, context, methodName, null, null, false);
   }
 
   public static <T> ContextualReturn<T> error(String capability, Context context, String methodName, ExecutionException throwable) {
-    return new ContextualReturn<T>(capability, context, methodName, null, throwable, true);
+    return new ContextualReturn<>(capability, context, methodName, null, throwable, true);
   }
 
   public String getCapability() {
@@ -128,11 +127,11 @@ public final class ContextualReturn<T> implements Contextual {
     ContextualReturn<?> that = (ContextualReturn<?>) o;
 
     if (executed != that.executed) return false;
-    if (value != null ? !value.equals(that.value) : that.value != null) return false;
+    if (!Objects.equals(value, that.value)) return false;
     if (!context.equals(that.context)) return false;
     if (!capability.equals(that.capability)) return false;
     if (!methodName.equals(that.methodName)) return false;
-    return error != null ? error.equals(that.error) : that.error == null;
+    return Objects.equals(error, that.error);
 
   }
 

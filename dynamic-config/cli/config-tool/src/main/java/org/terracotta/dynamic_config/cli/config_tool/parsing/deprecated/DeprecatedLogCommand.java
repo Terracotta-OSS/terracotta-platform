@@ -31,7 +31,7 @@ public class DeprecatedLogCommand extends Command {
   private HostPort node;
 
   @Inject
-  public final LogAction action;
+  public LogAction action;
 
   public DeprecatedLogCommand() {
     this(new LogAction());

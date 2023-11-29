@@ -96,19 +96,19 @@ public class NameGenerator {
   private static void assignFriendlyStripeName(Cluster cluster, Stripe stripe, Random random) {
     if (nameCanBeSet(stripe)) {
       List<String> used = cluster.getStripes().stream().map(Stripe::getName).collect(toList());
-      String allreadyGeneratedStripeName = null;
+      String alreadyGeneratedStripeName = null;
       for (String stripeName : used) {
         if (isPresentInDictionary(stripeName)) {
-          allreadyGeneratedStripeName = stripeName;
+          alreadyGeneratedStripeName = stripeName;
           break;
         }
       }
       String fileName;
-      if (allreadyGeneratedStripeName == null) {
+      if (alreadyGeneratedStripeName == null) {
         int ind = random.nextInt(dictionaryFiles.length);
         fileName = dictionaryFiles[ind];
       } else {
-        fileName = dictionaryFiles[category.get(allreadyGeneratedStripeName)];
+        fileName = dictionaryFiles[category.get(alreadyGeneratedStripeName)];
       }
       List<String> dict = readLines("dict/" + fileName);
       stripe.setName(pickRandomStripeName(dict, used, random));

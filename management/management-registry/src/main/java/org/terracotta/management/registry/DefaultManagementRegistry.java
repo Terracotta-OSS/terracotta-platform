@@ -22,7 +22,6 @@ import org.terracotta.management.model.context.ContextContainer;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -38,14 +37,9 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
   private final Context context;
   private final ContextContainer contextContainer;
 
-  private static final Comparator<Capability> CAPABILITY_COMPARATOR = new Comparator<Capability>() {
-    @Override
-    public int compare(Capability o1, Capability o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<Capability> CAPABILITY_COMPARATOR = Comparator.comparing(Capability::getName);
 
-  protected final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<ManagementProvider<?>>();
+  protected final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<>();
 
   public DefaultManagementRegistry() {
     this.context = Context.empty();
@@ -110,17 +104,17 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
 
   @Override
   public Collection<? extends Capability> getCapabilities() {
-    List<Capability> capabilities = new ArrayList<Capability>();
+    List<Capability> capabilities = new ArrayList<>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       capabilities.add(managementProvider.getCapability());
     }
-    Collections.sort(capabilities, CAPABILITY_COMPARATOR);
+    capabilities.sort(CAPABILITY_COMPARATOR);
     return capabilities;
   }
 
   @Override
   public Collection<String> getCapabilityNames() {
-    Collection<String> names = new TreeSet<String>();
+    Collection<String> names = new TreeSet<>();
     for (ManagementProvider<?> managementProvider : managementProviders) {
       names.add(managementProvider.getCapabilityName());
     }
@@ -129,7 +123,7 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
 
   @Override
   public List<ManagementProvider<?>> getManagementProvidersByCapability(String capabilityName) {
-    List<ManagementProvider<?>> allProviders = new ArrayList<ManagementProvider<?>>();
+    List<ManagementProvider<?>> allProviders = new ArrayList<>();
     for (ManagementProvider<?> provider : managementProviders) {
       if (provider.getCapabilityName().equals(capabilityName)) {
         allProviders.add(provider);
@@ -151,7 +145,7 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
   @Override
   public void close() {
     while (!managementProviders.isEmpty()) {
-      List<ManagementProvider<?>> providers = new ArrayList<ManagementProvider<?>>(this.managementProviders);
+      List<ManagementProvider<?>> providers = new ArrayList<>(this.managementProviders);
       for (ManagementProvider<?> managementProvider : providers) {
         managementProvider.close();
       }

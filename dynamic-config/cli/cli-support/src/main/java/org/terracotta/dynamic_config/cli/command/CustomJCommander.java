@@ -179,7 +179,7 @@ public class CustomJCommander<M extends Command> extends JCommander {
       }
 
       // Display all the names and descriptions
-      if (sorted.size() > 0) {
+      if (!sorted.isEmpty()) {
 
         // Sort the options by only considering the first displayed option
         // which will be the one with 1 dash (i.e. -help).

@@ -10,7 +10,6 @@
         "creationTimestamp": "2023-06-27T17:35:09.290Z",
         "creationUser": "matc",
         "nomadChange": {
-          "type": "ClusterActivationNomadChange",
           "cluster": {
             "stripes": [
               {
@@ -81,7 +80,6 @@
         "creationTimestamp": "2023-06-27T17:35:13.546Z",
         "creationUser": "matc",
         "nomadChange": {
-          "type": "StripeAdditionNomadChange",
           "cluster": {
             "stripes": [
               {

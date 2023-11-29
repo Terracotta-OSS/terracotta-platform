@@ -26,7 +26,7 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
- * This methods are only for testing purpose to create some model objects quick
+ * These methods are only for testing purpose to create some model objects quick
  *
  * @author Mathieu Carbou
  */

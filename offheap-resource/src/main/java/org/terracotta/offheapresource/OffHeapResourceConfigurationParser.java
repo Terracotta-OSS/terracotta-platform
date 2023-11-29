@@ -15,12 +15,12 @@
  */
 package org.terracotta.offheapresource;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.function.Function;
+import org.terracotta.config.TCConfigurationParser;
+import org.terracotta.config.service.ConfigValidator;
+import org.terracotta.config.service.ExtendedConfigParser;
+import org.terracotta.offheapresource.config.OffheapResourcesType;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -30,13 +30,12 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
-
-import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.service.ConfigValidator;
-import org.terracotta.config.service.ExtendedConfigParser;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.function.Function;
 
 public class OffHeapResourceConfigurationParser implements ExtendedConfigParser {
   
@@ -71,7 +70,7 @@ public class OffHeapResourceConfigurationParser implements ExtendedConfigParser 
         Collection<Source> schemaSources = new ArrayList<>();
         schemaSources.add(new StreamSource(TCConfigurationParser.TERRACOTTA_XML_SCHEMA.openStream()));
         schemaSources.add(getXmlSchema());
-        unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaSources.toArray(new Source[schemaSources.size()])));
+        unmarshaller.setSchema(SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaSources.toArray(new Source[0])));
         @SuppressWarnings("unchecked")
         JAXBElement<OffheapResourcesType> parsed = (JAXBElement<OffheapResourcesType>)unmarshaller.unmarshal(element);
         retValue = parsed.getValue();

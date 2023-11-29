@@ -48,7 +48,7 @@ public class GetAction extends ConfigurationAction {
     super.validate();
     Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
     Map<String, String> properties = new TreeMap<>();
-    // we put both expanded and non expanded properties
+    // we put both expanded and non-expanded properties,
     // and we will filter depending on what the user wanted
     cluster.toProperties(false, true, true).forEach((k, v) -> properties.put((String) k, (String) v));
     cluster.toProperties(true, true, true).forEach((k, v) -> properties.put((String) k, (String) v));

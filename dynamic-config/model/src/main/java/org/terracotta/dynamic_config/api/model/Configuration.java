@@ -301,14 +301,14 @@ public class Configuration {
   }
 
   /**
-   * Check if this configuration is a duplicate of an other configuration. The comparison is reciprocal.
+   * Check if this configuration is a duplicate of another configuration. The comparison is reciprocal.
    * <p>
    * Duplicate means:
    * Having the same setting name and scope when the key is null (for non map settings and map settings defined without their key component),
    * or having the same setting name, scope and key.
    * We cannot also mix a configuration that is defined with its key and another one defined without it.
    *
-   * @throws IllegalArgumentException if the setting are the same, same scope, same nodes to apply to, they are a map but their definition does not allows to check for duplication
+   * @throws IllegalArgumentException if the setting are the same, same scope, same nodes to apply to, they are a map but their definition does not allow to check for duplication
    */
   public boolean duplicates(Configuration other) throws IllegalArgumentException {
     if (setting != other.setting) {
@@ -330,11 +330,11 @@ public class Configuration {
     }
     // here, we have the same setting, same scope, and same nodes to apply to, and the setting is a map
     if (key != null && other.key != null && Objects.equals(key, other.key)) {
-      // if the keys are equals and non null, it means this is a map setting on the same key
+      // if the keys are equals and non-null, it means this is a map setting on the same key
       return true;
     }
     if (key != null && other.key != null && !Objects.equals(key, other.key)) {
-      // if the keys are not equals and non null, it means this is a map setting on different keys
+      // if the keys are not equals and non-null, it means this is a map setting on different keys
       return false;
     }
     // here, we have the same setting, same scope, and same nodes to apply to, and the setting is a map
@@ -343,7 +343,7 @@ public class Configuration {
       return true;
     }
     // here, we have the same setting, same scope, and same nodes to apply to, and the setting are a map,
-    // but we have either null keys, or a mix, with different values
+    // but we have either null keys, or a mix, with different values,
     // so we cannot tell if there are some duplication
     throw new IllegalArgumentException("Incompatible or duplicate configurations: " + this + " and " + other);
   }
@@ -368,11 +368,8 @@ public class Configuration {
       // case of a map, where we want to match a specific key
       return false;
     }
-    if (this.setting.isMap() && this.key == null && configPropertyKey.key != null) {
-      // case of a map, where we want to match a specific key
-      return false;
-    }
-    return true;
+    // case of a map, where we want to match a specific key
+    return !this.setting.isMap() || this.key != null || configPropertyKey.key == null;
   }
 
   public Collection<? extends PropertyHolder> apply(PropertyHolder propertyHolder) {

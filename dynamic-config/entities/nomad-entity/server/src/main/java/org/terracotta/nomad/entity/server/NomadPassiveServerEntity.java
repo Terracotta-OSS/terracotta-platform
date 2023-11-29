@@ -75,7 +75,7 @@ public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> impl
       }
     } catch (NomadException | RuntimeException e) {
       logger.error("RESTARTING: Failure happened while processing Nomad message: {}: {}", message, e.getMessage(), e);
-      restarted = server.stopIfPassive(StopAction.RESTART);
+      server.stopIfPassive(StopAction.RESTART);
       throw new EntityUserException(e.getMessage(), e);
     }
     if (!restarted) {

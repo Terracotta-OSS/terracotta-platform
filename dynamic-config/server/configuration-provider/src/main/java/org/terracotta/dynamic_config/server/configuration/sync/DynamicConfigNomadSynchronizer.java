@@ -237,8 +237,8 @@ public class DynamicConfigNomadSynchronizer {
 
             // if this happens, this change should be the latest on the active and has to be skipped,
             // because we do not want to sync it.
-            // Otherwise it will appear again in the passive append.log.
-            // The change being prepared, it means we have reached the and of the source stream.
+            // Otherwise, it will appear again in the passive append.log.
+            // The change being prepared, it means we have reached the end of the source stream.
             assertTrue(Objects.equals(source, sourceRelevantChanges.peekLast()));
 
             // If we end up there it means that the current relevant change we are comparing from the passive node is ahead

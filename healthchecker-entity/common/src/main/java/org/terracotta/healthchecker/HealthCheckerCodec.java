@@ -15,15 +15,17 @@
  */
 package org.terracotta.healthchecker;
 
-import java.nio.charset.Charset;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  *
  */
 public class HealthCheckerCodec implements MessageCodec<HealthCheckReq, HealthCheckRsp> {
-  private static final Charset CHARSET = Charset.forName("ASCII");
+  private static final Charset CHARSET = StandardCharsets.US_ASCII;
   
   @Override
   public byte[] encodeMessage(HealthCheckReq message) throws MessageCodecException {

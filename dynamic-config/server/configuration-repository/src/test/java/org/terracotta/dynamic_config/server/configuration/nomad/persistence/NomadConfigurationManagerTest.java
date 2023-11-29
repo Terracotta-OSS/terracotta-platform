@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.org.junit.rules.TemporaryFolder;
 
@@ -31,7 +30,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -49,8 +49,6 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class NomadConfigurationManagerTest {
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
   @Rule
   public TemporaryFolder folder = new TemporaryFolder(new File("target"));
 
@@ -144,24 +142,21 @@ public class NomadConfigurationManagerTest {
     doReturn(false).when(spyRepoManager).checkDirectoryExists(licensePath);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(changesPath);
 
-    exception.expect(IllegalStateException.class);
-    spyRepoManager.getConfigurationDirectoryDepth();
+    assertThrows(IllegalStateException.class, spyRepoManager::getConfigurationDirectoryDepth);
 
     doReturn(false).when(spyRepoManager).checkDirectoryExists(configPath);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(clusterPath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(licensePath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(changesPath);
 
-    exception.expect(IllegalStateException.class);
-    spyRepoManager.getConfigurationDirectoryDepth();
+    assertThrows(IllegalStateException.class, spyRepoManager::getConfigurationDirectoryDepth);
 
     doReturn(false).when(spyRepoManager).checkDirectoryExists(configPath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(clusterPath);
     doReturn(true).when(spyRepoManager).checkDirectoryExists(licensePath);
     doReturn(false).when(spyRepoManager).checkDirectoryExists(changesPath);
 
-    exception.expect(IllegalStateException.class);
-    spyRepoManager.getConfigurationDirectoryDepth();
+    assertThrows(IllegalStateException.class, spyRepoManager::getConfigurationDirectoryDepth);
   }
 
   @Test
@@ -171,8 +166,8 @@ public class NomadConfigurationManagerTest {
     assertThat(configManager.checkDirectoryExists(newFolder.toPath()), is(true));
     File newFile = folder.newFile();
 
-    exception.expect(IllegalArgumentException.class);
-    configManager.checkDirectoryExists(newFile.toPath());
+    assertThrows(IllegalArgumentException.class, () -> configManager.checkDirectoryExists(newFile.toPath()));
+
     assertThat(newFile.delete(), is(true));
     assertThat(configManager.checkDirectoryExists(newFile.toPath()), is(false));
   }

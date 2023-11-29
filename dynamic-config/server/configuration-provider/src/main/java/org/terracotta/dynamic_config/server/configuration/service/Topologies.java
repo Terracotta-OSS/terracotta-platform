@@ -99,12 +99,12 @@ class Topologies {
       Node newMe = findMe(updatedCluster);
 
       if (newMe != null) {
-        // we have updated the topology and I am still part of this cluster
+        // we have updated the topology, and I am still part of this cluster
         LOGGER.trace("Set upcoming topology to:\n{}", updatedCluster);
         this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getUID());
 
       } else {
-        // We have updated the topology and I am not part anymore of the cluster
+        // We have updated the topology, and I am not part anymore of the cluster
         // So we just reset the cluster object so that this node is alone
         Node oldMe = upcomingNodeContext.getNode();
         LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getName(), oldMe.getUID(), updatedCluster.toShapeString());
@@ -173,7 +173,7 @@ class Topologies {
       int voters = failover.getVoters();
       List<Stripe> evenNodeStripes = nodeContext.getCluster().getStripes()
           .stream().filter(s -> (s.getNodeCount() + voters) % 2 == 0).collect(Collectors.toList());
-      if (evenNodeStripes.size() > 0) {
+      if (!evenNodeStripes.isEmpty()) {
         StringBuilder warn = new StringBuilder(lineSeparator());
         warn.append("===================================================================================================================").append(lineSeparator());
         warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number").append(lineSeparator());

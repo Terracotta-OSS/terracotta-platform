@@ -26,7 +26,7 @@ import org.terracotta.lease.service.monitor.LeaseState;
  * leases.
  */
 public class LeaseServiceImpl implements LeaseService {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
 
   private final LeaseConfiguration leaseConfiguration;
   private final LeaseState leaseState;

@@ -24,6 +24,6 @@ public final class NmsConfig implements Serializable {
 
   private static final long serialVersionUID = 3;
 
-  // name must be hardcoded because it reference a class name in client package and is used on server-side
+  // name must be hardcoded because it references a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.nms.client.NmsEntity";
 }

@@ -49,7 +49,7 @@ public abstract class AbstractStatisticsManagementProvider<T extends AliasBindin
     // To keep ordering because these objects end up in an immutable
     // topology so this is easier for testing to compare with json payloads
     List<StatisticDescriptor> list = new ArrayList<>((Collection<? extends StatisticDescriptor>) super.getDescriptors());
-    Collections.sort(list, STATISTIC_DESCRIPTOR_COMPARATOR);
+    list.sort(STATISTIC_DESCRIPTOR_COMPARATOR);
     return list;
   }
 

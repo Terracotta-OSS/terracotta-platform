@@ -94,7 +94,6 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   protected void wireChangeHandler(ServiceRegistry serviceRegistry) {
     try {
       ConfigChangeHandlerManager manager = serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class));

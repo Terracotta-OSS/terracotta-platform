@@ -89,7 +89,7 @@ public class DiagnosticAction extends RemoteAction {
       throw new IllegalArgumentException("Output format must be set to 'text' or 'json'");
     }
 
-    // this call can take some time and we can have some timeout
+    // this call can take some time, and we can have some timeout
     Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(nodes);
 
     ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeNomadConsistency(allNodes);

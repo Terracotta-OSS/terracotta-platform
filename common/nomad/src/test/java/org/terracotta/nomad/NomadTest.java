@@ -83,7 +83,6 @@ public class NomadTest {
   private HostPort address3 = HostPort.create("localhost", 9412);
 
   @Before
-  @SuppressWarnings("unchecked")
   public void before() throws Exception {
     serverState1 = new MemoryNomadServerState<>();
     NomadServerState<String> serverState2 = new MemoryNomadServerState<>();

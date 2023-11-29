@@ -19,7 +19,9 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 import static org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec.EOF;
 
 /**
@@ -57,16 +59,14 @@ public class EmptyParameterDiagnosticCodecTest extends CommonCodecTest<String> {
 
   @Test
   public void test_deserialize_type_wrong() {
-    exception.expect(IllegalArgumentException.class);
-    exception.expectMessage("Target type must be assignable from String");
-    assertThat(codec.deserialize(EOF, getClass()), is(equalTo("")));
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> codec.deserialize(EOF, getClass()));
+    assertThat(e, hasMessage(equalTo("Target type must be assignable from String")));
   }
 
   @Test
   public void test_deserialize_message_wrong() {
-    exception.expect(DiagnosticCodecException.class);
-    exception.expectMessage("Unsupported encoded input");
-    assertThat(codec.deserialize("", String.class), is(equalTo("")));
+    DiagnosticCodecException e = assertThrows(DiagnosticCodecException.class, () -> codec.deserialize("", String.class));
+    assertThat(e, hasMessage(equalTo("Unsupported encoded input")));
   }
 
 }

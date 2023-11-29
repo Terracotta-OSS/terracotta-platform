@@ -51,7 +51,7 @@ public class NmsAgentEntityServerService extends ProxyServerEntityService<Void, 
     LOGGER.trace("createActiveEntity()");
     try {
       ClientMonitoringService clientMonitoringService = registry.getService(new ClientMonitoringServiceConfiguration(registry));
-      //clientMonitoringService can be null if no monitoring jar in the serevr classpath
+      //clientMonitoringService can be null if no monitoring jar in the server classpath
       return new ActiveNmsAgentServerEntity(clientMonitoringService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());

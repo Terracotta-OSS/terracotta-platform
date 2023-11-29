@@ -150,7 +150,7 @@ public class Props {
 
         @Override
         public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
-          entrySet().forEach(e -> action.accept(e.getKey(), e.getKey()));
+          entrySet().forEach(e -> action.accept(e.getKey(), e.getValue()));
         }
       };
       copy.putAll(properties);

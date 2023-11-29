@@ -229,7 +229,7 @@ public class ConfigurationInput {
     String[] s = cliInput.split("=")[0].split(":");
     if (s.length == 3) {
       // This is most likely a named-based formatted setting
-      // Therefore, format must be stripe|node:<stripe_or_node_name>:<setting>
+      // Therefore, format must be: stripe|node:<stripe_or_node_name>:<setting>.
       // All we can validate at this point is the 'scope' identifier (we can't validate the stripe/node name yet)
       scope = s[0];
       if (!scope.equals("stripe") && !scope.equals("node")) {

@@ -465,7 +465,7 @@ class TopologyService implements PlatformListener {
    */
   void willPushEntityStatistics(long consumerId, String serverName, ContextualStatistics... statistics) {
     // Stats are collected by the NMS entity collector so the consumer id calling willPushEntityStatistics
-    // will be the consumer id of the NMS entity. Thus we have to retrieve the server entity thanks to the
+    // will be the consumer id of the NMS entity. Thus, we have to retrieve the server entity thanks to the
     // context that is hold in the stat results
     Stream.of(statistics)
         .collect(Collectors.groupingBy(o -> Long.parseLong(o.getContext().getOrDefault(ServerEntity.CONSUMER_ID, String.valueOf(consumerId)))))

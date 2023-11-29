@@ -40,14 +40,14 @@ public interface EntityMonitoringService {
   void exposeManagementRegistry(ContextContainer contextContainer, Capability... capabilities);
 
   /**
-   * Push a new server-side notification coming from the entity consuming this service. This will be put in a best effort-buffer.
+   * Push a new server-side notification coming from the entity consuming this service. This will be put in a best-effort buffer.
    * <p>
    * Can be called from active or passive entity
    */
   void pushNotification(ContextualNotification notification);
 
   /**
-   * Push some server-side statistics coming from the entity consuming this service. This will be put in a best effort-buffer.
+   * Push some server-side statistics coming from the entity consuming this service. This will be put in a best-effort buffer.
    * <p>
    * Can be called from active or passive entity
    */

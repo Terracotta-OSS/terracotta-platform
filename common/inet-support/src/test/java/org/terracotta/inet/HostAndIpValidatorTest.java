@@ -18,7 +18,7 @@ package org.terracotta.inet;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.terracotta.inet.HostAndIpValidator.isValidHost;
 import static org.terracotta.inet.HostAndIpValidator.isValidIPv4;
 import static org.terracotta.inet.HostAndIpValidator.isValidIPv4Cidr;

@@ -88,7 +88,7 @@ public class OssServiceProvider implements ServiceProvider {
         getConnectionTimeout(config),
         // A long timeout is important here.
         // We need to block the call and wait for any return.
-        // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
+        // We cannot time out shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
         new NomadEntity.Settings().setRequestTimeout(getEntityOperationTimeout(config)),
         config.getSecurityRootDirectory());
   }

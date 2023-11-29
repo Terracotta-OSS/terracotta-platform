@@ -50,15 +50,15 @@ public class DefaultCallQueryBuilder<T> implements CallQuery.Builder<T> {
 
   @Override
   public CallQuery<T> build() {
-    return new DefaultCallQuery<T>(capabilityManagement, capabilityName, methodName, returnType, parameters, contexts);
+    return new DefaultCallQuery<>(capabilityManagement, capabilityName, methodName, returnType, parameters, contexts);
   }
 
   @Override
   public CallQuery.Builder<T> on(Context context) {
     if (!contexts.contains(context)) {
-      List<Context> contexts = new ArrayList<Context>(this.contexts);
+      List<Context> contexts = new ArrayList<>(this.contexts);
       contexts.add(context);
-      return new DefaultCallQueryBuilder<T>(capabilityManagement, capabilityName, methodName, returnType, parameters, contexts);
+      return new DefaultCallQueryBuilder<>(capabilityManagement, capabilityName, methodName, returnType, parameters, contexts);
     }
     return this;
   }

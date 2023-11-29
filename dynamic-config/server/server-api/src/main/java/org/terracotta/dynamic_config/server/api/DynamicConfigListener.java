@@ -47,7 +47,7 @@ public interface DynamicConfigListener extends DynamicConfigEventFiring {
    * Listener that will be called when a new configuration has been applied at runtime on a server, through a {@link ConfigChangeHandler}
    * <p>
    * The method is called with the topology equivalent to {@link TopologyService#getRuntimeNodeContext()} or
-   * {@link TopologyService#getUpcomingNodeContext()} ()} and the change that has been applied, depending whether the change requires a restart or not
+   * {@link TopologyService#getUpcomingNodeContext()} ()} and the change that has been applied, depending on whether the change requires a restart or not
    * <p>
    * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    */

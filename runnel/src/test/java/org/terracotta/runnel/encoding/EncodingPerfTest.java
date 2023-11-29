@@ -25,7 +25,6 @@ import org.terracotta.runnel.StructBuilder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class EncodingPerfTest {
@@ -40,7 +39,6 @@ public class EncodingPerfTest {
     BYTES;
   }
 
-  @SuppressWarnings("rawtypes")
   public static final EnumMapping<Typ> TYPE_ENUM_MAPPING = EnumMappingBuilder.newEnumMappingBuilder(Typ.class)
                                                                              .mapping(Typ.BOOL,
                                                                                       0)

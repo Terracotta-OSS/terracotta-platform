@@ -15,7 +15,6 @@
  */
 package org.terracotta.client.message.tracker;
 
-import static java.util.Comparator.comparingLong;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -28,6 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import static java.util.Comparator.comparingLong;
 
 public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResponse> implements OOOMessageHandler<M, R> {
 
@@ -101,11 +102,9 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
 
   @Override
   public void loadRecordedMessages(Stream<RecordedMessage<M, R>> recorded) {
-    recorded.forEach(rm->{
-      clientMessageTracker
-              .getTracker(rm.getClientSourceId())
-              .track(trackid.incrementAndGet(), rm.getTransactionId(), rm.getRequest(), rm.getResponse());
-    });
+    recorded.forEach(rm-> clientMessageTracker
+            .getTracker(rm.getClientSourceId())
+            .track(trackid.incrementAndGet(), rm.getTransactionId(), rm.getRequest(), rm.getResponse()));
   }
 
   @Override

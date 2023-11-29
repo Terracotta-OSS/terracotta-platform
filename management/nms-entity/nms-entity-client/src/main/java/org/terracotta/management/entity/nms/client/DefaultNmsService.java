@@ -103,7 +103,7 @@ public class DefaultNmsService implements NmsService, Closeable {
     // This close call is important.
     // We have to close as much as possible the nms entities we have fetched.
     // If we do not, then, when connection closes, the server can keep some "phantom" fetches
-    // on the server entity and thus it will prevent the entity from being destroyed.
+    // on the server entity, and thus it will prevent the entity from being destroyed.
     // This is a server bug.
     // This line does not solve completely the issue but limits its probability to happen.
     // But at any point, when you know that the connection is open, you'd better close any entity
@@ -132,6 +132,7 @@ public class DefaultNmsService implements NmsService, Closeable {
     return o.get();
   }
 
+  @SuppressWarnings("OptionalAssignedToNull")
   @Override
   public Message waitForMessage(long time, TimeUnit unit) throws InterruptedException, TimeoutException {
     Optional<Message> o = incomingMessageQueue.poll(time, unit);

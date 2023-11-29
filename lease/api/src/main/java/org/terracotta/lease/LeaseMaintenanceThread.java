@@ -23,7 +23,7 @@ import java.io.Closeable;
 import java.io.IOException;
 
 class LeaseMaintenanceThread extends Thread implements Closeable {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseMaintenanceThread.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseMaintenanceThread.class);
 
   private final LeaseMaintainerImpl leaseMaintainer;
   private final TimeSource timeSource;
@@ -69,7 +69,7 @@ class LeaseMaintenanceThread extends Thread implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // We need to shutdown and interrupt as we may be in a blocking call
+    // We need to shut down and interrupt as we may be in a blocking call
     shutdown = true;
     this.interrupt();
   }

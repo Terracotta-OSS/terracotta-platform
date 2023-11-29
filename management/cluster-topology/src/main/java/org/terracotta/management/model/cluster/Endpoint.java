@@ -68,7 +68,7 @@ public final class Endpoint implements Serializable {
   }
 
   public Map<String, Object> toMap() {
-    Map<String, Object> endpoint = new LinkedHashMap<String, Object>();
+    Map<String, Object> endpoint = new LinkedHashMap<>();
     endpoint.put("address", address);
     endpoint.put("port", port);
     return endpoint;

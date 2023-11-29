@@ -62,7 +62,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
   DiagnosticServiceImpl(Connection connection, Diagnostics delegate, DiagnosticCodec<?> codec) {
     this.connection = requireNonNull(connection);
     this.delegate = requireNonNull(delegate);
-    // we need to ensure the JMX parameter contains no space at all because the DiagnosticsHandler is poorly written
+    // we need to ensure the JMX parameter contains no space at all because the DiagnosticsHandler is poorly written,
     // and it is parsing parameters by splitting the string using space character
     this.codec = new EmptyParameterDiagnosticCodec()
         .around(new Base64DiagnosticCodec())
@@ -154,7 +154,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
       // Other possibility: the MBean has been unregistered...
     }
 
-    // backward compat'
+    // backward compatibility
     try {
       return LogicalServerState.parse(invoke("LogicalServerState", "getLogicalServerState"));
     } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {

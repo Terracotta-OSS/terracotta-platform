@@ -16,7 +16,6 @@
 package org.terracotta.lease;
 
 import org.terracotta.entity.EndpointDelegate;
-import org.terracotta.entity.EntityResponse;
 
 class LeaseEndpointDelegate implements EndpointDelegate<LeaseResponse> {
   private final LeaseReconnectListener reconnectListener;

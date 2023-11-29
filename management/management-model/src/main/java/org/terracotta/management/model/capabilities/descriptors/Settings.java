@@ -17,7 +17,6 @@ package org.terracotta.management.model.capabilities.descriptors;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,7 +32,7 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
 
   private static final long serialVersionUID = 1;
 
-  private final Map<String, Object> map = new LinkedHashMap<String, Object>();
+  private final Map<String, Object> map = new LinkedHashMap<>();
 
   public Settings() {
   }

@@ -248,7 +248,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
 
     // We have a mix of NomadServerMode == PREPARED / ACCEPTING
     // And we know our config is not inconsistent or partitioned
-    // So we are in an on-going unfinished change process
+    // So we are in an ongoing unfinished change process
 
     // Change UUIDs and result Hashes have already been validated by the consistency checker
     // So if we end up here were a change is in progress it means:

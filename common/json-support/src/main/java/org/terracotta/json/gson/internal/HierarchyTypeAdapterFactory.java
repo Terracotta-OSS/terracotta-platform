@@ -173,7 +173,7 @@ public final class HierarchyTypeAdapterFactory<T> implements TypeAdapterFactory 
 
   /**
    * Creates a new runtime type adapter using for {@code baseType} using {@code
-   * typeFieldName} as the type field name. Type field names are case sensitive.
+   * typeFieldName} as the type field name. Type field names are case-sensitive.
    *
    * @param maintainType true if the type field should be included in deserialized objects
    */
@@ -200,8 +200,7 @@ public final class HierarchyTypeAdapterFactory<T> implements TypeAdapterFactory 
   }
 
   /**
-   * Registers {@code type} identified by {@code label}. Labels are case
-   * sensitive.
+   * Registers {@code type} identified by {@code label}. Labels are case-sensitive.
    *
    * @throws IllegalArgumentException if either {@code type} or {@code label}
    *                                  have already been registered on this type adapter.
@@ -220,7 +219,7 @@ public final class HierarchyTypeAdapterFactory<T> implements TypeAdapterFactory 
 
   /**
    * Registers {@code type} identified by its {@link Class#getSimpleName simple
-   * name}. Labels are case sensitive.
+   * name}. Labels are case-sensitive.
    *
    * @throws IllegalArgumentException if either {@code type} or its simple name
    *                                  have already been registered on this type adapter.

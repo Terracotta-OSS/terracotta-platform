@@ -52,7 +52,7 @@ public class DeprecatedGetCommand extends Command {
   private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   @Inject
-  public final GetAction action;
+  public GetAction action;
 
   public DeprecatedGetCommand() {
     this(new GetAction());

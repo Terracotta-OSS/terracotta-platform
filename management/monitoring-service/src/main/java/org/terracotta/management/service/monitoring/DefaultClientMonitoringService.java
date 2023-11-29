@@ -119,22 +119,18 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   }
 
   void fireMessage(Message message) {
-    switch (message.getType()) {
-
-      case "MANAGEMENT_CALL":
-        Context context = message.unwrap(Contextual.class).get(0).getContext();
-        String clientId = context.get(Client.KEY);
-        if (clientId != null) {
-          ClientIdentifier clientIdentifier = ClientIdentifier.valueOf(clientId);
-          ClientDescriptor clientDescriptor = manageableClients.get(clientIdentifier);
-          if (clientDescriptor != null) {
-            send(clientDescriptor, message);
-          }
+    if (message.getType().equals("MANAGEMENT_CALL")) {
+      Context context = message.unwrap(Contextual.class).get(0).getContext();
+      String clientId = context.get(Client.KEY);
+      if (clientId != null) {
+        ClientIdentifier clientIdentifier = ClientIdentifier.valueOf(clientId);
+        ClientDescriptor clientDescriptor = manageableClients.get(clientIdentifier);
+        if (clientDescriptor != null) {
+          send(clientDescriptor, message);
         }
-        break;
-
-      default:
-        Utils.warnOrAssert(LOGGER, "[{}] fireMessage({}): message type unsupported", this.consumerId, message.getType());
+      }
+    } else {
+      Utils.warnOrAssert(LOGGER, "[{}] fireMessage({}): message type unsupported", this.consumerId, message.getType());
     }
   }
 

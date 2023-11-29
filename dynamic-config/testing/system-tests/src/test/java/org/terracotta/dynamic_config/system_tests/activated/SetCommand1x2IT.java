@@ -20,8 +20,8 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
@@ -52,7 +52,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     startNode(1, passiveId == 1 ? 2 : 1);
     waitForPassives(1);
 
-    // Finally ensure that metadata-dir has remain unchanged
+    // Finally ensure that metadata-dir has remained unchanged
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
         containsOutput(metadataDir.toString()));

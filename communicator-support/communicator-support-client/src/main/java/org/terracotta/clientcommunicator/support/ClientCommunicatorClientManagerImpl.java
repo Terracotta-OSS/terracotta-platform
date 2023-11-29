@@ -33,14 +33,13 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
 
     private final EntityClientEndpoint<M, R> entityClientEndpoint;
     private final ClientCommunicatorMessageFactory<M, R> clientCommunicatorMessageFactory;
-    private final ConcurrentMap<Integer, AtomicBoolean> monitors = new ConcurrentHashMap<Integer, AtomicBoolean>();
+    private final ConcurrentMap<Integer, AtomicBoolean> monitors = new ConcurrentHashMap<>();
 
     public ClientCommunicatorClientManagerImpl(EntityClientEndpoint<M, R> entityClientEndpoint, ClientCommunicatorMessageFactory<M, R> clientCommunicatorMessageFactory) {
         this.entityClientEndpoint = entityClientEndpoint;
         this.clientCommunicatorMessageFactory = clientCommunicatorMessageFactory;
     }
 
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     @SuppressFBWarnings({"JLM_JSR166_UTILCONCURRENT_MONITORENTER", "UW_UNCOND_WAIT"})
     @Override
     public void handleInvokeResponse(R response) {
@@ -66,7 +65,6 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
         }
     }
 
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
     @Override
     public void handleClientCommunicatorMessage(R message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {

@@ -1096,7 +1096,7 @@ public enum Setting {
 
     // we expose this property if:
     // 1. the user input is there
-    // 2. or, the user input is missing, but we have a default value and we want to include the default values in the export
+    // 2. or, the user input is missing, but we have a default value, and we want to include the default values in the export
     if (currentValue.isPresent() || defaultValue.isPresent() && includeDefaultValues) {
       if (expanded && isMap()) {
         // case where we want to expand the properties if this setting is a map.

@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 
 /**
@@ -46,16 +45,6 @@ public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
   @Override
   public String getSummary() {
     return "Upgrading configuration format from version " + from + " to version " + to;
-  }
-
-  @Override
-  public Cluster apply(Cluster original) {
-    return getCluster();
-  }
-
-  @Override
-  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
-    return false;
   }
 
   public Version getFrom() {

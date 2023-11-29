@@ -43,7 +43,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public CapabilityContext(Collection<Attribute> attributes) {
-    this.attributes = new ArrayList<Attribute>(Objects.requireNonNull(attributes));
+    this.attributes = new ArrayList<>(Objects.requireNonNull(attributes));
   }
 
   public Collection<Attribute> getAttributes() {
@@ -51,7 +51,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public Collection<String> getRequiredAttributeNames() {
-    Collection<String> names = new LinkedHashSet<String>();
+    Collection<String> names = new LinkedHashSet<>();
     for (Attribute attribute : this.attributes) {
       if (attribute.isRequired()) {
         names.add(attribute.getName());
@@ -77,7 +77,7 @@ public final class CapabilityContext implements Serializable {
   }
 
   public Collection<Attribute> getRequiredAttributes() {
-    Collection<Attribute> attributes = new ArrayList<Attribute>(this.attributes.size());
+    Collection<Attribute> attributes = new ArrayList<>(this.attributes.size());
     for (Attribute attribute : this.attributes) {
       if (attribute.isRequired()) {
         attributes.add(attribute);

@@ -82,7 +82,7 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
     return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
         && rolledBack.get() == 0 // AND we have no server online having rolled back this change
         && prepared.get() > 0 // AND we have some servers online that are still prepared
-        && (prepared.get() + committed.get() == expectedTotalNodeCount // AND we have all the nodes that are online and they are all either prepared or committed
+        && (prepared.get() + committed.get() == expectedTotalNodeCount // AND we have all the nodes that are online, and they are all either prepared or committed
         || committed.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are committed, so we can commit
         || committed.get() == 0 && forcedState == COMMITTED // OR we have some nodes offline, but amongst the online ones none are committed (they are all prepared), but user says he wants to force a commit
     );
@@ -92,7 +92,7 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
     return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
         && committed.get() == 0 // AND we have no server online having committed this change
         && prepared.get() > 0 // AND we have some servers online that are still prepared
-        && (prepared.get() + rolledBack.get() == expectedTotalNodeCount // AND we have all the nodes that are online and they are all either prepared or rolled back
+        && (prepared.get() + rolledBack.get() == expectedTotalNodeCount // AND we have all the nodes that are online, and they are all either prepared or rolled back
         || rolledBack.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are rolled back, so we can rollback the prepared ones
         || rolledBack.get() == 0 && forcedState == ROLLED_BACK // OR we have some nodes offline, but amongst the online ones none are rolled back (they are all prepared), but user says he wants to force a rollback
     );

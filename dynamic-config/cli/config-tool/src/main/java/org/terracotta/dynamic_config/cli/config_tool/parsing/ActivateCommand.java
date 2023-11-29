@@ -61,7 +61,7 @@ public class ActivateCommand extends RestartCommand {
   protected boolean restrictedActivation = false;
 
   @Inject
-  public final ActivateAction action;
+  public ActivateAction action;
 
   public ActivateCommand() {
     this(new ActivateAction());
@@ -93,7 +93,7 @@ public class ActivateCommand extends RestartCommand {
     if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
-    action.setNodess(nodes);
+    action.setNodes(nodes);
     action.setConfigPropertiesFile(configPropertiesFile);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);

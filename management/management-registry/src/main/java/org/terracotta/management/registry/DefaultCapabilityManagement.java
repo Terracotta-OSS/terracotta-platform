@@ -50,12 +50,12 @@ public class DefaultCapabilityManagement implements CapabilityManagement {
 
   @Override
   public <T> CallQuery.Builder<T> call(String methodName, Class<T> returnType, Parameter... parameters) {
-    return new DefaultCallQueryBuilder<T>(capabilityManagement, capabilityName, methodName, returnType, parameters);
+    return new DefaultCallQueryBuilder<>(capabilityManagement, capabilityName, methodName, returnType, parameters);
   }
 
   @Override
   public CallQuery.Builder<?> call(String methodName, Parameter... parameters) {
-    return new DefaultCallQueryBuilder<Object>(capabilityManagement, capabilityName, methodName, Object.class, parameters);
+    return new DefaultCallQueryBuilder<>(capabilityManagement, capabilityName, methodName, Object.class, parameters);
   }
 
 }

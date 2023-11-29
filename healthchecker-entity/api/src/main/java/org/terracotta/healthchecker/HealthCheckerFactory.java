@@ -15,6 +15,15 @@
  */
 package org.terracotta.healthchecker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.connection.Connection;
+import org.terracotta.connection.entity.EntityRef;
+import org.terracotta.exception.ConnectionClosedException;
+import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.EntityVersionMismatchException;
+
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Properties;
@@ -25,14 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.exception.ConnectionClosedException;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 /**
  *
@@ -40,7 +41,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
  */
 public class HealthCheckerFactory {
   
-  private static Logger LOG = LoggerFactory.getLogger(HealthCheck.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HealthCheck.class);
   private static final String NAME = "staticHealthChecker";
   /**
    * Start a health checker on a connection.  Adding a timeout manager to a connection 
@@ -73,7 +74,7 @@ public class HealthCheckerFactory {
     
     private final Connection root;
     private final HealthCheck checker;
-    private final Set<TimeoutListener> listeners = new LinkedHashSet<TimeoutListener>();
+    private final Set<TimeoutListener> listeners = new LinkedHashSet<>();
     private final Timer driver;
     private long iteration;
     private String currentMsg;

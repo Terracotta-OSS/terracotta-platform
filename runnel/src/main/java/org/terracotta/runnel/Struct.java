@@ -51,7 +51,7 @@ public class Struct {
    */
   public StructEncoder<Void> encoder() {
     root.checkFullyInitialized();
-    return new StructEncoder<Void>(root);
+    return new StructEncoder<>(root);
   }
 
   /**
@@ -62,7 +62,7 @@ public class Struct {
    */
   public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
     root.checkFullyInitialized();
-    return new StructDecoder<Void>(root, new ReadBuffer(byteBuffer));
+    return new StructDecoder<>(root, new ReadBuffer(byteBuffer));
   }
 
   /**

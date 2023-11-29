@@ -39,18 +39,16 @@ public class ConfigConversionException extends RuntimeException {
     if (params != null) {
       @SuppressWarnings("varargs")
       Stream<Tuple2<String, String>> paramStream = Arrays.stream(params);
-      paramStream.forEach(param -> {
-        parameters.compute(param.getT1(), (key, value) -> {
-          List<String> retValue;
-          if (value == null) {
-            retValue = new ArrayList<>();
-          } else {
-            retValue = value;
-          }
-          retValue.add(param.getT2());
-          return retValue;
-        });
-      });
+      paramStream.forEach(param -> parameters.compute(param.getT1(), (key, value) -> {
+        List<String> retValue;
+        if (value == null) {
+          retValue = new ArrayList<>();
+        } else {
+          retValue = value;
+        }
+        retValue.add(param.getT2());
+        return retValue;
+      }));
     }
   }
 

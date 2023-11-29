@@ -89,8 +89,8 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
@@ -117,7 +117,7 @@ public class DynamicConfigIT {
   protected final Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
   protected final Json json = jsonFactory.create();
 
-  // can be modified by sub-classes to update the timeouts
+  // can be modified by subclasses to update the timeouts
 
   // We intentionally set a huge timeout for connection
   protected Duration connectionTimeout = Duration.ofDays(1);

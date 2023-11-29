@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -27,17 +26,17 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.nomad.server.NomadException;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterActivationNomadChangeProcessorTest {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   private ClusterActivationNomadChangeProcessor processor;
   private NodeContext topology = new NodeContext(
@@ -67,9 +66,7 @@ public class ClusterActivationNomadChangeProcessorTest {
             Testing.newTestStripe("stripe-1").addNodes(
                 Testing.newTestNode("foo", "localhost"))), Testing.N_UIDS[1]);
 
-    expectedException.expect(NomadException.class);
-    expectedException.expectMessage("Found an existing configuration: " + topology);
-
-    processor.validate(topology, change);
+    NomadException e = assertThrows(NomadException.class, () -> processor.validate(topology, change));
+    assertThat(e, hasMessage(equalTo("Found an existing configuration: " + topology)));
   }
 }

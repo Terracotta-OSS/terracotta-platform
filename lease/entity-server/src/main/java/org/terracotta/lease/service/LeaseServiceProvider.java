@@ -42,7 +42,7 @@ import java.util.Collection;
  */
 @BuiltinService
 public class LeaseServiceProvider implements ServiceProvider, Closeable {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
 
   private LeaseConfiguration leaseConfiguration;
   private LeaseState leaseState;

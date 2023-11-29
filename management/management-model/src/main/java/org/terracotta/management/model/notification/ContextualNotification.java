@@ -37,7 +37,7 @@ public final class ContextualNotification implements Contextual {
   public ContextualNotification(Context context, String type, Map<String, String> attributes) {
     this.context = Objects.requireNonNull(context);
     this.type = Objects.requireNonNull(type);
-    this.attributes = new HashMap<String, String>(Objects.requireNonNull(attributes));
+    this.attributes = new HashMap<>(Objects.requireNonNull(attributes));
   }
 
   public ContextualNotification(Context context, String type) {

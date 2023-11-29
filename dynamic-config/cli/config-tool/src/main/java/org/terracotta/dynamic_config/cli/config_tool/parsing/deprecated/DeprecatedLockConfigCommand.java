@@ -34,7 +34,7 @@ public class DeprecatedLockConfigCommand extends Command {
   String lockContext;
 
   @Inject
-  public final LockConfigAction action;
+  public LockConfigAction action;
 
   public DeprecatedLockConfigCommand() {
     this(new LockConfigAction());

@@ -112,7 +112,7 @@ public class SerializationCodec implements Codec {
     }
     ByteArrayInputStream bin = new ByteArrayInputStream(buffer, offset, len);
     try {
-      ObjectInputStream ois = new ObjectInputStream(bin) {
+      try (ObjectInputStream ois = new ObjectInputStream(bin) {
 
         @Override
         protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
@@ -133,13 +133,10 @@ public class SerializationCodec implements Codec {
             return descriptor;
           }
         }
-      };
-      try {
+      }) {
         return ois.readObject();
       } catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
-      } finally {
-        ois.close();
       }
     } catch (IOException e) {
       throw new RuntimeException(e);

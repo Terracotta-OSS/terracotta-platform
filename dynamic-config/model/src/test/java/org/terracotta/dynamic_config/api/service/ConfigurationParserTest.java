@@ -38,13 +38,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -212,7 +212,7 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_parsing_allows_duplicates() {
-    // Note about duplicate entries: we do not test them, because they made a property file invalid
+    // Note about duplicate entries: we do not test them, because they made a property file invalid,
     // and we support the fact that the last one will override the previous one
     assertConfigEquals(
         config(

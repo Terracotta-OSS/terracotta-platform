@@ -37,7 +37,7 @@ public class FileCloseLock implements CloseLock {
   public void close() throws IOException {
     try (
         Owner<Channel, IOException> channelOwner = own(channel, IOException.class);
-        Owner<FileLock, IOException> fileLockOwner = own(fileLock, IOException.class);
+        Owner<FileLock, IOException> fileLockOwner = own(fileLock, IOException.class)
     ) {
       // Do nothing - the Java try-with-resources will correctly close both objects.
     }
