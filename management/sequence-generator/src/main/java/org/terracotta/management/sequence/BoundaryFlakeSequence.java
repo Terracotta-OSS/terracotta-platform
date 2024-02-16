@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.sequence;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 
@@ -53,7 +52,13 @@ public final class BoundaryFlakeSequence implements Sequence, Serializable {
 
   @Override
   public String toHexString() {
-    return DatatypeConverter.printHexBinary(toBytes());
+    byte[] bytes = toBytes();
+    StringBuilder r = new StringBuilder(bytes.length * 2);
+    for (byte b : bytes) {
+      r.append(Integer.toHexString((b >> 4) & 0xF));
+      r.append(Integer.toHexString(b & 0xF));
+    }
+    return r.toString();
   }
 
   @Override
@@ -107,7 +112,12 @@ public final class BoundaryFlakeSequence implements Sequence, Serializable {
   }
 
   public static BoundaryFlakeSequence fromHexString(String hex) {
-    return fromBytes(DatatypeConverter.parseHexBinary(hex));
-  }
+    final int len = hex.length();
+    byte[] bytes = new byte[len >>> 1];
 
+    for (int i = 0; i < len; i += 2) {
+      bytes[i >>> 1] = (byte) Integer.parseInt(hex.substring(i, i + 2), 16);
+    }
+    return fromBytes(bytes);
+  }
 }

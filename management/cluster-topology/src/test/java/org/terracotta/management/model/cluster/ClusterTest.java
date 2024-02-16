@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -212,12 +213,12 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  public void test_toMap() throws IOException {
+  public void test_toMap() throws Exception {
     String expectedJson = new String(Files.readAllBytes(new File("src/test/resources/cluster.json").toPath()), "UTF-8");
     Map actual = cluster1.toMap();
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    assertEquals(expectedJson, mapper.writeValueAsString(actual));
+    JSONAssert.assertEquals(expectedJson, mapper.writeValueAsString(actual), true);
   }
 
   @SuppressWarnings("unchecked")

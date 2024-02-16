@@ -22,7 +22,7 @@ import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.statistics.registry.Statistic;
+import org.terracotta.management.model.stats.Statistic;
 
 import java.io.Serializable;
 import java.util.ArrayList;

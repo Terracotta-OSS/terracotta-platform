@@ -57,7 +57,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
   @Override
   protected void onReconnect(ClientDescriptor clientDescriptor, ReconnectData reconnectData) {
     if (reconnectData != null && clientMonitoringService != null) {
-      LOGGER.trace("onReconnect({})", clientDescriptor);
+      LOGGER.info("Client reconnecting: {}", clientDescriptor);
       exposeTags(clientDescriptor, reconnectData.tags);
       exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
       pushNotification(clientDescriptor, reconnectData.contextualNotification);

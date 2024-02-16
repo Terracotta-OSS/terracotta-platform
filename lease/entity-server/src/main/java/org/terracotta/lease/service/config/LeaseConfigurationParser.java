@@ -17,18 +17,21 @@ package org.terracotta.lease.service.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -63,24 +66,15 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
 
   @Override
   public LeaseConfiguration parse(Element element, String source) {
-    NodeList childElements = element.getElementsByTagNameNS(NAMESPACE_STRING, LEASE_LENGTH_ELEMENT_NAME);
+    LeaseElement leaseElement = parser().apply(element);
 
-    if (childElements.getLength() != 1) {
-      LOGGER.error("Found " + childElements.getLength() + " lease-length elements. The XSD should have prevented this.");
-      throw new AssertionError("The schema for connection-leasing element requires one and only one lease-length element");
-    }
-
-    Element leaseLengthElement = (Element) childElements.item(0);
-
-    String leaseLengthString = leaseLengthElement.getTextContent();
-    LOGGER.info("Found lease length XML text: " + leaseLengthString);
+    String leaseLengthString = leaseElement.getLeaseValue();
 
     if (leaseLengthString.compareToIgnoreCase(MAX) == 0) {
       return new LeaseConfiguration(MAX_LEASE_LENGTH);
     }
 
-    String timeUnitString = leaseLengthElement.getAttribute(TIME_UNIT_ATTRIBUTE_NAME);
-    LOGGER.info("Found lease length time unit: " + timeUnitString);
+    String timeUnitString = leaseElement.getTimeUnit();
 
     TimeUnit timeUnit;
     try {
@@ -101,5 +95,32 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
     }
 
     return new LeaseConfiguration(TimeUnit.MILLISECONDS.convert(leaseLength, timeUnit));
+  }
+
+  private Function<Element, LeaseElement> parser() {
+    return (element -> {
+      NodeList childElements = element.getElementsByTagNameNS(NAMESPACE_STRING, LEASE_LENGTH_ELEMENT_NAME);
+
+      if (childElements.getLength() != 1) {
+        LOGGER.error("Found " + childElements.getLength() + " lease-length elements. The XSD should have prevented this.");
+        throw new AssertionError("The schema for connection-leasing element requires one and only one lease-length element");
+      }
+
+      Element leaseLengthElement = (Element)childElements.item(0);
+
+      String leaseLengthString = leaseLengthElement.getTextContent();
+      LOGGER.info("Found lease length XML text: " + leaseLengthString);
+
+      String timeUnitString = leaseLengthElement.getAttribute(TIME_UNIT_ATTRIBUTE_NAME);
+      LOGGER.info("Found lease length time unit: " + timeUnitString);
+
+      LeaseElement leaseElement = new LeaseElement(leaseLengthString, timeUnitString);
+
+      return leaseElement;
+    });
+  }
+
+  public ConfigValidator getConfigValidator() {
+    return new LeaseConfigValidator(parser());
   }
 }

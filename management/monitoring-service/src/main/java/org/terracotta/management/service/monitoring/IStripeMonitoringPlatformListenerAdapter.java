@@ -77,14 +77,17 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
   @Override
   public boolean addNode(PlatformServer sender, String[] parents, String name, Serializable value) {
-    if (parents == null || parents.length == 0) {
+    if (parents == null) {
+      return true;
+    }
+    if (parents.length < 2 && !name.equals("state")) {
       return true;
     }
     LOGGER.trace("[0] addNode({}, {}, {})", sender.getServerName(), String.join("/", parents), name);
 
     if ("platform".equals(parents[0])) {
       // handle platform/state compared to platform/[clients|entities|fetched]/<id>
-      String entryType = "state".equals(name) ? name : parents[parents.length - 1];
+      String entryType = "state".equals(name) ? name : parents[1];
 
       switch (entryType) {
 
@@ -111,8 +114,12 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
             Utils.warnOrAssert(LOGGER, "[0] addNode({}, {}, {}): unable to add client: not an active server", sender.getServerName(), String.join("/", parents), name);
             return false;
           }
-          clients.put(name, (PlatformConnectedClient) value);
-          delegate.clientConnected(currentActive, (PlatformConnectedClient) value);
+          if (value instanceof PlatformConnectedClient) {
+            clients.put(name, (PlatformConnectedClient) value);
+            delegate.clientConnected(currentActive, (PlatformConnectedClient) value);
+          } else {
+            delegate.clientAddProperty(clients.get(parents[parents.length-1]), name, value.toString());
+          }
           return true;
         }
 

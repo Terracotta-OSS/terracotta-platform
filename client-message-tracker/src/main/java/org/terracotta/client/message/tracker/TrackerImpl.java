@@ -15,19 +15,20 @@
  */
 package org.terracotta.client.message.tracker;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Predicate;
-import java.util.stream.LongStream;
 
-public class TrackerImpl<R> implements Tracker<R> {
+class TrackerImpl<R> implements Tracker<R> {
 
   private final Predicate<Object> trackerPolicy;
-  private final ConcurrentMap<Long, R> trackedValues;
-  private volatile long lastReconciledId = 0;
+  private final SortedMap<Long, R> trackedValues;
 
   /**
    * Constructor taking a predicate to define the tracking policy. If the predicate returns true, the source will
@@ -36,50 +37,44 @@ public class TrackerImpl<R> implements Tracker<R> {
    * @param trackerPolicy defines if a source is tracked or not
    */
   @SuppressWarnings("unchecked")
-  public TrackerImpl(Predicate<?> trackerPolicy) {
+  TrackerImpl(Predicate<?> trackerPolicy) {
     this.trackerPolicy = (Predicate<Object>) trackerPolicy;
-    this.trackedValues = new ConcurrentHashMap<>();
-  }
-
-  long getLastReconciledId() {
-    return lastReconciledId;
+    this.trackedValues = new TreeMap<>();
   }
 
   @Override
   public void track(long id, Object source, R value) {
     if (id > 0 && trackerPolicy.test(source)) {
-      trackedValues.put(id, value);
+      placeTrackedValue(id, value);
     }
+  }
+  
+  private synchronized void placeTrackedValue(long id, R value) {
+    trackedValues.put(id, value);
   }
 
   @Override
-  public R getTrackedValue(long id) {
+  public synchronized R getTrackedValue(long id) {
     return trackedValues.get(id);
   }
 
   @Override
-  public void reconcile(long id) {
-    long lastId = lastReconciledId;
-    if (id > lastId) {
-      LongStream.range(lastId, id).forEach(i -> trackedValues.remove(i));
-      while (id > lastReconciledId) {
-        lastReconciledId = id;
-      }
-    }
+  public synchronized void reconcile(long id) {
+    trackedValues.headMap(id).clear();
   }
 
   @Override
-  public Map<Long, R> getTrackedValues() {
-    return trackedValues;
+  public synchronized Map<Long, R> getTrackedValues() {
+    return Collections.unmodifiableMap(new HashMap(trackedValues));
   }
 
   @Override
-  public void loadOnSync(Map<Long, R> trackedValues) {
+  public synchronized void loadOnSync(Map<Long, R> trackedValues) {
     this.trackedValues.putAll(trackedValues);
   }
 
   @Override
-  public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("TrackedResponses", trackedValues.keySet());
+  public synchronized void addStateTo(StateDumpCollector stateDumper) {
+    stateDumper.addState("TrackedResponses", new ArrayList<>(trackedValues.keySet()));
   }
 }

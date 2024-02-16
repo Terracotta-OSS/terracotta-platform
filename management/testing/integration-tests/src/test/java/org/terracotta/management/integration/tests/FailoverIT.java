@@ -28,6 +28,7 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -82,7 +83,7 @@ public class FailoverIT extends AbstractHATest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
 
-    assertEquals(readJson("topology-after-failover.json"), readJsonStr(actual));
+    JSONAssert.assertEquals(readJson("topology-after-failover.json").toString(), readJsonStr(actual).toString(), true);
   }
 
   @Test

@@ -29,7 +29,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.6-SNAPSHOT</version>
+    <version>5.7-SNAPSHOT</version>
   </parent>
 
   <groupId>org.terracotta.voltron.proxy</groupId>
@@ -43,7 +43,7 @@
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

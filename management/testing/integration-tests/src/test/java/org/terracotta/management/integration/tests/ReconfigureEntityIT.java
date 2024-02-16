@@ -29,6 +29,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -81,7 +82,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     String currentTopo = toJson(cluster.toMap()).toString();
     String actual = removeRandomValues(currentTopo);
     String expected = readJson("topology-before-reconfigure.json").toString();
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
@@ -90,7 +91,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     currentTopo = toJson(cluster.toMap()).toString();
     actual = removeRandomValues(currentTopo);
     expected = readJson("topology-reconfigured.json").toString();
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
   }
 
   @Test
@@ -109,7 +110,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     String actual = removeRandomValues(currentJson);
     String expected = readJson("notifications-after-reconfigure.json").toString();
 
-    assertEquals(expected, actual);
+    JSONAssert.assertEquals(expected, actual, true);
   }
 
 }

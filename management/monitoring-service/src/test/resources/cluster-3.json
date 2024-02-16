@@ -41,6 +41,10 @@
     "clientId" : "111@127.0.0.1:name:uuid-1",
     "hostName" : "localhost",
     "tags" : [ ],
+    "properties" : {
+        "clientReportedAddress" : "localhost:65432",
+        "version" : "1.2.0"
+    },
     "connections" : [ {
       "id" : "uuid-1:SINGLE:server-1:127.0.0.1:5678",
       "logicalConnectionUid" : "uuid-1",

@@ -16,7 +16,7 @@
 package org.terracotta.voltron.proxy.client;
 
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.InvocationBuilder;
@@ -59,8 +59,8 @@ public class VoltronProxyInvocationHandlerTest {
     final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
-    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
+    when(builder.message(ArgumentMatchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(ArgumentMatchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(ProxyEntityResponse.messageResponse(Void.TYPE, null));

@@ -68,7 +68,7 @@ class DefaultStatisticService implements StatisticService, Closeable {
   @Override
   public void addStatisticCollector(EntityManagementRegistry registry) {
     long consumerId = registry.getMonitoringService().getConsumerId();
-    LOGGER.trace("[{}] addStatisticCollector()", consumerId);
+    LOGGER.info("[{}] Adding ability to collect statistics to entity management registry", consumerId);
 
     // The context for the collector is created from the the registry of the entity wanting server-side providers.
     // We create a provider that will receive management calls to control the global voltron's statistic collector.
@@ -101,7 +101,7 @@ class DefaultStatisticService implements StatisticService, Closeable {
 
   @Override
   public void close() {
-    LOGGER.trace("close()");
+    LOGGER.info("Closing statistic service");
     ExecutorUtil.shutdownNow(managementScheduler);
   }
 

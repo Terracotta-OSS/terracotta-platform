@@ -61,16 +61,25 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       totalSize += size;
       OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(r.getName());
-      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size, (res, update) -> {
-        for (EntityManagementRegistry registry : registries) {
-          Map<String, String> attrs = new HashMap<>();
-          attrs.put("oldThreshold", String.valueOf(update.old));
-          attrs.put("threshold", String.valueOf(update.now));
-          attrs.put("capacity", String.valueOf(res.capacity()));
-          attrs.put("available", String.valueOf(res.available()));
-          registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
-        }
-      });
+      OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(identifier.getName(), size,
+          (res, update) -> {
+            for (EntityManagementRegistry registry : registries) {
+              Map<String, String> attrs = new HashMap<>();
+              attrs.put("oldThreshold", String.valueOf(update.old));
+              attrs.put("threshold", String.valueOf(update.now));
+              attrs.put("capacity", String.valueOf(res.capacity()));
+              attrs.put("available", String.valueOf(res.available()));
+              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
+            }
+          },
+          (res, oldCapacity, newCapacity) -> {
+            for (EntityManagementRegistry registry : registries) {
+              Map<String, String> attrs = new HashMap<>();
+              attrs.put("oldCapacity", Long.toString(oldCapacity));
+              attrs.put("newCapacity", Long.toString(newCapacity));
+              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
+            }
+          });
       resources.put(identifier, offHeapResource);
 
       Map<String, Object> properties = new HashMap<>();

@@ -17,7 +17,7 @@ package org.terracotta.management.registry;
 
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
-import org.terracotta.management.registry.collect.StatisticRegistry;
+import org.terracotta.management.model.stats.StatisticRegistry;
 import org.terracotta.statistics.registry.Statistic;
 
 import java.io.Serializable;

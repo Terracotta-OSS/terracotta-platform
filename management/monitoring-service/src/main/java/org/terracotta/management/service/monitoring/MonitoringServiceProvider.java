@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.sequence.BoundaryFlakeSequenceGenerator;
@@ -65,18 +64,13 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   private DefaultManagementDataListener managementDataListener;
   private Collection<ManageableServerComponent> manageablePlugins;
 
-  public MonitoringServiceProvider() {
-    // because only passthrough is calling close(), not tc-core, so this is to cleanly close services (thread pools) at shutdown
-    Runtime.getRuntime().addShutdownHook(new Thread(this::close));
-  }
-
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
     return providedServiceTypes;
   }
 
   @Override
-  public void prepareForSynchronization() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() {
   }
 
   @Override
@@ -92,8 +86,16 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
   @Override
   public void addStateTo(StateDumpCollector dump) {
     TopologyService topologyService = this.topologyService;
-    if (topologyService != null) {
+
+    if (topologyService == null) {
+      dump.addState("status", "The TopologyService was not loaded.");
+      return;
+    }
+
+    if (topologyService.isCurrentServerActive()) {
       dump.addState("cluster", topologyService.getClusterCopy().toMap());
+    } else {
+      dump.addState("status", "This is a passive server, so it is unaware of connected clients and other stripe members.");
     }
   }
 
@@ -118,14 +120,14 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
 
     // get or create a shared registry used to do aggregated operations on all consumer registries (i.e. management calls)
     if (SharedEntityManagementRegistry.class == serviceType) {
-      LOGGER.trace("[{}] getService({})", consumerID, SharedEntityManagementRegistry.class.getSimpleName());
+      LOGGER.info("[{}] getService({})", consumerID, SharedEntityManagementRegistry.class.getSimpleName());
       return serviceType.cast(sharedManagementRegistry);
     }
 
     // get or creates a client-side monitoring service
     if (ClientMonitoringService.class == serviceType) {
       if (configuration instanceof ClientMonitoringServiceConfiguration) {
-        LOGGER.trace("[{}] getService({})", consumerID, ClientMonitoringService.class.getSimpleName());
+        LOGGER.info("[{}] getService({})", consumerID, ClientMonitoringService.class.getSimpleName());
         ClientMonitoringServiceConfiguration clientMonitoringServiceConfiguration = (ClientMonitoringServiceConfiguration) configuration;
         DefaultClientMonitoringService clientMonitoringService = new DefaultClientMonitoringService(
             consumerID,
@@ -141,7 +143,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
     // get or creates a monitoring accessor service (for tms)
     if (ManagementService.class == serviceType) {
       if (configuration instanceof ManagementServiceConfiguration) {
-        LOGGER.trace("[{}] getService({})", consumerID, ManagementService.class.getSimpleName());
+        LOGGER.info("[{}] getService({})", consumerID, ManagementService.class.getSimpleName());
         DefaultManagementService managementService = new DefaultManagementService(consumerID, topologyService, firingService);
         return serviceType.cast(managementService);
       } else {
@@ -155,7 +157,7 @@ public class MonitoringServiceProvider implements ServiceProvider, Closeable {
         AbstractManagementRegistryConfiguration managementRegistryConfiguration = (AbstractManagementRegistryConfiguration) configuration;
         boolean activeEntity = managementRegistryConfiguration.isActive();
 
-        LOGGER.trace("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), activeEntity, configuration.getClass().getSimpleName());
+        LOGGER.info("[{}] getService({}) isActive={}, config={}", consumerID, EntityManagementRegistry.class.getSimpleName(), activeEntity, configuration.getClass().getSimpleName());
 
         // create an active or passive monitoring service
         IMonitoringProducer monitoringProducer = managementRegistryConfiguration.getMonitoringProducer();
