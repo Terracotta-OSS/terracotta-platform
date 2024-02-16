@@ -72,7 +72,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   VoltronProxyInvocationHandler(final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint, Collection<Class<?>> events, final Codec codec) {
     this.entityClientEndpoint = entityClientEndpoint;
-    handler = Executors.newSingleThreadExecutor(r -> new Thread(r, "Message Handler for " + entityClientEndpoint));
+    String threadName = "Message Handler for " + entityClientEndpoint.toString();
+    handler = Executors.newSingleThreadExecutor(r -> new Thread(r, threadName));
     this.listeners = new ConcurrentHashMap<>();
     if (!events.isEmpty()) {
       for (Class<?> aClass : events) {
