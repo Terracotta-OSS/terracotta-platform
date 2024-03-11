@@ -38,7 +38,6 @@ public class SetCommand2x3IT extends DynamicConfigIT {
   @Test
   public void testAutoRestart() {
     int passiveId = waitForNPassives(1, 1)[0];
-    stopNode(1, passiveId); // simulate a node down
     String exclude = "stripe.1.node." + passiveId + ".tc-properties.foo=bar";
 
     String[] cli = concat(
@@ -56,9 +55,7 @@ public class SetCommand2x3IT extends DynamicConfigIT {
 
     for (int s = 1; s <= 2; s++) {
       for (int n = 1; n <= 3; n++) {
-        if (s != 1 && n != passiveId) {
-          assertFalse(usingTopologyService(s, n, TopologyService::mustBeRestarted));
-        }
+        assertFalse(usingTopologyService(s, n, TopologyService::mustBeRestarted));
       }
     }
   }

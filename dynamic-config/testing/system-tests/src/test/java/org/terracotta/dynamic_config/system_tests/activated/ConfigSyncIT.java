@@ -67,7 +67,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     stopNode(1, passiveNodeId);
 
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(1, activeNodeId), "-setting", "offheap-resources.main=1GB", "-force"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
@@ -95,7 +95,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // active entity will return with the failure
     // passive entity will not fail and commit
     assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        configTool("set", "-connect-to", "localhost:" + getNodePort(1, activeNodeId), "-setting", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO", "-force"),
         is(not(successful())));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows

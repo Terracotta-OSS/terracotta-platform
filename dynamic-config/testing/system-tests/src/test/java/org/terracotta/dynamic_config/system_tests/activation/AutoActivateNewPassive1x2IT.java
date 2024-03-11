@@ -113,7 +113,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     // trigger some changes
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE"), is(successful()));
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE", "-force"), is(successful()));
 
     // let's say we need to repair / or make a node join...
     // we will be able to add it through a restrictive activation
