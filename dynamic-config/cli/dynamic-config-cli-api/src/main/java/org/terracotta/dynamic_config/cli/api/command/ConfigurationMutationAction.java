@@ -64,6 +64,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationMutationAction.class);
 
   protected boolean autoRestart;
+  protected boolean force;
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
@@ -81,6 +82,10 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   public void setRestartDelay(Measure<TimeUnit> restartDelay) {
     this.restartDelay = restartDelay;
+  }
+
+  public void setForce(boolean force) {
+    this.force = force;
   }
 
   @Override
@@ -256,7 +261,12 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
   }
 
   private boolean requiresAllNodesAlive() {
-    return configurations.stream().map(Configuration::getSetting).anyMatch(setting -> setting.requires(CLUSTER_ONLINE));
+    // By default, we require all nodes to be up to allow a DC change: the consensus system needs all nodes to be able to vote and prepare the change.
+    // This will also solve any potential partitioned config to happen (or loosing a change if a failover happens just after),
+    // in the case a nomad change is prepared at the same time a passive is synchronizing the DC configuration from active server.
+    // This can be overridden by the user if he knows what he is doing with: -force
+    // In any case, if the changes requires all nodes to be up (like SSL), we will require all nodes to be up even if -force is used.
+    return !force || configurations.stream().map(Configuration::getSetting).anyMatch(setting -> setting.requires(CLUSTER_ONLINE));
   }
 
   private void rollingRestart(Cluster cluster, Map<String, Endpoint> onlineNodesToRestart) {

@@ -79,7 +79,6 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +90,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
@@ -105,6 +105,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -145,6 +146,65 @@ public class DesynchronizedNomadConfigTest {
       DynamicConfigSyncData syncData = active.sync.getSyncData();
       passive.sync.sync(syncData);
       runNormalChange(nomadClient);
+    }
+  }
+
+  // This test is showing the issue that can happen when a node starts at the same time a nomad change is forced and prepared on the active,
+  // just at the same time (or a little after) it is sending its config to the passive that is syncing.
+  // A DC changes requires all nodes to be up in order to avoid such situation.
+  @Test
+  public void test_concurrent_sync_and_change() throws NomadException {
+    Path root = copy(rootName);
+    try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
+         FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"))) {
+      // 1. active starts sending changed to passive
+      DynamicConfigSyncData syncData = active.sync.getSyncData();
+
+      // 2. at the same time it accepts a change
+      try (NomadClient<NodeContext> nomadClient = createNomadClient(active)) {
+        runNormalChange(nomadClient, "2GB"); // currently succeeds, but should fail
+      }
+
+      // 3. passive syncs the previously sent changes in 1
+      passive.sync.sync(syncData);
+
+      // 3. active server has preparing (and also eventually committed) the change while passive is syncing
+      assertThat(active.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(2, MemoryUnit.GB))));
+
+      // 4. passive server has synced the changes, but the last one is missing
+      assertThat(passive.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(512, MemoryUnit.MB))));
+
+      // 4. we now have a cluster with a partitioned config.
+      try (NomadClient<NodeContext> nomadClient = createNomadClient(1, active, passive)) {
+        runNormalChange(nomadClient, "3GB"); // should succeed, but currently fails
+        fail();
+      } catch (IllegalStateException e) {
+        /* fails with:
+        java.lang.IllegalStateException: Two-Phase commit failed with 2 messages(s):
+(1) UNRECOVERABLE: Partitioned configuration on cluster. Subsets: [[host1:9410], [host2:9412]]
+(2) Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent or partitioned and cannot be trivially recovered.
+        */
+        assertThat(e.getMessage(), containsString("UNRECOVERABLE: Partitioned configuration on cluster"));
+      }
+
+      // If this issue is caught in time, the easier way to repair it is to restart the passive.
+      // But if this issue is not caught in time, and worse, the passive becomes active, then the last change is lost and the cluster might run into issues
+
+      // Let's simulate a passive restarts (new passive sync)
+      syncData = active.sync.getSyncData();
+      passive.sync.sync(syncData);
+
+      // now both servers are OK
+      assertThat(active.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(2, MemoryUnit.GB))));
+      assertThat(passive.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(2, MemoryUnit.GB))));
+
+      // and a change can be made
+      try (NomadClient<NodeContext> nomadClient = createNomadClient(1, active, passive)) {
+        runNormalChange(nomadClient, "3GB");
+      }
+
+      assertThat(active.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(3, MemoryUnit.GB))));
+      assertThat(passive.manager.getConfiguration().get().getCluster().getOffheapResources().orDefault().get("main"), is(equalTo(Measure.of(3, MemoryUnit.GB))));
     }
   }
 
@@ -358,6 +418,12 @@ public class DesynchronizedNomadConfigTest {
     }
   }
 
+  private NomadClient<NodeContext> createNomadClient(FakeNode node) {
+    List<NomadEndpoint<NodeContext>> endpoints = singletonList(node.getEndpoint());
+    NomadEnvironment environment = new NomadEnvironment();
+    return new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
+  }
+
   private NomadClient<NodeContext> createNomadClient(int idx, FakeNode active, FakeNode passive) {
     List<NomadEndpoint<NodeContext>> endpoints = idx == 0 ?
         asList(active.getEndpoint(), passive.getEndpoint()) :
@@ -378,10 +444,14 @@ public class DesynchronizedNomadConfigTest {
     return configurationConsistencyAnalyzer;
   }
 
-  private static void runNormalChange(NomadClient<NodeContext> nomadClient) {
+  private static void runNormalChange(NomadClient<NodeContext> nomadClient, String offheapValue) {
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-    nomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "2GB"));
+    nomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", offheapValue));
     failureRecorder.reThrowErrors();
+  }
+
+  private static void runNormalChange(NomadClient<NodeContext> nomadClient) {
+    runNormalChange(nomadClient, "2GB");
   }
 
   static class FakeNode implements Closeable {
@@ -416,7 +486,7 @@ public class DesynchronizedNomadConfigTest {
     }
 
     NomadClient<NodeContext> createNomadClient() {
-      List<NomadEndpoint<NodeContext>> endpoints = Collections.singletonList(getEndpoint());
+      List<NomadEndpoint<NodeContext>> endpoints = singletonList(getEndpoint());
       NomadEnvironment environment = new NomadEnvironment();
       return new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
     }

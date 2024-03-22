@@ -43,6 +43,9 @@ public class SetCommand extends RestartCommand {
   @Parameter(names = {"-auto-restart"}, description = "If a change requires some nodes to be restarted, the command will try to restart them if there are at least 2 nodes online per stripe. Default: false")
   boolean autoRestart = false;
 
+  @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
+  protected boolean force;
+
   @Inject
   public SetAction action;
 
@@ -61,6 +64,7 @@ public class SetCommand extends RestartCommand {
     action.setAutoRestart(autoRestart);
     action.setRestartWaitTime(getRestartWaitTime());
     action.setRestartDelay(getRestartDelay());
+    action.setForce(force);
 
     action.run();
   }
