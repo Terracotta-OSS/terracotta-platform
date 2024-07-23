@@ -2,6 +2,7 @@
 <!--
 
     Copyright Terracotta, Inc.
+    Copyright Super iPaaS Integration LLC, an IBM Company 2024
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +23,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.21</version>
+    <version>5.23</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
@@ -376,11 +377,9 @@
               <exclude>src/main/java/org/terracotta/json/gson/internal/RuntimeTypeAdapter.java</exclude>
               <exclude>**/README</exclude>
               <exclude>**/src/test/resources/**</exclude>
-              <exclude>**/src/main/resources/**</exclude>
               <exclude>**/.idea/**</exclude>
               <exclude>**/nbproject/**</exclude>
               <exclude>**/*.adoc</exclude>
-              <exclude>**/pom.xml</exclude>
               <exclude>**/*.txt</exclude>
               <exclude>.mvn/**</exclude>
               <exclude>mvnw</exclude>
@@ -500,33 +499,9 @@
 
   <developers>
     <developer>
-      <name>Myron Scott</name>
-      <email>Myron.Scott@terracottatech.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
-      <organizationUrl>https://terracotta.org</organizationUrl>
-    </developer>
-    <developer>
-      <name>Venkata Sairam Madduri</name>
-      <email>venkatasairam.madduri@softwareag.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
-      <organizationUrl>https://terracotta.org</organizationUrl>
-    </developer>
-    <developer>
-      <name>Mobasherul Haque</name>
-      <email>mdmobasherul.haque@softwareag.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
-      <organizationUrl>https://terracotta.org</organizationUrl>
-    </developer>
-    <developer>
-      <name>Saurabh Agarwal</name>
-      <email>saurabh.agarwal@softwareag.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
-      <organizationUrl>https://terracotta.org</organizationUrl>
-    </developer>
-    <developer>
-      <name>Mathieu Carbou</name>
-      <email>mathieu.carbou@softwareag.com</email>
-      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <name>Terracotta Developers</name>
+      <email>tc-oss-dg@ibm.com</email>
+      <organization>Super iPaaS Integration LLC, an IBM Company</organization>
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
   </developers>
