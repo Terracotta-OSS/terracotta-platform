@@ -16,36 +16,36 @@
  */
 package org.terracotta.inet;
 
+import java.net.IDN;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.regex.Pattern;
+
+import static java.util.regex.Pattern.compile;
+
 public class HostAndIpValidator {
-  private final static String VALID_HOSTNAME = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$";
 
-  private static final String OCTET = "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
-  private static final String IPv4_ADDRESS = "(" + OCTET + "\\." + OCTET + "\\." + OCTET + "\\." + OCTET + ")";
-  // from https://www.regexpal.com/93988
-  private final static String IPv6_ADDRESS = "s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|" +
-      "(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|" +
-      "(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*";
+  private static final Pattern OCTET = compile("(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])");
+  private static final Pattern IPv4_ADDRESS = compile("(?:" + OCTET + "\\.){3}" + OCTET);
 
-  private static final String IPv4_MASK = "(3[0-2]|2[0-9]|1[0-9]|[0-9])";
-  private static final String IPv6_MASK = "([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])";
+  private static final Pattern IPv4_MASK = compile("(?:3[0-2]|2[0-9]|1[0-9]|[0-9])");
+  private static final Pattern IPv6_MASK = compile("(?:[0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])");
 
   private static final String IPv4_CIDR = IPv4_ADDRESS + "/" + IPv4_MASK;
-  private static final String IPv6_CIDR = IPv6_ADDRESS + "/" + IPv6_MASK;
 
   private static final String IPv4_CIDR_SUFFIX = "/32";
   private static final String IPv6_CIDR_SUFFIX = "/128";
 
   public static boolean isValidHost(String host) {
-    return host.matches(VALID_HOSTNAME);
+    try {
+      return !IDN.toASCII(host, IDN.ALLOW_UNASSIGNED | IDN.USE_STD3_ASCII_RULES).isEmpty();
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   public static boolean isValidIPv4(String ipAddress) {
-    return ipAddress.matches(IPv4_ADDRESS);
+    return IPv4_ADDRESS.matcher(ipAddress).matches();
   }
 
   public static boolean isValidIPv4Cidr(String cidr) {
@@ -53,19 +53,42 @@ public class HostAndIpValidator {
   }
 
   public static boolean isValidIPv6(String ipAddress) {
-    return isValidIPv6(ipAddress, false) || isValidIPv6(ipAddress, true);
+    if (ipAddress.startsWith("[")) {
+      try {
+        InetAddress.getAllByName(ipAddress);
+        return true;
+      } catch (UnknownHostException e) {
+        return false;
+      }
+    } else {
+      return isValidIPv6("[" + ipAddress + "]");
+    }
   }
 
   public static boolean isValidIPv6(String ipAddress, boolean brackets) {
     if (brackets) {
-      return ipAddress.matches("\\[" + IPv6_ADDRESS + "\\]");
+      if (ipAddress.startsWith("[")) {
+        try {
+          InetAddress.getAllByName(ipAddress);
+          return true;
+        } catch (UnknownHostException e) {
+          return false;
+        }
+      } else {
+        return false;
+      }
     } else {
-      return ipAddress.matches(IPv6_ADDRESS);
+      return isValidIPv6("[" + ipAddress + "]", true);
     }
   }
 
   public static boolean isValidIPv6Cidr(String cidr) {
-    return cidr.matches(IPv6_CIDR);
+    String[] parts = cidr.split("/", 2);
+    if (parts.length == 2) {
+      return isValidIPv6(parts[0]) && IPv6_MASK.matcher(parts[1]).matches();
+    } else {
+      return false;
+    }
   }
 
   public static String getIPv4Suffix() {
