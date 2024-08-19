@@ -506,7 +506,7 @@ public class Node implements Cloneable, PropertyHolder {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
-  public Node clone() {
+  public final Node clone() {
     Node clone = new Node();
     clone.dataDirs = this.dataDirs == null ? null : new ConcurrentHashMap<>(this.dataDirs);
     clone.backupDir = this.backupDir;
