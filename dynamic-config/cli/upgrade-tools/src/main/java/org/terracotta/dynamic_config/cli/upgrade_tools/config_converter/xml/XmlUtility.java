@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -79,7 +80,9 @@ public class XmlUtility {
   }
 
   public static String getPrettyPrintableXmlString(Node doc) throws TransformerException {
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    TransformerFactory factory = TransformerFactory.newInstance();
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    Transformer transformer = factory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
     transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
     transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
