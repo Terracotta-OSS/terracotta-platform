@@ -18,6 +18,9 @@ package org.terracotta.inet;
 
 import org.junit.Test;
 
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.terracotta.inet.HostAndIpValidator.isValidHost;
@@ -32,6 +35,7 @@ public class HostAndIpValidatorTest {
     assertThat(isValidHost("hostname"), is(true));
     assertThat(isValidHost("host-name"), is(true));
     assertThat(isValidHost("host-name123"), is(true));
+    assertThat(isValidHost("होस्टनाम"), is(true));
 
     assertThat(isValidHost("host_name"), is(false));
     assertThat(isValidHost("host%%name"), is(false));
@@ -44,6 +48,10 @@ public class HostAndIpValidatorTest {
     assertThat(isValidIPv4("0.0.0.0"), is(true));
     assertThat(isValidIPv4("127.0.0.1"), is(true));
 
+    assertThat(isValidIPv4("17.1.1.01"), is(false));
+    assertThat(isValidIPv4("17.1.01.1"), is(false));
+    assertThat(isValidIPv4("17.01.1.1"), is(false));
+    assertThat(isValidIPv4("017.1.1.1"), is(false));
     assertThat(isValidIPv4("10.10.10"), is(false));
     assertThat(isValidIPv4("10.10.10.10.10"), is(false));
     assertThat(isValidIPv4("400:400:400:400"), is(false));
