@@ -317,7 +317,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
-  public Cluster clone() {
+  public final Cluster clone() {
     final Cluster clone = new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
     clone.clientLeaseDuration = this.clientLeaseDuration;
     clone.clientReconnectWindow = this.clientReconnectWindow;

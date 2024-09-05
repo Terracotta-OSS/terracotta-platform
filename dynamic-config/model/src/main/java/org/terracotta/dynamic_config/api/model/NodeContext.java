@@ -90,7 +90,7 @@ public class NodeContext implements Cloneable {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
-  public NodeContext clone() {
+  public final NodeContext clone() {
     return new NodeContext(cluster.clone(), nodeUID);
   }
 

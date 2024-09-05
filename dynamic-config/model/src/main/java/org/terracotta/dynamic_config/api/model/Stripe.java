@@ -124,7 +124,7 @@ public class Stripe implements Cloneable, PropertyHolder {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
-  public Stripe clone() {
+  public final Stripe clone() {
     Stripe copy = new Stripe();
     copy.nodes = this.nodes.stream().map(Node::clone).collect(toCollection(CopyOnWriteArrayList::new));
     copy.name = this.name;
