@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
-import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
+import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.api.server.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
 import javax.management.MBeanServer;

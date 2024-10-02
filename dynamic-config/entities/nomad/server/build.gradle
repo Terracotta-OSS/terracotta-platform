@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  service project(':dynamic-config:api')
+  implementation project(':dynamic-config:entities:nomad:common')
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.entities'
+  artifactId = 'dynamic-config-nomad-entity-server'
+  name = 'Dynamic Config Nomad Entity'
+}

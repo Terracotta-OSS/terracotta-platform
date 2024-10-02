@@ -1,0 +1,3 @@
+[submodule "build-logic/terracotta-gradle-plugins"]
+	path = build-logic/terracotta-gradle-plugins
+	url = https://github.com/Terracotta-OSS/terracotta-gradle-plugins.git
