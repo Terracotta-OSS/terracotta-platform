@@ -1,0 +1,94 @@
+pluginManagement {
+  plugins {
+    id 'org.asciidoctor.jvm.convert' version '4.0.3'
+    id 'org.asciidoctor.jvm.gems' version '4.0.3'
+    id 'biz.aQute.bnd.builder' version '6.4.0'
+  }
+  includeBuild 'build-logic'
+}
+
+plugins {
+  id 'org.terracotta.build.cache'
+}
+
+rootProject.name = 'terracotta-platform'
+
+include ':client-message-tracker',
+    ':common:test-utilities',
+    ':common:inet',
+    ':common:json',
+    ':common:nomad',
+    ':common:output-service',
+    ':common:sanskrit',
+    ':common:structures',
+    ':platform-base',
+    ':runnel',
+    ':voltron-proxy:common',
+    ':voltron-proxy:client',
+    ':voltron-proxy:server',
+    // entities
+    ':communicator:common',
+    ':communicator:client',
+    ':communicator:server'
+
+    // ':data-root-resource'
+    // ':diagnostic:client'
+    // ':diagnostic:common'
+    // ':diagnostic:model'
+    // ':diagnostic:service'
+    // ':diagnostic:service-api'
+    // ':docs'
+    // ':dynamic-config:api'
+    // ':dynamic-config:cli:cli-support'
+    // ':dynamic-config:cli:config-tool'
+    // ':dynamic-config:cli:dynamic-config-cli-api'
+    // ':dynamic-config:cli:upgrade-tools'
+    // ':dynamic-config:cli:upgrade-tools-oss'
+    // ':dynamic-config:entities:management-entity:server'
+    // ':dynamic-config:entities:nomad-entity:client'
+    // ':dynamic-config:entities:nomad-entity:common'
+    // ':dynamic-config:entities:nomad-entity:server'
+    // ':dynamic-config:entities:topology-entity:client'
+    // ':dynamic-config:entities:topology-entity:common'
+    // ':dynamic-config:entities:topology-entity:server'
+    // ':dynamic-config:json'
+    // ':dynamic-config:model'
+    // ':dynamic-config:server:configuration-provider'
+    // ':dynamic-config:server:configuration-repository'
+    // ':dynamic-config:server:server-api'
+    // ':dynamic-config:server:services'
+    // ':dynamic-config:testing:entity'
+    // ':dynamic-config:testing:support'
+    // ':dynamic-config:testing:system-tests'
+    // ':galvan-platform-support'
+    // ':healthchecker-entity:api'
+    // ':healthchecker-entity:client-impl'
+    // ':healthchecker-entity:common'
+    // ':healthchecker-entity:server-impl'
+    // ':kit'
+    // ':layout'
+    // ':lease:api'
+    // ':lease:common'
+    // ':lease:entity-api'
+    // ':lease:entity-client'
+    // ':lease:entity-common'
+    // ':lease:entity-server'
+    // ':lease:passthrough-leased-connection-api'
+    // ':lease:system-test'
+    // ':management:cluster-topology'
+    // ':management:management-model'
+    // ':management:management-registry'
+    // ':management:monitoring-service'
+    // ':management:monitoring-service-api'
+    // ':management:nms-agent-entity:client'
+    // ':management:nms-agent-entity:common'
+    // ':management:nms-agent-entity:server'
+    // ':management:nms-entity:client'
+    // ':management:nms-entity:common'
+    // ':management:nms-entity:server'
+    // ':management:sequence-generator'
+    // ':management:testing:doc'
+    // ':management:testing:integration-tests'
+    // ':management:testing:'
+    // ':management:sample-entity'
+    // ':offheap-resource'

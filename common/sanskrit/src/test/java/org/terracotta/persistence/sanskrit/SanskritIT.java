@@ -16,14 +16,13 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import java.nio.file.Path;
+
+import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
-
-import java.nio.file.Path;
-
-import static org.junit.Assert.assertEquals;
 
 public class SanskritIT {
   private final SanskritMapper mapper = new JsonSanskritMapper();

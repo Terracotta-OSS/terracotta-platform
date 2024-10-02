@@ -1,0 +1,58 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: "${{ matrix.os }}:jdk-${{ matrix.jdk }}:jvm-${{ matrix.jvm }}"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        jdk: [8]
+        jvm: [8, 11, 17, 21]
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      SEGMENT_DOWNLOAD_TIMEOUT_MINS: 10
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      - name: "Setup JDK ${{ matrix.jdk }}"
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ matrix.jdk }}
+
+      - name: "Setup JVM ${{ matrix.jvm }}"
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ matrix.jvm }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build with Gradle
+        run: ./gradlew check -x dependencyCheckAggregate --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}

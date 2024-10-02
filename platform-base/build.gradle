@@ -1,0 +1,11 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'platform-base'
+  name = 'ServerInfo Server Plugin'
+}
