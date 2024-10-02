@@ -1,0 +1,35 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.xjc'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+sourceSets {
+  xml {
+    xjcTargetPackage = 'org.terracotta.data.config'
+  }
+}
+
+dependencies {
+  service project(':dynamic-config:server:api')
+  service project(':management:server:api')
+  service "org.terracotta:statistics:$terracottaStatisticVersion"
+  
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+
+  xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
+  xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+
+  testImplementation project(':common:test-utilities')
+  testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
+
+  xmlXjcEpisodes "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'data-root-resource'
+  name = 'Data Root Server Resource'
+}

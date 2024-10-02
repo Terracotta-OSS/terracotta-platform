@@ -1,0 +1,21 @@
+#!/bin/sh
+# Copyright Terracotta, Inc.
+# Copyright Super iPaaS Integration LLC, an IBM Company 2017, 2024
+
+BIN_DIR="\$(cd "\$(dirname "\$0")" || exit; pwd)" || exit
+${tooldir_evaluation}
+
+# this will only happen if using sag installer
+if [ -r "\${BIN_DIR}/setenv.sh" ] ; then
+  . "\${BIN_DIR}/setenv.sh"
+fi
+
+if [ ! -d "\${JAVA_HOME}" ]; then
+   echo "ERROR: JAVA_HOME must point to Java installation."
+   echo "    \${JAVA_HOME}"
+   exit 2
+fi
+
+JAVA="\${JAVA_HOME}/bin/java"
+
+exec "\${JAVA}" ${java_opts} \${JAVA_OPTS} -jar "\${TOOL_DIR}/${jar}" ${java_args} "\$@"

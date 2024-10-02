@@ -1,0 +1,19 @@
+// import org.asciidoctor.gradle.base.process.ProcessMode
+// import org.asciidoctor.gradle.jvm.AsciidoctorTask
+
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.asciidoctor.jvm.convert'
+  id 'org.asciidoctor.jvm.gems'
+}
+
+copyright.check('src/main/asciidoc')
+
+repositories {
+    ruby.gems()
+}
+
+dependencies {
+  asciidoctorGems 'rubygems:coderay:1.1.2'
+}

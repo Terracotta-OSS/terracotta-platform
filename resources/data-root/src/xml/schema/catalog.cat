@@ -1,0 +1,6 @@
+#
+# Copyright Terracotta, Inc.
+# Copyright Super iPaaS Integration LLC, an IBM Company 2017, 2024
+#
+
+PUBLIC "http://www.terracotta.org/config" "classpath:/terracotta.xsd"

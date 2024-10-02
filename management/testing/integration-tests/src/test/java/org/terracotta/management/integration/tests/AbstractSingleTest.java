@@ -43,7 +43,7 @@ public abstract class AbstractSingleTest extends AbstractTest {
 
   @Rule
   public Cluster voltron = newCluster()
-      .in(Paths.get("target", "galvan"))
+      .in(Paths.get("build", "galvan", "tests"))
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)

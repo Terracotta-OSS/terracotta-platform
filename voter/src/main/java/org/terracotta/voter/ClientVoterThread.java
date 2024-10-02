@@ -39,7 +39,7 @@ public class ClientVoterThread implements AutoCloseable {
   private final Properties connectionProperties;
   private final ScheduledExecutorService exec;
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientVoterThread.class);
-  
+
   private volatile ScheduledFuture<?> currentTask;
 
   public ClientVoterThread(ClientVoterManager mgr, String id, ScheduledExecutorService clock, Properties props) {
@@ -55,11 +55,11 @@ public class ClientVoterThread implements AutoCloseable {
     }
     return mgr.register(id);
   }
-  
+
   public ClientVoterManager getVoterManager() {
     return mgr;
   }
-  
+
   @Override
   public void close() {
     if (currentTask != null) {

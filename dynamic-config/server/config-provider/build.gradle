@@ -1,0 +1,27 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  service project(':dynamic-config:server:api')
+  service project(':diagnostic:server:api')
+  service project(':common:json')
+
+  voltron "org.terracotta.internal:configuration-provider:$terracottaCoreVersion"
+  voltron "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+
+  implementation project(':dynamic-config:json')
+  implementation project(':dynamic-config:repository')
+  implementation "com.beust:jcommander:$jcommanderVersion"
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+
+  testImplementation project(':common:test-utilities')
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.server'
+  artifactId = 'dynamic-config-configuration-provider'
+  name = 'Dynamic Config Server Configuration Provider'
+}

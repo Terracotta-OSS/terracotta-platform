@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':dynamic-config:api')
+  api project(':common:json')
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config'
+  artifactId = 'dynamic-config-json'
+  name = 'Dynamic Config Json Modules'
+}

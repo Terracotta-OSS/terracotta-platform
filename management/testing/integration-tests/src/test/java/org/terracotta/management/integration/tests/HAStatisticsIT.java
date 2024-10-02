@@ -31,7 +31,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void can_do_remote_management_calls_on_servers() throws Exception {
     Set<String> servers = new HashSet<>();
-    
+
     try {
       triggerServerStatComputation();
 
@@ -54,7 +54,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void test_passive_stats() throws Exception {
     Set<String> servers = new HashSet<>();
-    
+
     try {
       triggerServerStatComputation();
 

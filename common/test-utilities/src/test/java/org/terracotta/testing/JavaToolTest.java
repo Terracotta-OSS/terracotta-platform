@@ -35,7 +35,7 @@ import static org.hamcrest.Matchers.is;
 public class JavaToolTest {
 
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "build"), false);
 
   @Test
   public void threadDumpToMemory() {

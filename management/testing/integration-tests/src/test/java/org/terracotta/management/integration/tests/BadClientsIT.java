@@ -66,7 +66,7 @@ public class BadClientsIT extends AbstractSingleTest {
 
     foo2.close();
     cacheFactory2.getConnection().close();
-    
+
     do {
       count = nmsService.readTopology().clientStream()
           .filter(client -> client.getClientIdentifier().getConnectionUid().equals(uuid))

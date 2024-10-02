@@ -1,0 +1,30 @@
+:: Copyright Terracotta, Inc.
+:: Copyright Super iPaaS Integration LLC, an IBM Company 2017, 2024
+
+@echo off
+setlocal EnableExtensions EnableDelayedExpansion
+
+pushd "%~dp0"
+set "BIN_DIR=%CD%"
+popd
+
+${tooldir_evaluation}
+
+if exist "%BIN_DIR%\\setenv.bat" (
+  pushd "%BIN_DIR%" && (
+    call .\\setenv.bat
+    popd
+  )
+)
+
+if not defined JAVA_HOME (
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
+)
+
+set JAVA="%JAVA_HOME%\\bin\\java.exe"
+
+%JAVA% ${java_opts} %JAVA_OPTS% -jar "%TOOL_DIR%\\${jar}" ${java_args} %*
+
+exit /b %ERRORLEVEL%
+endlocal

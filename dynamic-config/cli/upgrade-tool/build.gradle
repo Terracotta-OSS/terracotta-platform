@@ -1,0 +1,30 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  implementation project(':dynamic-config:cli:api')
+  implementation project(':dynamic-config:cli:jcommander')
+  implementation project(':dynamic-config:repository')
+  implementation project(':dynamic-config:json')
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  
+  // server apis
+  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+
+  // xml plugins
+  implementation "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  implementation xmlConfig(project(':resources:data-root'))
+  implementation xmlConfig(project(':resources:offheap'))
+  implementation xmlConfig(project(':lease:server'))
+
+  testImplementation project(':common:test-utilities')
+  testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.cli'
+  artifactId = 'dynamic-config-cli-upgrade-tools'
+}

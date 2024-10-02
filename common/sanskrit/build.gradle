@@ -1,0 +1,18 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+
+  testImplementation project(':common:json')
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.common'
+  artifactId = 'common-sanskrit'
+  name = 'Sanskrit'
+}

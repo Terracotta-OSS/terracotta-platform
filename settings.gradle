@@ -1,0 +1,128 @@
+pluginManagement {
+  plugins {
+    id 'biz.aQute.bnd.builder' version '6.4.0'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.3.0'
+    id 'org.asciidoctor.jvm.convert' version '4.0.3'
+    id 'org.asciidoctor.jvm.gems' version '4.0.3'
+    id 'org.owasp.dependencycheck' version '8.4.3'
+  }
+  includeBuild 'build-logic'
+}
+
+rootProject.name = 'terracotta-platform'
+
+include ':common:test-utilities',
+    ':common:inet',
+    ':common:json',
+    ':common:nomad',
+    ':common:output-service',
+    ':common:runnel',
+    ':common:sanskrit',
+    ':common:structures',
+
+    // voltron proxy API
+    ':voltron-proxy:common',
+    ':voltron-proxy:client',
+    ':voltron-proxy:server',
+
+    // communicator API
+    ':communicator:common',
+    ':communicator:client',
+    ':communicator:server',
+
+    // management API
+    ':management:sequence-generator',
+    ':management:model',
+    ':management:registry',
+
+    // dynamic-config API
+    ':dynamic-config:model',
+    ':dynamic-config:api',
+    ':dynamic-config:json',
+    ':dynamic-config:repository',
+
+    // diagnostic service API
+    ':diagnostic:model',
+    ':diagnostic:common',
+    ':diagnostic:client',
+    
+    // lease API
+    ':lease:common',
+    ':lease:client',
+
+    // voltron server API
+    ':diagnostic:server:api',
+    ':dynamic-config:server:api',
+    ':management:server:api',
+
+    // voltron resources
+    ':resources:data-root',
+    ':resources:offheap',
+
+    // voltron services
+    ':client-message-tracker',
+    ':diagnostic:server:services',
+    ':dynamic-config:server:config-provider',
+    ':dynamic-config:server:services',
+    ':lease:server',
+    ':management:server:services',
+    ':platform-base',
+
+    // voltron healthchecker entity
+    ':healthchecker:common',
+    ':healthchecker:client',
+    ':healthchecker:server',
+
+    // voltron dynamic-config entities
+    ':dynamic-config:entities:management:server',
+    ':dynamic-config:entities:nomad:common',
+    ':dynamic-config:entities:nomad:client',
+    ':dynamic-config:entities:nomad:server',
+    ':dynamic-config:entities:topology:common',
+    ':dynamic-config:entities:topology:client',
+    ':dynamic-config:entities:topology:server',
+
+    // voltron management entities
+    ':management:entities:nms:common',
+    ':management:entities:nms:client',
+    ':management:entities:nms:server',
+    ':management:entities:nms-agent:common',
+    ':management:entities:nms-agent:client',
+    ':management:entities:nms-agent:server',
+
+    // dynamic-config CLI
+    ':dynamic-config:cli:api',
+    ':dynamic-config:cli:jcommander',
+    ':dynamic-config:cli:config-tool',
+    ':dynamic-config:cli:upgrade-tool',
+    ':dynamic-config:cli:upgrade-tool-oss',
+
+    // voter CLI
+    ':voter',
+
+    // doc
+    ':docs',  
+
+    // kit layout
+    ':platform-layout',
+
+    // kit (used for testing only - not deployed)
+    ':kit',
+
+    // testing support (angela, galvan, passthrough, etc)
+    ':dynamic-config:testing:galvan',
+    ':dynamic-config:testing:support',
+    ':lease:testing:passthrough',
+
+    ':lease:testing:integration-tests',
+
+    // long-running management tests
+    ':management:testing:entity',
+    ':management:testing:examples',
+    ':management:testing:integration-tests',
+
+    // long-running dynamic-config tests
+    ':dynamic-config:testing:entity',
+    ':dynamic-config:testing:integration-tests'
+    
+    

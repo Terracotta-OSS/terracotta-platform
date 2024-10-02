@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':dynamic-config:api')
+  api "org.terracotta:entity-server-api:$terracottaApisVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.server'
+  artifactId = 'dynamic-config-server-api'
+  name = 'Dynamic Config Server API'
+}

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.terracotta.testing;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,6 +41,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author Mathieu Carbou
  */
+@SuppressFBWarnings("ENV_USE_PROPERTY_INSTEAD_OF_ENV")
 public class JavaBinary {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JavaBinary.class);

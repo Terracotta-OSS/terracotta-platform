@@ -16,11 +16,11 @@
  */
 package org.terracotta.voter;
 
-import org.terracotta.connection.ConnectionException;
-
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+
+import org.terracotta.connection.ConnectionException;
 
 public interface ClientVoterManager {
 
@@ -55,17 +55,17 @@ public interface ClientVoterManager {
   void close();
 
   boolean isVoting();
-  
+
   boolean isRegistered();
-  
+
   long generation();
-  
+
   long lastVotedGeneration();
-  
+
   void zombie();
 
   boolean isConnected();
-  
+
   boolean register(String id) throws TimeoutException;
 
   /**

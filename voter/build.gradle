@@ -1,0 +1,30 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.tool'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  implementation project(':dynamic-config:json')
+  implementation project(':dynamic-config:cli:api')
+  implementation project(':dynamic-config:cli:jcommander')
+  implementation "org.terracotta:connection-api:$terracottaApisVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+  testImplementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
+}
+
+tool {
+  name = 'voter'
+  mainClass = 'org.terracotta.voter.cli.TCVoterMain'
+  javaOptions = ['-Dlogback.configurationFile=logback-voter.xml']
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'voter'
+  name = 'Voter CLI'
+}

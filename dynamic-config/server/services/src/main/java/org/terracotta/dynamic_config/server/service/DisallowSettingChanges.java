@@ -20,7 +20,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.api.server.NomadPermissionChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;

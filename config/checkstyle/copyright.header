@@ -1,0 +1,7 @@
+^#!
+^<\?xml.*>$
+^<!DOCTYPE .*>$
+^\W*$
+^\W*Copyright Terracotta, Inc.$
+^\W*Copyright Super iPaaS Integration LLC, an IBM Company (?:\d{4}, )?(?:\d{4})\W*$
+^\W*$

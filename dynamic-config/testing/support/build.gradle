@@ -1,0 +1,24 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':common:json')
+  api project(':common:output-service')
+  api project(':common:test-utilities')
+  api project(':diagnostic:client')
+  api project(':dynamic-config:cli:config-tool')
+  api project(':dynamic-config:cli:upgrade-tool')
+  api "org.hamcrest:hamcrest-core:$hamcrestVersion"
+  api "org.hamcrest:hamcrest-library:$hamcrestVersion"
+  api "org.terracotta:angela:$terracottaAngelaVersion"
+  implementation project(':dynamic-config:json')
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.testing'
+  artifactId = 'dynamic-config-testing-support'
+  name = 'Dynamic Config Testing Support'
+}

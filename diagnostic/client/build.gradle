@@ -1,0 +1,19 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api "org.terracotta:connection-api:$terracottaApisVersion"
+  api project(':diagnostic:model')
+  api project(':diagnostic:common')
+
+  testImplementation project(':common:test-utilities')
+}
+
+deploy {
+  groupId = 'org.terracotta.diagnostic'
+  artifactId = 'diagnostic-client'
+  name = 'Diagnostic Client'
+}

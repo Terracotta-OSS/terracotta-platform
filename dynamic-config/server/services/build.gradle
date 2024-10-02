@@ -1,0 +1,18 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  service project(':dynamic-config:api')
+  voltron "org.terracotta.internal:management:$terracottaCoreVersion"
+  voltron "org.terracotta.internal:server-spi:$terracottaCoreVersion"
+  voltron "ch.qos.logback:logback-classic:$logbackVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.server'
+  artifactId = 'dynamic-config-services'
+  name = 'Dynamic Config Server Plugin'
+}

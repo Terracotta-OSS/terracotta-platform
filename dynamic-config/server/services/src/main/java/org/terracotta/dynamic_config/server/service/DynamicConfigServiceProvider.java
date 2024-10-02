@@ -25,16 +25,16 @@ import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
-import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
-import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
-import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
-import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
-import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
+import org.terracotta.dynamic_config.api.server.DynamicConfigNomadServer;
+import org.terracotta.dynamic_config.api.server.LicenseService;
+import org.terracotta.dynamic_config.api.server.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.api.server.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.api.server.PathResolver;
+import org.terracotta.dynamic_config.api.server.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
@@ -57,7 +57,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
-import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.accept;
+import static org.terracotta.dynamic_config.api.server.ConfigChangeHandler.accept;
 
 @BuiltinService
 public class DynamicConfigServiceProvider implements ServiceProvider {

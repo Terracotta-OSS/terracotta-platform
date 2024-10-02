@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright Super iPaaS Integration LLC, an IBM Company 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.state.NomadServerState;
 import org.terracotta.nomad.server.state.NomadStateChange;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,12 +47,14 @@ public class NomadServerImpl<T> implements NomadServer<T> {
   private final NomadServerState<T> state;
   private ChangeApplicator<T> changeApplicator;
 
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public NomadServerImpl(NomadServerState<T> state, ChangeApplicator<T> changeApplicator) throws NomadException {
     this.state = state;
     this.changeApplicator = changeApplicator;
     init();
   }
 
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
   public NomadServerImpl(NomadServerState<T> state) throws NomadException {
     this(state, null);
   }

@@ -1,0 +1,15 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  implementation project(':healthchecker:common')
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'healthchecker-server'
+  name = 'Healthchecker Entity'
+}

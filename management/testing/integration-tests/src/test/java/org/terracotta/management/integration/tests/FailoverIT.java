@@ -128,19 +128,19 @@ public class FailoverIT extends AbstractHATest {
     });
 
     assertThat(serverNames.size(), equalTo(1));
-    
+
     /*
-    
+
     If you set logback-ext.xml in trace mode, now you shouldn't see these kind of logs on the server:
-    
+
 [ManagementScheduler-1] TRACE org.terracotta.management.service.monitoring.DefaultPassiveEntityMonitoringService - [2] pushStatistics(3)
 [ManagementScheduler-1] TRACE org.terracotta.management.service.monitoring.DefaultDataListener - [2] pushBestEffortsData(2, testServer1, server-entity-statistics)
 [ManagementScheduler-1] WARN org.terracotta.management.service.monitoring.DefaultDataListener - [2] pushBestEffortsData(2, testServer1, server-entity-statistics) IGNORED: sender is the current active server
-    
+
     The management registry created by the passive Nms Entity was not closed after a promotion to active, and thus the statistic collector
     was still running in background, and sending data through the voltron callback mechanism. Hopefully there was a check that dropped the
-    bad incoming data to avoid sending it to the client. But the statistic collector was still consuming CPU resources. 
-    
+    bad incoming data to avoid sending it to the client. But the statistic collector was still consuming CPU resources.
+
     */
   }
 

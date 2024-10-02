@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.test_support.mapper;
 
 import com.tc.classloader.OverrideService;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.server.api.GroupPortMapper;
+import org.terracotta.dynamic_config.api.server.GroupPortMapper;
 
 @OverrideService("org.terracotta.dynamic_config.server.configuration.startup.DefaultGroupPortMapperImpl")
 public class TestGroupPortMapper implements GroupPortMapper {

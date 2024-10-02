@@ -1,0 +1,32 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.galvan'
+}
+
+configurations {
+  galvanServerPlugins 
+}
+
+dependencies {
+  galvanServerPlugins project(':management:testing:entity')
+
+  testImplementation project(':common:json')
+  testImplementation project(':diagnostic:client')
+  testImplementation project(':management:entities:nms:client')
+  testImplementation project(':management:entities:nms-agent:client')
+  testImplementation project(':management:testing:entity')
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+}
+
+sourceSets {
+  test {
+    copyright {
+      exclude '**/*.txt'
+    }
+  }
+}
+
+test {
+  jvmArgs "-XX:MaxDirectMemorySize=2048m"
+  systemProperty 'serverWorkingDir', project.layout.buildDirectory.get().dir('galvan').getAsFile().absolutePath
+}
