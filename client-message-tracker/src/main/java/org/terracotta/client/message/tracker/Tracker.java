@@ -21,8 +21,10 @@ import org.terracotta.entity.StateDumpable;
 import java.util.function.Predicate;
 
 /**
- * Keeps track of an entity's objects with their ids and their corresponding values.
- * The decision on whether or not to track an object is taken using the tracker policy of the implementation
+ * Keeps track of an entity's objects with their ids and their corresponding
+ * values.
+ * The decision on whether or not to track an object is taken using the tracker
+ * policy of the implementation
  *
  * @param <R> type of the value
  */
@@ -43,9 +45,9 @@ interface Tracker<M, R> extends StateDumpable {
    * The value is tracked if and only if the provided {@code object} is trackable,
    * which is determined using the tracker policy of the implementation.
    *
-   * @param id Incoming entity object ID
+   * @param id     Incoming entity object ID
    * @param object Incoming entity object
-   * @param value Outgoing entity value
+   * @param value  Outgoing entity value
    */
   void track(long track, long id, M object, R value);
 
@@ -58,7 +60,7 @@ interface Tracker<M, R> extends StateDumpable {
   R getTrackedValue(long id);
 
   /**
-   * 
+   *
    * @param id Tracked entity ID
    * @return Tracked entity request
    */
@@ -70,12 +72,13 @@ interface Tracker<M, R> extends StateDumpable {
    * @param id Incoming entity ID
    */
   void reconcile(long id);
+
   /**
    * determines if the transaction id is old enough that it was cleared from
    * the cached message stream
    *
    * @param id transactionid of the message in question
-   * @return true if the message has been removed from the cached stream 
+   * @return true if the message has been removed from the cached stream
    */
   boolean wasReconciled(long id);
 }

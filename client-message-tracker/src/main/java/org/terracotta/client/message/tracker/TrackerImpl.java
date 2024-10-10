@@ -16,13 +16,13 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.StateDumpCollector;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import org.terracotta.entity.StateDumpCollector;
 
 class TrackerImpl<M, R> implements Tracker<M, R> {
 
@@ -30,8 +30,8 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
   private volatile long reconciledMarker = 0L;
 
   /**
-   * Constructor taking a predicate to define the tracking policy. If the predicate returns true, the source will
-   * be tracked.
+   * Constructor taking a predicate to define the tracking policy. If the
+   * predicate returns true, the source will be tracked.
    *
    * @param trackerPolicy defines if a source is tracked or not
    */
@@ -45,7 +45,7 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
       placeTrackedValue(track, id, source, value);
     }
   }
-  
+
   private synchronized void placeTrackedValue(long insert, long id, M req, R value) {
     trackedValues.put(id, new RequestResponse<>(insert, id, req, value));
   }
@@ -54,7 +54,7 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
   public synchronized R getTrackedValue(long id) {
     return Optional.ofNullable(trackedValues.get(id)).map(RequestResponse::getResponse).orElse(null);
   }
-  
+
   @Override
   public synchronized M getTrackedRequest(long id) {
     return Optional.ofNullable(trackedValues.get(id)).map(RequestResponse::getRequest).orElse(null);
@@ -81,6 +81,7 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
   }
 
   static class RequestResponse<M, R> {
+
     private final long insert;
     private final long transaction;
     private final M request;

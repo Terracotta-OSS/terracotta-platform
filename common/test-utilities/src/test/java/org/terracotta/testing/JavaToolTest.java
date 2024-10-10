@@ -16,18 +16,17 @@
  */
 package org.terracotta.testing;
 
-import org.junit.Rule;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import static java.util.stream.Collectors.toList;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import org.junit.Rule;
+import org.junit.Test;
 
 /**
  * @author Mathieu Carbou
@@ -35,7 +34,7 @@ import static org.hamcrest.Matchers.is;
 public class JavaToolTest {
 
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "build"), false);
 
   @Test
   public void threadDumpToMemory() {
