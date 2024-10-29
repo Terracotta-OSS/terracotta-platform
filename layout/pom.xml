@@ -150,21 +150,6 @@
     </dependency>
 
     <!--
-      tools/upgrade/lib
-    -->
-
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>upgrade-tools-oss</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!--
       tools/voter/lib
     -->
 
