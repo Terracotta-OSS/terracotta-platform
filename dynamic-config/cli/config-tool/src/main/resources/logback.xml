@@ -31,7 +31,7 @@
     <appender-ref ref="STDERR"/>
   </root>
 
-  <logger name="com.terracottatech.tools" level="INFO" additivity="false">
+  <logger name="org.terracotta.tools" level="INFO" additivity="false">
     <appender-ref ref="STDERR"/>
   </logger>
 

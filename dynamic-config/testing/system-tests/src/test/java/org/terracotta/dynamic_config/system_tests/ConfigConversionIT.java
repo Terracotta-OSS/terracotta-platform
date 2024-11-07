@@ -33,7 +33,7 @@ import org.terracotta.dynamic_config.api.service.MalformedClusterException;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
-import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
+import org.terracotta.dynamic_config.api.server.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;

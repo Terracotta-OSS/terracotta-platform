@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
-import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
 
 /**
  * Handler for <pre>org.terracotta.dynamic-config.simulate</pre>

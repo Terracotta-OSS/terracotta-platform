@@ -1,1 +1,0 @@
-Mechanism classes to support creating a management registry and some providers of capabilities such as statistics, management calls, etc.

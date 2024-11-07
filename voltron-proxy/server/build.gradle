@@ -1,0 +1,19 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':voltron-proxy:common')
+  api "org.terracotta:entity-server-api:$terracottaApisVersion"
+  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+
+  testImplementation project(':voltron-proxy:client')
+}
+
+deploy {
+  groupId = 'org.terracotta.voltron.proxy'
+  artifactId = 'voltron-proxy-server'
+  name = 'Voltron Proxy Server'
+}

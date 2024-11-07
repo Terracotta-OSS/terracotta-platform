@@ -1,0 +1,20 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  testImplementation project(':common:test-utilities')
+}
+
+test {
+  forkEvery = 1
+  jvmArgs = ['-Dorg.terracotta.management.sequence.NodeIdSource=org.terracotta.management.sequence.MyNodeIdSource', '-Dorg.terracotta.management.sequence.TimeSource=org.terracotta.management.sequence.MyTimeSource']
+}
+
+deploy {
+  groupId = 'org.terracotta.management'
+  artifactId = 'sequence-generator'
+  name = 'Management Sequence Generator'
+}

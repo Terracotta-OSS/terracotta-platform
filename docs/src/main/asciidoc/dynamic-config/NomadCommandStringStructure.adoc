@@ -53,7 +53,7 @@ usability and possibly more power.
 Some configuration may contain sensitive information such as private keys or passwords. At the moment all such
 configuration is placed in files and protected using filesystem permissions. However, if we allow commands to provide
 such information then the sanskrit repository becomes something that must be secured with filesystem permissions and
-sharing the repository with Software AG support becomes more difficult. We will side-step this issue for now by not
+sharing the repository with support becomes more difficult. We will side-step this issue for now by not
 allowing a file upload command. Users must place such files on the server themselves. The configuration commands will
 only specify the paths to those files (e.g. security root directory path).
 

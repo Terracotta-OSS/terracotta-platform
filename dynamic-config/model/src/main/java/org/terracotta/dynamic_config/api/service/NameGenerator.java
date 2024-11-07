@@ -189,7 +189,7 @@ public class NameGenerator {
   private static String pickRandomStripeName(List<String> dict, List<String> used, Random random) {
     dict = new ArrayList<>(dict);
     dict.removeAll(used);
-    
+
     if (dict.isEmpty()) {
       String name;
       do {

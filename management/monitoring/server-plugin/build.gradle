@@ -1,0 +1,17 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  service project(':management:monitoring:server-api')
+  implementation project(':voltron-proxy:common')
+  testImplementation project(':common:json')
+}
+
+deploy {
+  groupId = 'org.terracotta.management'
+  artifactId = 'monitoring-service-plugin'
+  name = 'Monitoring Server Plugin'
+}
