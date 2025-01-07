@@ -6,8 +6,11 @@ plugins {
 
 dependencies {
   api project(':common:runnel')
-  api project(':dynamic-config:model')
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
+  compileOnlyApi project(':dynamic-config:model')
+  compileOnly "org.terracotta:common-api:$terracottaApisVersion"
+  testImplementation "org.terracotta:common-api:$terracottaApisVersion"
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
+  testImplementation project(':dynamic-config:model')
 }
 
 deploy {

@@ -5,13 +5,11 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:galvan:$terracottaGalvanVersion"
-  api "org.terracotta.internal:galvan-support:$terracottaCoreVersion"
+  api "org.terracotta.internal:galvan-support:$terracottaRuntimeVersion"
 
   implementation project(':common:test-utilities')
   implementation project(':dynamic-config:cli:upgrade-tool')
   implementation project(':dynamic-config:cli:upgrade-tool-oss')
-  implementation "org.terracotta:test-interfaces:$terracottaGalvanVersion"
   implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 }
 

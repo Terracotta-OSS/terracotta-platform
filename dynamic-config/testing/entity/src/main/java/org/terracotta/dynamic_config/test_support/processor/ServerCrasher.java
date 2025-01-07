@@ -17,6 +17,7 @@
 package org.terracotta.dynamic_config.test_support.processor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.LoggerFactory;
 
 public class ServerCrasher {
   //  CANNOT BE USED WITH INLINE SERVER TESTS
@@ -25,6 +26,7 @@ public class ServerCrasher {
     if (Boolean.getBoolean("restart.inline")) {
       throw new RuntimeException("server cannot be crashed in inline mode");
     }
+    LoggerFactory.getLogger(ServerCrasher.class).info("crashing server for test", new Exception());
     System.exit(99);
   }
 }

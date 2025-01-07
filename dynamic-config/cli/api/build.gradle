@@ -10,8 +10,9 @@ dependencies {
   api project(':diagnostic:client')
   api project(':dynamic-config:entities:nomad:client')
   implementation project(':dynamic-config:json')
-  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   testImplementation project(':common:test-utilities')
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

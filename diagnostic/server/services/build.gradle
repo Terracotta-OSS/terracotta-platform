@@ -9,6 +9,7 @@ dependencies {
   service project(':diagnostic:server:api')
   implementation project(':diagnostic:common')
   testImplementation project(':common:test-utilities')
+  testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

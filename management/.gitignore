@@ -1,5 +1,3 @@
-# Maven exclusions
-target/
 
 # IntelliJ exclusions
 /.idea/

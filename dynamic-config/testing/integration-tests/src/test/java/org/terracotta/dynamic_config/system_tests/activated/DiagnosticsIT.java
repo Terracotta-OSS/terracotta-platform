@@ -16,7 +16,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
@@ -33,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.connection.Diagnostics;
 
 @ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class DiagnosticsIT extends DynamicConfigIT {

@@ -5,8 +5,9 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
-  api "org.terracotta:packaging-support:$terracottaApisVersion"
+  compileOnly "org.terracotta:common-api:$terracottaApisVersion"
+  testImplementation "org.terracotta:common-api:$terracottaApisVersion"
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }
 
 deploy {

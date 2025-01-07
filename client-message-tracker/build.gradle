@@ -9,3 +9,7 @@ deploy {
   artifactId = 'terracotta-client-message-tracker'
   name = 'Client Message Tracker Server Plugin'
 }
+
+dependencies {
+    testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
+}

@@ -8,8 +8,8 @@ plugins {
 dependencies {
   implementation project(':dynamic-config:cli:api')
   implementation project(':dynamic-config:cli:jcommander')
-  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
-  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
 }
 

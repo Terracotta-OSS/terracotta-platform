@@ -6,8 +6,11 @@ plugins {
 
 dependencies {
   api project(':management:model')
+  compileOnly "org.terracotta:statistics:$terracottaStatisticVersion"
 
   testImplementation project(':common:json')
+  testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }
 
 deploy {

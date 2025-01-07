@@ -6,7 +6,9 @@ plugins {
 
 dependencies {
   api project(':management:entities:nms:common')
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  // common has the model as compileOnly
+  runtimeOnly project(':management:model')
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   api project(':voltron-proxy:client')
 }
 

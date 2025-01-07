@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
   api project(':communicator:common')
-  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  compileOnly "org.terracotta:server-api:$terracottaApisVersion"
 }
 
 deploy {

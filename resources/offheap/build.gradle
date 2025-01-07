@@ -16,12 +16,13 @@ dependencies {
   service project(':management:server:api')
   service "org.terracotta:statistics:$terracottaStatisticVersion"
 
-  voltron "org.terracotta:tc-tripwire-plugin:$terracottaTripwireVersion"
+  compileOnly "org.terracotta:server-api:$terracottaApisVersion"
+  testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
   
   xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
   xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
-  
+
   implementation project(':common:structures')
 
   xmlXjcEpisodes "org.terracotta:tcconfig-schema:$terracottaConfigVersion"

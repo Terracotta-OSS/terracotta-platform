@@ -16,7 +16,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -98,7 +97,6 @@ public class AttachStripeIT extends DynamicConfigIT {
     final int activeId = waitForActive(1);
 
     try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
-        new TerracottaConnectionService(),
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, activeId))),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),

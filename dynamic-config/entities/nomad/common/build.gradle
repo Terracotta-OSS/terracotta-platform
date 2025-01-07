@@ -5,9 +5,9 @@ plugins {
 }
 
 dependencies {
-  api project(':common:nomad')
+  compileOnlyApi project(':common:nomad')
   implementation project(':dynamic-config:json')
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:common-api:$terracottaApisVersion"
 }
 
 deploy {

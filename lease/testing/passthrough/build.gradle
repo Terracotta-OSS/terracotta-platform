@@ -6,7 +6,8 @@ plugins {
 
 dependencies {
   api project(':lease:client')
-  implementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
+  implementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
 }
 
 deploy {

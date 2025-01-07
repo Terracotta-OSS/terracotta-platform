@@ -16,7 +16,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -78,7 +77,6 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     startNode(1, 2);
 
     try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
-        new TerracottaConnectionService(),
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),

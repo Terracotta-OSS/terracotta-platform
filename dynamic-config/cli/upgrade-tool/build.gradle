@@ -12,7 +12,7 @@ dependencies {
   implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
   
   // server apis
-  implementation "org.terracotta:entity-server-api:$terracottaApisVersion"
+  api "org.terracotta:server-api:$terracottaApisVersion"
 
   // xml plugins
   implementation "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
@@ -21,7 +21,7 @@ dependencies {
   implementation xmlConfig(project(':lease:server'))
 
   testImplementation project(':common:test-utilities')
-  testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+  testRuntimeOnly "ch.qos.logback:logback-classic:$logbackVersion"
 }
 
 deploy {

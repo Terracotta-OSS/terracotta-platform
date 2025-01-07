@@ -15,6 +15,7 @@ dependencies {
   api "org.hamcrest:hamcrest-library:$hamcrestVersion"
   api "org.terracotta:angela:$terracottaAngelaVersion"
   implementation project(':dynamic-config:json')
+  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

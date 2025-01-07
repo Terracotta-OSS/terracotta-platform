@@ -6,7 +6,9 @@ plugins {
 
 dependencies {
   api project(':dynamic-config:entities:topology:common')
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  //  common above pulls compileOnly for below
+  runtimeOnly project(':dynamic-config:model')
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
 }
 
 deploy {
