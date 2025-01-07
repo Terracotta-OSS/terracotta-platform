@@ -5,13 +5,16 @@ plugins {
 }
 
 dependencies {
-  api project(':dynamic-config:api')
+  compileOnly project(':dynamic-config:api')
   api project(':common:sanskrit')
-  api project(':common:json')
+  compileOnly project(':common:json')
 
-  implementation project(':dynamic-config:json')
-  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  api project(':dynamic-config:json')
+  compileOnly "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 
+  testImplementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  testImplementation project(':dynamic-config:api')
+  testImplementation project(':common:json')
   testImplementation project(':common:test-utilities')
   testImplementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
 }
