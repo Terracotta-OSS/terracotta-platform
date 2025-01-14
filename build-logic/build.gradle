@@ -69,9 +69,9 @@ gradlePlugin {
       id = 'org.terracotta.build.convention.voltron'
       implementationClass = 'org.terracotta.build.conventions.VoltronConvention'
     }
-    tool {
-      id = 'org.terracotta.build.tool'
-      implementationClass = 'org.terracotta.build.plugins.ToolPlugin'
+    toolConvention {
+      id = 'org.terracotta.build.convention.tool'
+      implementationClass = 'org.terracotta.build.conventions.ToolConvention'
     }
   }
 }
