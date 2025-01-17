@@ -1,0 +1,85 @@
+plugins {
+  id 'java-gradle-plugin'
+}
+
+repositories {
+  gradlePluginPortal()
+  mavenCentral()
+}
+
+dependencies {
+  api 'org.terracotta.build:terracotta-gradle-plugins'
+  api 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.27'
+  api 'org.unbroken-dome.gradle-plugins:gradle-xjc-plugin:2.0.0'
+  api 'org.owasp:dependency-check-gradle:8.4.3'
+
+  implementation 'org.terracotta:terracotta-utilities-tools:0.0.16'
+
+  testImplementation platform('org.junit:junit-bom:5.10.0')
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.hamcrest:hamcrest:2.2'
+  testImplementation 'org.mockito:mockito-inline:5.2.0'
+
+  // On Java 9+ we must provide our own JAF implementation
+  if (JavaVersion.current().isJava9Compatible()) {
+    runtimeOnly 'com.sun.activation:javax.activation:1.2.0'
+  }
+}
+
+gradlePlugin {
+  plugins {
+    angelaConvention {
+      id = 'org.terracotta.build.convention.angela'
+      implementationClass = 'org.terracotta.build.conventions.AngelaConvention'
+    }
+    galvanConvention {
+      id = 'org.terracotta.build.convention.galvan'
+      implementationClass = 'org.terracotta.build.conventions.GalvanConvention'
+    }
+    baseConvention {
+      id = 'org.terracotta.build.convention.base'
+      implementationClass = 'org.terracotta.build.conventions.BaseConvention'
+    }
+    distributionConvention {
+      id = 'org.terracotta.build.convention.distribution'
+      implementationClass = 'org.terracotta.build.conventions.DistributionConvention'
+    }
+    javaLibraryConvention {
+      id = 'org.terracotta.build.convention.java-library'
+      implementationClass = 'org.terracotta.build.conventions.JavaLibraryConvention'
+    }
+    javaConvention {
+      id = 'org.terracotta.build.convention.java'
+      implementationClass = 'org.terracotta.build.conventions.JavaConvention'
+    }
+    javaBaseConvention {
+      id = 'org.terracotta.build.convention.java-base'
+      implementationClass = 'org.terracotta.build.conventions.JavaBaseConvention'
+    }
+    xjcConvention {
+      id = 'org.terracotta.build.convention.xjc'
+      implementationClass = 'org.terracotta.build.conventions.XjcConvention'
+    }
+    packageConvention {
+      id = 'org.terracotta.build.convention.package'
+      implementationClass = 'org.terracotta.build.conventions.PackageConvention'
+    }
+    voltronConvention {
+      id = 'org.terracotta.build.convention.voltron'
+      implementationClass = 'org.terracotta.build.conventions.VoltronConvention'
+    }
+    toolConvention {
+      id = 'org.terracotta.build.convention.tool'
+      implementationClass = 'org.terracotta.build.conventions.ToolConvention'
+    }
+  }
+}
+
+test {
+  useJUnitPlatform()
+  filter {
+    failOnNoMatchingTests = false
+  }
+  systemProperty("gradle-user-home",   gradle.gradleUserHomeDir)
+}

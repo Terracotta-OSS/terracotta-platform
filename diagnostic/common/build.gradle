@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':common:json')
+
+  testImplementation project(':common:structures')
+}
+
+deploy {
+  groupId = 'org.terracotta.diagnostic'
+  artifactId = 'diagnostic-common'
+}

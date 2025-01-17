@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class ClientVoterThread implements AutoCloseable {
   private final Properties connectionProperties;
   private final ScheduledExecutorService exec;
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientVoterThread.class);
-  
+
   private volatile ScheduledFuture<?> currentTask;
 
   public ClientVoterThread(ClientVoterManager mgr, String id, ScheduledExecutorService clock, Properties props) {
@@ -55,11 +55,11 @@ public class ClientVoterThread implements AutoCloseable {
     }
     return mgr.register(id);
   }
-  
+
   public ClientVoterManager getVoterManager() {
     return mgr;
   }
-  
+
   @Override
   public void close() {
     if (currentTask != null) {

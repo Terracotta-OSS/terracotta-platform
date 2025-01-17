@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
  */
 package org.terracotta.voter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.Diagnostics;
-import org.terracotta.connection.DiagnosticsFactory;
-
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.Diagnostics;
+import org.terracotta.connection.DiagnosticsFactory;
 
 public class ClientVoterManagerImpl implements ClientVoterManager {
 
@@ -37,7 +37,7 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public static final String MBEAN_NAME = "VoterManager";
 
   private final String hostPort;
-  public Diagnostics diagnostics;
+  Diagnostics diagnostics;
 
   private volatile boolean voting = false;
   private volatile long generation = INVALID_VOTER_RESPONSE;
@@ -95,17 +95,17 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     }
     return response;
   }
-  
+
   /**
-   * Parse the response from the server.  
-   * 
+   * Parse the response from the server.
+   *
    * The server should return a long based on current state
    * -1 if the voter that is trying to heartbeat is not registered
    * 0 for a valid heartbeat with no voting occuring
-   * any positive long means the server is requesting a vote in the 
+   * any positive long means the server is requesting a vote in the
    * generation returned in the long.
    * @param result
-   * @return 
+   * @return
    */
   private long parseResponse(String result) {
     try {
@@ -195,21 +195,21 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public boolean isVoting() {
     return voting;
   }
-  
+
   @Override
   public boolean isRegistered() {
     return generation >= 0;
   }
-  
+
   @Override
   public long generation() {
     return generation;
   }
-  
+
   @Override
   public long lastVotedGeneration() {
     return lastVotedGeneration;
-  }  
+  }
 
   @Override
   public void zombie() {

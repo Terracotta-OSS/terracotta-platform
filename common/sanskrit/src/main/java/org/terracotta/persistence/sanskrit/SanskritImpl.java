@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.terracotta.persistence.sanskrit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.persistence.sanskrit.change.SanskritChange;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import static org.terracotta.persistence.sanskrit.MarkableLineParser.LS;
  * The main class for reading and writing a Sanskrit append log.
  * This class is intended to be used by a single thread and so it is not thread-safe.
  */
+@SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
 public class SanskritImpl implements Sanskrit {
   private static final Logger LOGGER = LoggerFactory.getLogger(SanskritImpl.class);
 

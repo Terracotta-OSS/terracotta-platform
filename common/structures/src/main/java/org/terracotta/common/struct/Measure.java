@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.Objects;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
-public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<T>> {
+public final class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<T>> {
 
   private final BigInteger quantity;
 

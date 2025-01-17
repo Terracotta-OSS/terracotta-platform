@@ -1,0 +1,26 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.tool'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  implementation project(':dynamic-config:cli:api')
+  implementation project(':dynamic-config:cli:jcommander')
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+}
+
+tool {
+  name = 'config-tool'
+  mainClass = 'org.terracotta.dynamic_config.cli.config_tool.ConfigTool'
+  javaOptions = ['-Dlogback.configurationFile=logback-config-tool.xml']
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.cli'
+  artifactId = 'dynamic-config-cli-config-tool'
+  name = 'Dynamic Config config-tool CLI'
+}

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void can_do_remote_management_calls_on_servers() throws Exception {
     Set<String> servers = new HashSet<>();
-    
+
     try {
       triggerServerStatComputation();
 
@@ -54,7 +54,7 @@ public class HAStatisticsIT extends AbstractHATest {
   @Test
   public void test_passive_stats() throws Exception {
     Set<String> servers = new HashSet<>();
-    
+
     try {
       triggerServerStatComputation();
 

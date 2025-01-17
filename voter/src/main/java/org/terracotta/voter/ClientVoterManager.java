@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
  */
 package org.terracotta.voter;
 
-import org.terracotta.connection.ConnectionException;
-
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+
+import org.terracotta.connection.ConnectionException;
 
 public interface ClientVoterManager {
 
@@ -55,17 +55,17 @@ public interface ClientVoterManager {
   void close();
 
   boolean isVoting();
-  
+
   boolean isRegistered();
-  
+
   long generation();
-  
+
   long lastVotedGeneration();
-  
+
   void zombie();
 
   boolean isConnected();
-  
+
   boolean register(String id) throws TimeoutException;
 
   /**

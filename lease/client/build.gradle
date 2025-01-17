@@ -1,0 +1,19 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':lease:common')
+  api project(':common:structures')
+  api "org.terracotta:connection-api:$terracottaApisVersion"
+  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'lease-entity-client'
+  name = 'Lease Entity Client'
+}

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
-import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
-import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
-import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.api.server.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.api.server.PathResolver;
+import org.terracotta.dynamic_config.api.server.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
 import org.terracotta.dynamic_config.test_support.processor.MyDummyNomadAdditionChangeProcessor;

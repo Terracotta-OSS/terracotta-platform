@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.client.status.DiscoveryProcess;
 import org.terracotta.nomad.server.ChangeRequestState;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.time.Clock;
 import java.util.List;
 
@@ -39,7 +41,8 @@ public class NomadClient<T> implements AutoCloseable {
    * @param host    the name of the local machine
    * @param user    the name of the user the current process is running as
    */
-  public NomadClient(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
+  @SuppressFBWarnings("CT_CONSTRUCTOR_THROW")
+   public NomadClient(List<NomadEndpoint<T>> servers, String host, String user, Clock clock) {
     this.clock = clock;
     if (servers.isEmpty()) {
       throw new IllegalArgumentException("There must be at least one server");

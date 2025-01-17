@@ -1,0 +1,26 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':common:structures')
+  api project(':common:inet')
+
+  testImplementation project(':common:test-utilities')
+}
+
+sourceSets {
+  main {
+    copyright {
+      exclude '**/dict/*.txt'
+    }
+  }
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config'
+  artifactId = 'dynamic-config-model'
+  name = 'Dynamic Config Model'
+}

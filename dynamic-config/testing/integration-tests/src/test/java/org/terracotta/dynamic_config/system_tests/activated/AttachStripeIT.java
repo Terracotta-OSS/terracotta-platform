@@ -1,0 +1,122 @@
+/*
+ * Copyright Terracotta, Inc.
+ * Copyright IBM Corp. 2024, 2025
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.terracotta.dynamic_config.system_tests.activated;
+
+import com.terracotta.connection.api.TerracottaConnectionService;
+import org.junit.Before;
+import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntityFactory;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
+public class AttachStripeIT extends DynamicConfigIT {
+
+  @Before
+  public void setup() throws Exception {
+    startNode(1, 1);
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
+
+    // start the second node
+    startNode(1, 2);
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
+
+    //attach the second node
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+
+    //Activate cluster
+    activateCluster();
+  }
+
+  @Test
+  public void test_attach_stripe_to_activated_cluster() throws Exception {
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+    // start a 2 node stripe
+    startNode(2, 1);
+    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(1)));
+    startNode(2, 2);
+    assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+
+    // attach the new stripe to the activated 1x2 cluster to form a 2x2 cluster
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    waitForNPassives(2, 1);
+
+    // verify the #nodes in the new topology of the cluster
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(4)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(4)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(4)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(4)));
+
+    // verify the #stripes in the new topology of the cluster
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getStripeCount(), is(equalTo(2)));
+
+    // verify the #nodesperstripe in the new topology of the cluster
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripe(2).get().getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripe(2).get().getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
+  }
+
+  @Test
+  public void test_topology_entity_callback_onStripeAddition() throws Exception {
+    startNode(2, 1);
+    startNode(2, 2);
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+
+    final int activeId = waitForActive(1);
+
+    try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
+        new TerracottaConnectionService(),
+        Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, activeId))),
+        "dynamic-config-topology-entity",
+        getConnectionTimeout(),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getDiagnosticOperationTimeout()),
+        null)) {
+
+      CountDownLatch called = new CountDownLatch(1);
+
+      dynamicTopologyEntity.setListener(new DynamicTopologyEntity.Listener() {
+        @Override
+        public void onStripeAddition(Cluster cluster, UID addedStripeUID) {
+          called.countDown();
+        }
+      });
+
+      assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+
+      called.await();
+    }
+  }
+}

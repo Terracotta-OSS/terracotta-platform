@@ -1,0 +1,13 @@
+org.terracotta.build.conventions.AngelaConvention
+org.terracotta.build.conventions.BaseConvention
+org.terracotta.build.conventions.BlacklistConvention
+org.terracotta.build.conventions.CheckstyleConvention
+org.terracotta.build.conventions.DistributionConvention
+org.terracotta.build.conventions.GalvanConvention
+org.terracotta.build.conventions.JavaBaseConvention
+org.terracotta.build.conventions.JavaConvention
+org.terracotta.build.conventions.JavaLibraryConvention
+org.terracotta.build.conventions.SpotBugsConvention
+org.terracotta.build.conventions.ToolConvention
+org.terracotta.build.conventions.VoltronConvention
+org.terracotta.build.conventions.XjcConvention

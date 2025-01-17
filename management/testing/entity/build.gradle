@@ -1,0 +1,31 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.voltron'
+}
+
+dependencies {
+  service project(':dynamic-config:api')
+  service project(':management:server:api')
+  service project(':resources:offheap')
+  implementation project(':voltron-proxy:server')
+
+  compileOnly project(':voltron-proxy:client')
+  compileOnly project(':management:entities:nms-agent:client')
+  compileOnly "org.terracotta:entity-client-api:$terracottaApisVersion"
+
+  testImplementation project(':common:json')
+  testImplementation project(':management:entities:nms:client')
+  testImplementation project(':management:entities:nms:server')
+  testImplementation project(':management:entities:nms-agent:client')
+  testImplementation project(':management:entities:nms-agent:server')
+  testImplementation project(':management:server:services')
+  testImplementation project(':resources:offheap')
+  testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.management.testing'
+  artifactId = 'sample-entity'
+  name = 'Management Test Entity'
+}

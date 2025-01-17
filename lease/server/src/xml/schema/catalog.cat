@@ -1,0 +1,6 @@
+#
+# Copyright Terracotta, Inc.
+# Copyright IBM Corp. 2017, 2025
+#
+
+PUBLIC "http://www.terracotta.org/config" "classpath:/terracotta.xsd"

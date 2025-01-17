@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class DynamicConfigIT {
   }
 
   public DynamicConfigIT(Duration testTimeout) {
-    this(testTimeout, Paths.get(System.getProperty("user.dir"), "target", "test-data"));
+    this(testTimeout, Paths.get(System.getProperty("user.dir"), "build", "test-data"));
   }
 
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {

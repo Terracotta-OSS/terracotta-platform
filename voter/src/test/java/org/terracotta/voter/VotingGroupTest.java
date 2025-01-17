@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,6 @@
 
 package org.terracotta.voter;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.LoggerFactory;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,18 +30,28 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toMap;
+
+import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.containsString;
+import org.hamcrest.MatcherAssert;
 import static org.hamcrest.Matchers.hasProperty;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.slf4j.LoggerFactory;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 public class VotingGroupTest {
 
@@ -102,7 +102,6 @@ public class VotingGroupTest {
           when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
           when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
         } catch (TimeoutException to) {
-          
         }
         return mockClientVoterManager;
       }
@@ -152,7 +151,6 @@ public class VotingGroupTest {
           when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
           when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
         } catch (TimeoutException to) {
-          
         }
         return mockClientVoterManager;
       }
@@ -205,7 +203,6 @@ public class VotingGroupTest {
           when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
           when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
         } catch (TimeoutException to) {
-          
         }
         return mockClientVoterManager;
       }
@@ -259,7 +256,6 @@ public class VotingGroupTest {
           when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
           when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
         } catch (TimeoutException to) {
-          
         }
         return mockClientVoterManager;
       }

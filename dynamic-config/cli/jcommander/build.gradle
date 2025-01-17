@@ -1,0 +1,19 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':dynamic-config:model')
+  api project(':dynamic-config:cli:api')
+  api "com.beust:jcommander:$jcommanderVersion"
+  implementation "ch.qos.logback:logback-classic:$logbackVersion"
+  testImplementation project(':common:test-utilities')
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.cli'
+  artifactId = 'dynamic-config-cli-support'
+  name = 'Dynamic Config CLI JCommander Support'
+}

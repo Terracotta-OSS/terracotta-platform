@@ -1,0 +1,52 @@
+import org.terracotta.build.conventions.BaseConvention
+
+plugins {
+  id 'org.owasp.dependencycheck'
+  id 'org.terracotta.build.convention.base'
+  id 'io.github.gradle-nexus.publish-plugin'
+}
+
+gradle.includedBuilds.forEach { includedBuild ->
+  project.tasks.named('check') { parentBuildCheckTask ->
+    parentBuildCheckTask.dependsOn(includedBuild.task(':check'))
+  }
+}
+
+wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+}
+
+assert JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_1_8) : 'Terracotta Platform requires Java 8 or later to build'
+
+// Attention: these defaults may change in CI, see TcCi plugin
+dependencyCheck {
+  cveValidForHours=24
+  failBuildOnCVSS = 0 // Fail on all when not in CI (0-10)
+  suppressionFile = 'config/owasp-suppressions.xml'
+  skipConfigurations += ['checkstyle', 'spotbugs', 'asciidoctor']
+  analyzers {
+    assemblyEnabled = false // no .NET here, prevent warnings
+  }
+}
+
+nexusPublishing {
+  repositories {
+    sonatype {
+      username = sonatypeUser
+      password = sonatypePwd
+    }
+  }
+  // Sonatype is often very slow in these operations:
+  transitionCheckOptions {
+      delayBetween = Duration.ofSeconds((findProperty("delayBetweenRetriesInSeconds") ?: "10") as int)
+      maxRetries = (findProperty("numberOfRetries") ?: "100") as int
+  }
+}
+
+allprojects {
+  afterEvaluate { Project p ->
+    if (p.getPlugins().hasPlugin(BasePlugin)) {
+      assert p.getPlugins().hasPlugin(BaseConvention)
+    }
+  }
+}

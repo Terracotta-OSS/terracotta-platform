@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
-import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
+import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
 
 import java.util.Collections;
 

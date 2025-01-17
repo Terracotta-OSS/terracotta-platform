@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,30 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 /**
- * Entities that want once and only once message invocation guarantees can delegate their invokes to this service.
+ * Entities that want once and only once message invocation guarantees can
+ * delegate their invokes to this service.
  */
 @CommonComponent
 public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResponse> extends StateDumpable {
 
   /**
-   * Will return a cached response from a previous invocation of the same {@code message} with the given {@code context}
-   * if one existed. Else will apply {@code invokeFunction} and return the response after caching it.
+   * Will return a cached response from a previous invocation of the same
+   * {@code message} with the given {@code context}
+   * if one existed. Else will apply {@code invokeFunction} and return the
+   * response after caching it.
    *
-   * @param context invocation context
-   * @param message a message
+   * @param context        invocation context
+   * @param message        a message
    * @param invokeFunction the entity invocation logic
-   * @return a cached response if one is available, else the result of the {@code invokeFunction}
+   * @return a cached response if one is available, else the result of the
+   *         {@code invokeFunction}
    * @throws EntityUserException
    */
   R invoke(InvokeContext context, M message, BiFunction<InvokeContext, M, R> invokeFunction) throws EntityUserException;
 
   /**
-   * Notify that a client has disconnected from the cluster and all knowledge about that client can be cleared.
+   * Notify that a client has disconnected from the cluster and all knowledge
+   * about that client can be cleared.
    *
    * @param clientSourceId the client descriptor of the disconnected client
    */
@@ -59,10 +64,12 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @return a stream of tracked client sources
    */
   Stream<ClientSourceId> getTrackedClients();
+
   /**
    * lookup of duplicates has closed and will no longer occur
    */
   void closeDuplicatesWindow();
+
   /**
    * Lookup a response for a transaction for a client on a particular segment.
    *
@@ -73,7 +80,8 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
   R lookupResponse(ClientSourceId src, long txn);
 
   /**
-   * Get a stream of tracked messages ordered by sequence id - Order is important so replay is
+   * Get a stream of tracked messages ordered by sequence id - Order is important
+   * so replay is
    * sequenced correctly.
    *
    * @return a stream of ordered RecordedMessages
@@ -82,10 +90,11 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
 
   /**
    * load all the sequenced messages to the current message tracker
-   * 
+   *
    * @param recorded - a stream of recorded messages
    */
   void loadRecordedMessages(Stream<RecordedMessage<M, R>> recorded);
+
   /**
    * Destroys the {@code OOOMessageHandler}
    */

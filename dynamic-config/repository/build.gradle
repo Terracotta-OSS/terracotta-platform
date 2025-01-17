@@ -1,0 +1,23 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':dynamic-config:api')
+  api project(':common:sanskrit')
+  api project(':common:json')
+
+  implementation project(':dynamic-config:json')
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+
+  testImplementation project(':common:test-utilities')
+  testImplementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.server'
+  artifactId = 'dynamic-config-configuration-repository'
+  name = 'Dynamic Config Repository'
+}

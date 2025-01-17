@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,7 @@ public class NameGenerator {
   private static String pickRandomStripeName(List<String> dict, List<String> used, Random random) {
     dict = new ArrayList<>(dict);
     dict.removeAll(used);
-    
+
     if (dict.isEmpty()) {
       String name;
       do {

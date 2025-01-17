@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,8 +99,8 @@ public class BoundaryFlakeSequenceGeneratorTest {
     URLClassLoader cl1 = new URLClassLoader(cp, this.getClass().getClassLoader());
     URLClassLoader cl2 = new URLClassLoader(cp, this.getClass().getClassLoader());
 
-    Callable<String> runner1 = (Callable<String>) cl1.loadClass("org.terracotta.management.sequence.Runner").newInstance();
-    Callable<String> runner2 = (Callable<String>) cl2.loadClass("org.terracotta.management.sequence.Runner").newInstance();
+    Callable<String> runner1 = (Callable<String>) cl1.loadClass("org.terracotta.management.sequence.Runner").getDeclaredConstructor().newInstance();
+    Callable<String> runner2 = (Callable<String>) cl2.loadClass("org.terracotta.management.sequence.Runner").getDeclaredConstructor().newInstance();
 
     String seq1 = runner1.call();
     String seq2 = runner2.call();

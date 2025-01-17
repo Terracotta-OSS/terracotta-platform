@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':common:nomad')
+  implementation project(':dynamic-config:json')
+  api "org.terracotta:entity-common-api:$terracottaApisVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.entities'
+  artifactId = 'dynamic-config-nomad-entity-common'
+}

@@ -1,0 +1,17 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':management:registry')
+  api "org.terracotta:entity-server-api:$terracottaApisVersion"
+  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.management'
+  artifactId = 'monitoring-service-api'
+  name = 'Monitoring Server API'
+}

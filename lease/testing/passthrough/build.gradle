@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':lease:client')
+  implementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'passthrough-leased-connection-api'
+  name = 'Lease Passthrough Support'
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!--
+
+    Copyright Terracotta, Inc.
+    Copyright IBM Corp. 2024, 2025
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<xs:schema version="1.0" elementFormDefault="qualified"
+           xmlns:or="http://www.terracotta.org/config/offheap-resource"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tc="http://www.terracotta.org/config"
+           targetNamespace="http://www.terracotta.org/config/offheap-resource">
+
+  <xs:import namespace="http://www.terracotta.org/config"/>
+
+  <xs:element name="offheap-resources" type="or:offheap-resources-type" substitutionGroup="tc:config-content">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        An enumeration of the resources that will be made available by this service.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="offheap-resources-type">
+    <xs:sequence>
+      <xs:element name="resource" type="or:resource-type" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Definition of an offheap resource that can be consumed by Voltron entities.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="resource-type">
+    <xs:simpleContent>
+      <xs:extension base="xs:positiveInteger">
+        <xs:attribute name="name" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              Name by which the pool can be referenced from an entity.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="unit" type="or:memory-unit" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              The unit the resource size is expressed in.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:simpleType name="memory-unit">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="B"/>
+      <xs:enumeration value="kB"/>
+      <xs:enumeration value="MB"/>
+      <xs:enumeration value="GB"/>
+      <xs:enumeration value="TB"/>
+      <xs:enumeration value="PB"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

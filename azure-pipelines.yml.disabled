@@ -1,0 +1,147 @@
+# Copyright Terracotta, Inc.
+# Copyright IBM Corp. 2024, 2025
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# See shared code location for steps and parameters:
+# https://dev.azure.com/TerracottaCI/_git/terracotta
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: terracotta/terracotta
+
+jobs:
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "checks"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon"
+      gradleTasks: "checkstyle spotbugs"
+
+  # BUILD
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "build_lin_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: "build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "build_lin_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: "build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "build_win_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: "build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "build_win_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: "build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test"
+
+  # IT Management
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_management_lin_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: ":management:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_management_lin_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: ":management:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_management_win_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: ":management:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_management_win_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: ":management:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  # IT Dynamic-Config
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_dc_lin_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: ":dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_dc_lin_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "ubuntu-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: ":dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_dc_win_jdk17_jvm17"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=17"
+      gradleTasks: ":dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"
+
+  - template: build-templates/gradle-common.yml@templates
+    parameters:
+      jobName: "it_dc_win_jdk17_jvm21"
+      jdkVersion: "17"
+      vmImage: "windows-latest"
+      timeoutInMinutes: 15
+      options: "--no-daemon -PcompileVM=17 -PtestVM=21"
+      gradleTasks: ":dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest"

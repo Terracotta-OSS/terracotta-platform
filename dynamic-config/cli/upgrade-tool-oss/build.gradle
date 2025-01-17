@@ -1,0 +1,20 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  implementation project(':dynamic-config:model')
+  implementation project(':dynamic-config:cli:upgrade-tool')
+
+  implementation xmlConfig(project(':resources:data-root'))
+  
+  implementation "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta.dynamic-config.cli'
+  artifactId = 'upgrade-tools-oss'
+  name = 'Dynamic Config CLI upgrade-tool (OSS)'
+}

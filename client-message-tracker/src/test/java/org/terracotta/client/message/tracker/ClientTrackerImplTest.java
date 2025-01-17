@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.junit.Test;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ClientSourceId;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import org.junit.Test;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
 public class ClientTrackerImplTest {
 
@@ -62,11 +61,11 @@ public class ClientTrackerImplTest {
       public boolean matches(ClientDescriptor cd) {
         return cd.getSourceId().toLong() == id;
       }
-      
+
       @Override
       public int hashCode() {
         int hash = 7;
-        hash = 67 * hash + (int)((id >> 32) & 0xffff) + (int)(id & 0xffff);
+        hash = 67 * hash + (int) ((id >> 32) & 0xffff) + (int) (id & 0xffff);
         return hash;
       }
 
@@ -81,7 +80,7 @@ public class ClientTrackerImplTest {
         if (getClass() != obj.getClass()) {
           return false;
         }
-        return ((ClientSourceId)obj).toLong() == id;
+        return ((ClientSourceId) obj).toLong() == id;
       }
     };
   }

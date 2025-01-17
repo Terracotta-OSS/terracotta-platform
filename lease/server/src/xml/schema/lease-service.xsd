@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!--
+
+    Copyright Terracotta, Inc.
+    Copyright IBM Corp. 2024, 2025
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<xs:schema version="1.0" elementFormDefault="qualified"
+           xmlns:lease="http://www.terracotta.org/service/lease"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tc="http://www.terracotta.org/config"
+           targetNamespace="http://www.terracotta.org/service/lease">
+
+  <xs:import namespace="http://www.terracotta.org/config"/>
+
+  <xs:element name="connection-leasing" type="lease:connection-leasing-type" substitutionGroup="tc:service-content">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Configuration for connection leasing.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="connection-leasing-type">
+    <xs:sequence>
+      <xs:element name="lease-length" type="lease:lease-length-type" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            The length of leases to issue.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="lease-length-type">
+    <xs:simpleContent>
+      <xs:extension base="xs:positiveInteger">
+        <xs:attribute name="unit" type="lease:time-unit" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              The unit the lease length is expressed in.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:simpleType name="time-unit">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="milliseconds"/>
+      <xs:enumeration value="seconds"/>
+      <xs:enumeration value="minutes"/>
+      <xs:enumeration value="hours"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
  * <p>
  * IMPORTANT: this class is not thread-safe. It has to be constructed and used (parse) by the same thread.
  */
-class ConfigurationParser {
+final class ConfigurationParser {
 
   private final List<Configuration> configurations;
   private final Version version;

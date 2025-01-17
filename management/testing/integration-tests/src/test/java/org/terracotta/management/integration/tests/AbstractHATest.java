@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright Super iPaaS Integration LLC, an IBM Company 2024
+ * Copyright IBM Corp. 2024, 2025
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class AbstractHATest extends AbstractTest {
 
   @Rule
   public Cluster voltron = newCluster(2)
-      .in(Paths.get("target" ,"galvan"))
+      .in(Paths.get("build", "galvan", "tests"))
       .withServiceFragment(resourceConfig)
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")

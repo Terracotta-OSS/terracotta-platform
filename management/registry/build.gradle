@@ -1,0 +1,17 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api project(':management:model')
+
+  testImplementation project(':common:json')
+}
+
+deploy {
+  groupId = 'org.terracotta.management'
+  artifactId = 'management-registry'
+  name = 'Management Registry'
+}

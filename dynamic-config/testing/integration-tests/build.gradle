@@ -1,0 +1,43 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.angela'
+  id 'org.terracotta.build.hosts'
+}
+
+configurations {
+  angelaServerPlugins 
+}
+
+dependencies {
+  angelaServerPlugins project(':dynamic-config:testing:entity')
+
+  testImplementation project(':dynamic-config:cli:upgrade-tool-oss')
+  testImplementation project(':dynamic-config:cli:upgrade-tool')
+  testImplementation project(':dynamic-config:entities:topology:client')
+  testImplementation project(':dynamic-config:json')
+  testImplementation project(':dynamic-config:repository')
+  testImplementation project(':dynamic-config:testing:support')
+  testImplementation project(':voter')
+
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+}
+
+sourceSets {
+  test {
+    copyright {
+      exclude '**/*.txt'
+    }
+  }
+}
+
+test {
+  if (System.getenv("DC_IT_MAX_FORKS") != null) {
+      maxParallelForks = Integer.parseInt(System.getenv("DC_IT_MAX_FORKS"))
+  }
+  jvmArgs "-XX:MaxDirectMemorySize=2048m"
+  jvmArgs "-Dorg.terracotta.disablePortReleaseCheck=true"
+  systemProperty 'org.terracotta.voter.topology.fetch.interval', '5000'
+  hosts {
+    customLocalHosts = ["127.0.0.1", "localhost", "${'hostname'.execute().text.trim()}", "testhostname"]
+  }
+}

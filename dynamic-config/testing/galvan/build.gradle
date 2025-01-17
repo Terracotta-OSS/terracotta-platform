@@ -1,0 +1,22 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.deploy'
+  id 'biz.aQute.bnd.builder'
+}
+
+dependencies {
+  api "org.terracotta:galvan:$terracottaGalvanVersion"
+  api "org.terracotta.internal:galvan-support:$terracottaCoreVersion"
+
+  implementation project(':common:test-utilities')
+  implementation project(':dynamic-config:cli:upgrade-tool')
+  implementation project(':dynamic-config:cli:upgrade-tool-oss')
+  implementation "org.terracotta:test-interfaces:$terracottaGalvanVersion"
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'galvan-platform-support'
+  name = 'Platform Galvan Support'
+}
