@@ -1,23 +1,4 @@
-
-<!--
-If this is your first time contributing to the project (or it's been a while), please consider reviewing https://github.com/Terracotta-OSS/terracotta-platform/blob/master/CONTRIBUTING.md
--->
-
-
-This PR...
-
-Fixes issue #
-
-## Changes
--
-
------------------
-## Checklist
-- [ ] tested locally
-- [ ] updated the docs
-- [ ] added appropriate test
-- [ ] signed-off on the DCO referenced in the CONTRIBUTING link below via `git commit -s` on my commits, and submit this code under terms of the Apache 2.0 license and assign copyright to this project owners
-  (If you're not using command-line, you can use a [browser extension](https://github.com/scottrigby/dco-gh-ui) )
------------------
-In submitting this contribution, I agree to the terms of contributing as referred to here: 
-https://github.com/Terracotta-OSS/terracotta-platform/blob/master/CONTRIBUTING.md
+In adding my name to the list of publishers, I agree to the current Software AG contributor 
+agreement as referred to here: https://github.com/terracotta-oss/contributing/blob/main/CONTRIBUTING.md.
+I also agree to follow all of the responsibilities and policies pertaining to being a project
+"Publisher", as listed in the same document.

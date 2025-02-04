@@ -2,6 +2,7 @@ package org.terracotta.build.conventions;
 
 import org.gradle.api.Project;
 import org.gradle.api.tasks.Sync;
+import org.terracotta.build.plugins.OsgiPackagePlugin;
 import org.terracotta.build.plugins.PackagePlugin;
 
 import static org.terracotta.build.PluginUtils.capitalize;
@@ -29,7 +30,7 @@ public class PackageConvention implements ConventionPlugin<Project, PackagePlugi
   @Override
   public void apply(Project project) {
     project.getPlugins().apply(JavaBaseConvention.class);
-    project.getPlugins().apply(PackagePlugin.class);
+    project.getPlugins().apply(OsgiPackagePlugin.class);
 
     //exclude shaded packages from the unpackaged api elements
     project.getConfigurations().matching(s -> s.getName().equals(UNPACKAGED_API_ELEMENTS_CONFIGURATION_NAME)

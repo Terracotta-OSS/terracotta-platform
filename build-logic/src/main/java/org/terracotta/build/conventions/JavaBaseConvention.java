@@ -3,7 +3,7 @@ package org.terracotta.build.conventions;
 import org.terracotta.build.plugins.JavaVersionPlugin;
 import org.terracotta.build.plugins.PackagePlugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.dsl.DependencyAdder;
+import org.gradle.api.artifacts.dsl.DependencyCollector;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.plugins.JvmTestSuitePlugin;
@@ -40,7 +40,7 @@ public class JavaBaseConvention implements ConventionPlugin<Project, JavaBasePlu
 
         JavaVersionPlugin.JavaVersions javaVersions = project.getExtensions().getByType(JavaVersionPlugin.JavaVersions.class);
 
-        PackagePlugin.augmentAttributeSchema(project.getDependencies().getAttributesSchema());
+        PackagePlugin.augmentAttributeSchema(project);
 
         project.getExtensions().configure(JavaPluginExtension.class, java -> {
             java.toolchain(toolchain -> toolchain.getLanguageVersion().convention(javaVersions.getCompileVersion()));
@@ -60,7 +60,7 @@ public class JavaBaseConvention implements ConventionPlugin<Project, JavaBasePlu
                 testing.getSuites().withType(JvmTestSuite.class).configureEach(testSuite -> {
                     testSuite.useJUnit(project.property("junitVersion").toString());
 
-                    DependencyAdder implementation = testSuite.getDependencies().getImplementation();
+                    DependencyCollector implementation = testSuite.getDependencies().getImplementation();
                     implementation.add("org.hamcrest:hamcrest:" + project.property("hamcrestVersion"));
                     implementation.add("org.hamcrest:hamcrest-core:" + project.property("hamcrestVersion"));
                     implementation.add("org.hamcrest:hamcrest-library:" + project.property("hamcrestVersion"));
