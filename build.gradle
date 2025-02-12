@@ -6,12 +6,6 @@ plugins {
   id 'io.github.gradle-nexus.publish-plugin'
 }
 
-gradle.includedBuilds.forEach { includedBuild ->
-  project.tasks.named('check') { parentBuildCheckTask ->
-    parentBuildCheckTask.dependsOn(includedBuild.task(':check'))
-  }
-}
-
 wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }

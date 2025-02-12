@@ -15,7 +15,7 @@ dependencies {
   service project(':dynamic-config:server:api')
   service project(':management:server:api')
   service "org.terracotta:statistics:$terracottaStatisticVersion"
-  
+    
   implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 
   xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
@@ -23,8 +23,8 @@ dependencies {
   xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
   testImplementation project(':common:test-utilities')
-  testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
-
+  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+    
   xmlXjcEpisodes "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 }
 

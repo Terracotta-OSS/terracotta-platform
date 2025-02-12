@@ -20,7 +20,6 @@ package org.terracotta.testing.config;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +33,8 @@ public class ConfigRepoStartupBuilder extends ConfigFileStartupBuilder {
   public String[] build() {
     if (builtCommand == null) {
       try {
-        installServer();
-        Path generatedRepositories = convertToConfigFile(false);
+        Path tcConfig = installServer();
+        Path generatedRepositories = convertToConfigFile(tcConfig, false);
 
         // moves the generated files onto the server folder, but only for this server we are building
         Path source = generatedRepositories.resolve("stripe-" + getStripeId()).resolve(getServerName()).toAbsolutePath();
@@ -51,8 +50,6 @@ public class ConfigRepoStartupBuilder extends ConfigFileStartupBuilder {
 
   private void buildStartupCommand(Path destination) {
     List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("server", "bin", "start-tc-server"));
-    command.add(scriptPath);
 
     if (isConsistentStartup()) {
       command.add("-c");

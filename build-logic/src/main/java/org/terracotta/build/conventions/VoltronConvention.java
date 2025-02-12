@@ -28,9 +28,7 @@ public class VoltronConvention implements ConventionPlugin<Project, VoltronPlugi
       String terracottaApisVersion = project.property("terracottaApisVersion").toString();
       String slf4jVersion = project.property("slf4jVersion").toString();
       config.getDependencies().addAll(asList(
-              dependencyFactory.create("org.terracotta", "entity-server-api", terracottaApisVersion),
-              dependencyFactory.create("org.terracotta", "standard-cluster-services", terracottaApisVersion),
-              dependencyFactory.create("org.terracotta", "packaging-support", terracottaApisVersion),
+              dependencyFactory.create("org.terracotta", "server-api", terracottaApisVersion),
               dependencyFactory.create("org.slf4j", "slf4j-api", slf4jVersion)
       ));
     });

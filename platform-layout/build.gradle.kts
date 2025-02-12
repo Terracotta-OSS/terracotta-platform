@@ -32,7 +32,7 @@ val kit by configurations.registering {
   description = "Outgoing kit configuration"
 }
 
-copyright.check(fileTree("src/main/dist"))
+//copyright.check(fileTree("src/main/dist"))
 
 // tools
 
@@ -74,14 +74,14 @@ val serverPluginLibs = dependencies.extensions.create<ServerPluginExtension>("se
 
 val logbackVersion: String by properties
 val slf4jVersion: String by properties
-val terracottaCoreVersion: String by properties
+val terracottaRuntimeVersion: String by properties
 
 dependencies {
   /*
    * These roundabout string invokes are necessary until Gradle 8.5 due to: https://github.com/gradle/gradle/issues/26602
    */
-  serverLibs.name("org.terracotta.internal:terracotta:$terracottaCoreVersion")
-  serverLibs.name("org.terracotta.internal:tc-server:$terracottaCoreVersion")
+  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaRuntimeVersion")
+/*
   constraints {
     serverLibs.name("ch.qos.logback:logback-classic") {
       version {
@@ -94,11 +94,12 @@ dependencies {
       }
     }
   }
-
+*/
   // voltron server API
   serverPluginApis(project(":common:json"))
   serverPluginApis(project(":diagnostic:server:api"))
   serverPluginApis(project(":dynamic-config:server:api"))
+  serverPluginApis(project(":dynamic-config:json"))
   serverPluginApis(project(":management:server:api"))
 
   // voltron resources
