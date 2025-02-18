@@ -13,6 +13,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'lease-system-test'
+  artifactId = 'terracotta-lease-testing-integration-tests'
   name = 'Lease System tests'
 }

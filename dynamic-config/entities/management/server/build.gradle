@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.entities'
-  artifactId = 'dynamic-config-management-entity-server'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-entities-management-server'
   name = 'Dynamic Config Management Entity'
 }

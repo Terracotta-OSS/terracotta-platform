@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.voltron.communicator'
-  artifactId = 'communicator-support-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-communicator-client'
   name = 'Communicator Client API'
 }

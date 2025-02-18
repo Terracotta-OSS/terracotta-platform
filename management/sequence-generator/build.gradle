@@ -14,7 +14,7 @@ test {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'sequence-generator'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-sequence-generator'
   name = 'Management Sequence Generator'
 }

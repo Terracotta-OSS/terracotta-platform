@@ -20,7 +20,7 @@ sourceSets {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config'
-  artifactId = 'dynamic-config-model'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-model'
   name = 'Dynamic Config Model'
 }

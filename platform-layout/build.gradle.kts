@@ -192,7 +192,7 @@ publishing {
     register<MavenPublication>("distribution") {
       artifact(tasks.distZip)
       artifact(tasks.distTar)
-      groupId = "org.terracotta.distributions"
+      groupId = "org.terracotta"
       artifactId = "terracotta-platform-layout"
       pom {
         name = "Terracotta platform layout"

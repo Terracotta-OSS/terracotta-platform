@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.voltron.proxy'
-  artifactId = 'voltron-proxy-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-voltron-proxy-client'
   name = 'Voltron Proxy Client'
 }

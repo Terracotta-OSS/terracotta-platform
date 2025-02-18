@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.testing'
-  artifactId = 'dynamic-config-testing-entity'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-testing-entity'
   name = 'Dynamic Config Test Entity'
 }

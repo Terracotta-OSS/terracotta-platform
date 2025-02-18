@@ -13,7 +13,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.diagnostic'
-  artifactId = 'diagnostic-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-diagnostic-client'
   name = 'Diagnostic Client'
 }
