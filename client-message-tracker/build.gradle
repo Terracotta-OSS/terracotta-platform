@@ -6,6 +6,6 @@ plugins {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'client-message-tracker'
+  artifactId = 'terracotta-client-message-tracker'
   name = 'Client Message Tracker Server Plugin'
 }

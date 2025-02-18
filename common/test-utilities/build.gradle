@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-test-utilities'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-test-utilities'
   name = 'Test Utilities'
 }

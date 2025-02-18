@@ -11,6 +11,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'passthrough-leased-connection-api'
+  artifactId = 'terracotta-lease-testing-passthrough'
   name = 'Lease Passthrough Support'
 }

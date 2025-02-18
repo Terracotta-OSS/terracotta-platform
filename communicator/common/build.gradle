@@ -9,6 +9,6 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.voltron.communicator'
-  artifactId = 'communicator-support-common'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-communicator-common'
 }

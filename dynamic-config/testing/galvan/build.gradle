@@ -17,6 +17,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'galvan-platform-support'
+  artifactId = 'terracotta-dynamic-config-testing-galvan'
   name = 'Platform Galvan Support'
 }

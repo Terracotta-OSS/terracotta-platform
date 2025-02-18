@@ -14,7 +14,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.cli'
-  artifactId = 'upgrade-tools-oss'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-cli-upgrade-tool-oss'
   name = 'Dynamic Config CLI upgrade-tool (OSS)'
 }

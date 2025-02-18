@@ -9,7 +9,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-inet-support'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-inet'
   name = 'Inet Utilities'
 }

@@ -15,7 +15,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config'
-  artifactId = 'dynamic-config-api'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-api'
   name = 'Dynamic Config API'
 }

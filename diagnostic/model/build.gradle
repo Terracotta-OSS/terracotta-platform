@@ -9,7 +9,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.diagnostic'
-  artifactId = 'diagnostic-model'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-diagnostic-model'
   name = 'Diagnostic Model'
 }

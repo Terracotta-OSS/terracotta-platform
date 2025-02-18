@@ -25,7 +25,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management.testing'
-  artifactId = 'sample-entity'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-testing-entity'
   name = 'Management Test Entity'
 }

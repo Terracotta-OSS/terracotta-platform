@@ -13,7 +13,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.cli'
-  artifactId = 'dynamic-config-cli-support'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-cli-jcommander'
   name = 'Dynamic Config CLI JCommander Support'
 }
