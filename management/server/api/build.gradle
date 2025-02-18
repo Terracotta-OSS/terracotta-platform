@@ -11,7 +11,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'monitoring-service-api'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-server-api'
   name = 'Monitoring Server API'
 }

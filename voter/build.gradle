@@ -25,6 +25,6 @@ tool {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'voter'
+  artifactId = 'terracotta-voter'
   name = 'Voter CLI'
 }

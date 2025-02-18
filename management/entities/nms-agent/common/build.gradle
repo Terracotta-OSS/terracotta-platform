@@ -10,6 +10,6 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'nms-agent-entity-common'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-entities-nms-agent-common'
 }

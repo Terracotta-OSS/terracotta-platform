@@ -6,6 +6,6 @@ plugins {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'platform-base'
+  artifactId = 'terracotta-platform-base'
   name = 'ServerInfo Server Plugin'
 }

@@ -10,6 +10,6 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.voltron.proxy'
-  artifactId = 'voltron-proxy-common'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-voltron-proxy-common'
 }

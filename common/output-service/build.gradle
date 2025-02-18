@@ -5,7 +5,7 @@ plugins {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'output-service'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-output-service'
   name = 'Output Service'
 }
