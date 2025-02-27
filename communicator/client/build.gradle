@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   api project(':communicator:common')
 }
 
