@@ -12,7 +12,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-sanskrit'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-sanskrit'
   name = 'Sanskrit'
 }

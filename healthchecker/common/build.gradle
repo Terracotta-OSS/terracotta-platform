@@ -10,5 +10,5 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'healthchecker-common'
+  artifactId = 'terracotta-healthchecker-common'
 }

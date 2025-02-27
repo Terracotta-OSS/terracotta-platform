@@ -10,6 +10,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'healthchecker-server'
+  artifactId = 'terracotta-healthchecker-server'
   name = 'Healthchecker Entity'
 }

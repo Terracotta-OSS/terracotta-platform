@@ -12,7 +12,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'monitoring-service'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-server-services'
   name = 'Monitoring Server Plugin'
 }

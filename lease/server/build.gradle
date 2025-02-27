@@ -25,6 +25,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'lease-entity-server'
+  artifactId = 'terracotta-lease-server'
   name = 'Lease Entity'
 }

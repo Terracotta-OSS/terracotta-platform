@@ -9,7 +9,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-nomad'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-nomad'
   name = 'Nomad'
 }

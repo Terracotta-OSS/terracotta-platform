@@ -11,7 +11,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.diagnostic'
-  artifactId = 'diagnostic-service-api'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-diagnostic-server-api'
   name = 'Diagnostic Server API'
 }

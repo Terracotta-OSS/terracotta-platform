@@ -9,7 +9,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-structures'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-structures'
   name = 'Structures'
 }

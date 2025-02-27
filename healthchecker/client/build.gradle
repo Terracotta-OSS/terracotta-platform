@@ -12,6 +12,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'healthchecker-client'
+  artifactId = 'terracotta-healthchecker-client'
   name = 'Healthchecker Entity Client'
 }
