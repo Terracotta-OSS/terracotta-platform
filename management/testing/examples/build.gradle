@@ -12,7 +12,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'management-examples'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-testing-examples'
   name = 'Management Examples'
 }

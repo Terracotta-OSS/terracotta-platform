@@ -11,7 +11,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.management'
-  artifactId = 'nms-entity-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-entities-nms-client'
   name = 'NMS Entity Client'
 }

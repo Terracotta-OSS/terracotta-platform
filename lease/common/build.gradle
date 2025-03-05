@@ -12,5 +12,5 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'lease-common'
+  artifactId = 'terracotta-lease-common'
 }

@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.entities'
-  artifactId = 'dynamic-config-nomad-entity-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-entities-nomad-client'
   name = 'Dynamic Config Nomad Entity Client'
 }

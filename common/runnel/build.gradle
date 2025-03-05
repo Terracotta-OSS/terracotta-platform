@@ -6,6 +6,6 @@ plugins {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'runnel'
+  artifactId = 'terracotta-runnel'
   name = 'Runnel'
 }

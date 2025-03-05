@@ -29,6 +29,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'offheap-resource'
+  artifactId = 'terracotta-resources-offheap'
   name = 'Offheap Server Resource'
 }

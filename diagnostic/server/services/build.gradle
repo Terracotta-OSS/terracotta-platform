@@ -12,7 +12,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.diagnostic'
-  artifactId = 'diagnostic-service'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-diagnostic-server-services'
   name = 'Diagnostic Server Plugin'
 }

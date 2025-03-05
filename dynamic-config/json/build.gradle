@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config'
-  artifactId = 'dynamic-config-json'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-json'
   name = 'Dynamic Config Json Modules'
 }

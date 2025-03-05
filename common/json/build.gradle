@@ -10,8 +10,8 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.common'
-  artifactId = 'common-json-support'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-json'
   name = 'JSON Support'
 }
 

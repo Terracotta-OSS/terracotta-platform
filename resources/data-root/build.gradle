@@ -30,6 +30,6 @@ dependencies {
 
 deploy {
   groupId = 'org.terracotta'
-  artifactId = 'data-root-resource'
+  artifactId = 'terracotta-resources-data-root'
   name = 'Data Root Server Resource'
 }

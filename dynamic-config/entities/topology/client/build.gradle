@@ -10,7 +10,7 @@ dependencies {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.entities'
-  artifactId = 'dynamic-config-topology-entity-client'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-entities-topology-client'
   name = 'Dynamic Config Topology Entity Client'
 }

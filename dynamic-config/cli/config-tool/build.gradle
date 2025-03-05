@@ -20,7 +20,7 @@ tool {
 }
 
 deploy {
-  groupId = 'org.terracotta.dynamic-config.cli'
-  artifactId = 'dynamic-config-cli-config-tool'
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-config-cli-config-tool'
   name = 'Dynamic Config config-tool CLI'
 }
