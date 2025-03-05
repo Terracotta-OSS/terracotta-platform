@@ -4,6 +4,7 @@ plugins {
   id 'org.owasp.dependencycheck'
   id 'org.terracotta.build.convention.base'
   id 'io.github.gradle-nexus.publish-plugin'
+  id 'net.researchgate.release'
 }
 
 gradle.includedBuilds.forEach { includedBuild ->
@@ -41,6 +42,23 @@ nexusPublishing {
       delayBetween = Duration.ofSeconds((findProperty("delayBetweenRetriesInSeconds") ?: "10") as int)
       maxRetries = (findProperty("numberOfRetries") ?: "100") as int
   }
+}
+
+release {
+    git {
+        requireBranch.set("master")
+    }
+    versionProperties = ["defaultVersion"]
+    tagTemplate = "v\${version}"
+
+    // work around this issue by tacking on "build" again:
+    // https://github.com/researchgate/gradle-release/blob/af4bf46b/src/main/groovy/net/researchgate/release/ReleasePlugin.groovy#L153
+    def buildTasks = ["build", "publish"]
+    if (project.hasProperty("postReleaseBuildTasks")) {
+        // specify what to do after tagging/building and before updating to a SNAPSHOT version, eg:
+        // ./gradlew release -PpostReleaseBuildTasks="closeSonatypeStagingRepository"
+        buildTasks.addAll((project.property("postReleaseBuildTasks") as String).split(" "))
+    }
 }
 
 allprojects {
