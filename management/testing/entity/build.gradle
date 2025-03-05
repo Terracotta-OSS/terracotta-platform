@@ -1,6 +1,5 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.deploy'
   id 'org.terracotta.build.convention.voltron'
 }
 
@@ -22,10 +21,4 @@ dependencies {
   testImplementation project(':management:server:services')
   testImplementation project(':resources:offheap')
   testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
-}
-
-deploy {
-  groupId = 'org.terracotta'
-  artifactId = 'terracotta-management-testing-entity'
-  name = 'Management Test Entity'
 }

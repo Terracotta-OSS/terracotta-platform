@@ -73,6 +73,10 @@ gradlePlugin {
       id = 'org.terracotta.build.convention.tool'
       implementationClass = 'org.terracotta.build.conventions.ToolConvention'
     }
+    deployConvention {
+      id = 'org.terracotta.build.convention.deploy'
+      implementationClass = 'org.terracotta.build.conventions.DeployConvention'
+    }
   }
 }
 

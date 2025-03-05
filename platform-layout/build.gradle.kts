@@ -25,7 +25,7 @@ buildscript {
 plugins {
   id("jvm-ecosystem")
   id("org.terracotta.build.convention.distribution")
-  id("org.terracotta.build.deploy")
+  id("org.terracotta.build.convention.deploy")
 }
 
 val kit by configurations.registering {

@@ -1,6 +1,6 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.deploy'
+  id 'org.terracotta.build.convention.deploy'
   id 'org.terracotta.build.convention.xjc'
   id 'org.terracotta.build.convention.voltron'
 }

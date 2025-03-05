@@ -3,7 +3,6 @@
 
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.deploy'
   id 'org.asciidoctor.jvm.convert'
   id 'org.asciidoctor.jvm.gems'
 }

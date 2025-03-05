@@ -1,6 +1,5 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.deploy'
   id 'biz.aQute.bnd.builder'
 }
 
@@ -9,10 +8,4 @@ dependencies {
   testImplementation project(':lease:server')
   testImplementation project(':dynamic-config:api')
   testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
-}
-
-deploy {
-  groupId = 'org.terracotta'
-  artifactId = 'terracotta-lease-testing-integration-tests'
-  name = 'Lease System tests'
 }
