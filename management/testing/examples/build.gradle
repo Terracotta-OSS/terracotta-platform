@@ -1,6 +1,5 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.deploy'
   id 'biz.aQute.bnd.builder'
 }
 
@@ -9,10 +8,4 @@ dependencies {
   implementation project(':management:testing:entity')
   implementation "org.terracotta:connection-api:$terracottaApisVersion"
   implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
-}
-
-deploy {
-  groupId = 'org.terracotta'
-  artifactId = 'terracotta-management-testing-examples'
-  name = 'Management Examples'
 }
