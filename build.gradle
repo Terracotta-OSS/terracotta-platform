@@ -32,8 +32,8 @@ dependencyCheck {
 nexusPublishing {
   repositories {
     sonatype {
-      username = sonatypeUser
-      password = sonatypePwd
+      username = System.getenv("SONATYPE_USERNAME") ?: sonatypeUser
+      password = System.getenv("SONATYPE_PASSWORD") ?: sonatypePwd
     }
   }
   // Sonatype is often very slow in these operations:
