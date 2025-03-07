@@ -7,5 +7,6 @@ dependencies {
   testImplementation project(':lease:client')
   testImplementation project(':lease:server')
   testImplementation project(':dynamic-config:api')
-  testImplementation "org.terracotta:passthrough-server:$terracottaPassthroughVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }

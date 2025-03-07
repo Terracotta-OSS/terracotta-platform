@@ -6,8 +6,10 @@ plugins {
 
 dependencies {
   api project(':management:registry')
-  api "org.terracotta:entity-server-api:$terracottaApisVersion"
-  api "org.terracotta:standard-cluster-services:$terracottaApisVersion"
+  implementation ("org.terracotta:statistics:$terracottaStatisticVersion") {
+      exclude group: 'org.slf4j'
+  }
+  compileOnly "org.terracotta:server-api:$terracottaApisVersion"
 }
 
 deploy {

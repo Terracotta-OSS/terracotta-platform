@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:entity-common-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:common-api:$terracottaApisVersion"
 }
 
 deploy {

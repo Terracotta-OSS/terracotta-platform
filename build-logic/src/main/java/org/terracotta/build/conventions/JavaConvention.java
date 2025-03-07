@@ -28,6 +28,6 @@ public class JavaConvention implements ConventionPlugin<Project, JavaPlugin> {
 
     project.getExtensions().configure(JavaPluginExtension.class, JavaPluginExtension::withSourcesJar);
 
-    project.getDependencies().add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, "org.slf4j:slf4j-api:" + project.property("slf4jVersion"));
+    project.getDependencies().add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, "org.slf4j:slf4j-api:" + project.property("slf4jVersion"));
   }
 }

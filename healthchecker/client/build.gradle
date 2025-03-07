@@ -5,9 +5,9 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:connection-api:$terracottaApisVersion"
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   implementation project(':healthchecker:common')
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {
