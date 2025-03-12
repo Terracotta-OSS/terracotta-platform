@@ -25,16 +25,24 @@ public class DeployConvention implements ConventionPlugin<Project, DeployPlugin>
     project.getPlugins().apply(SigningPlugin.class);
 
     final String gpgSigningKey = Optional.ofNullable(System.getenv("GPG_SIGNING_KEY"))
-        .orElse(project.hasProperty("gpgSigningKey") ? project.property("gpgSigningKey").toString() : null);
-    final String gpgSigningPassphrase = Optional.ofNullable(System.getenv("GPG_SIGNING_PASSPHRASE")).orElse(
-        project.hasProperty("gpgSigningPassphrase") ? project.property("gpgSigningPassphrase").toString() : null);
+        .orElse(project.hasProperty("signingKey") ? project.property("signingKey").toString() : null);
 
-    if (gpgSigningKey != null && gpgSigningPassphrase != null) {
+    final String gpgSigningKeyId = Optional.ofNullable(System.getenv("GPG_SIGNING_KEY_ID"))
+        .orElse(project.hasProperty("signingKeyId") ? project.property("signingKeyId").toString() : null);
+
+    final String gpgSigningPassphrase = Optional.ofNullable(System.getenv("GPG_SIGNING_PASSPHRASE"))
+        .orElse(project.hasProperty("signingPassword") ? project.property("signingPassword").toString() : null);
+
+    if (gpgSigningKey != null) {
       project.afterEvaluate(p -> {
         p.getExtensions().configure(PublishingExtension.class, publishing -> {
           if (!publishing.getPublications().isEmpty()) {
             project.getExtensions().configure(SigningExtension.class, signing -> {
-              signing.useInMemoryPgpKeys(gpgSigningKey, gpgSigningPassphrase);
+              if (gpgSigningKeyId != null) {
+                signing.useInMemoryPgpKeys(gpgSigningKeyId, gpgSigningKey, gpgSigningPassphrase);
+              } else {
+                signing.useInMemoryPgpKeys(gpgSigningKey, gpgSigningPassphrase);
+              }
               signing.sign(publishing.getPublications());
             });
           }
