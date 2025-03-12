@@ -7,9 +7,10 @@ plugins {
 dependencies {
   api project(':lease:common')
   api project(':common:structures')
-  api "org.terracotta:connection-api:$terracottaApisVersion"
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
-  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
+  
+  testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

@@ -16,7 +16,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
@@ -275,7 +274,6 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void test_topology_entity_callback_onSettingChange() throws Exception {
     try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
-        new TerracottaConnectionService(),
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),

@@ -5,11 +5,14 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta:connection-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   api project(':diagnostic:model')
   api project(':diagnostic:common')
+  // part of diagnostic common defined as compile only but needed for the client
+  runtimeOnly project(':common:json')
 
   testImplementation project(':common:test-utilities')
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

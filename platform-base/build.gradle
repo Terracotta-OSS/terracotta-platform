@@ -9,3 +9,7 @@ deploy {
   artifactId = 'terracotta-platform-base'
   name = 'ServerInfo Server Plugin'
 }
+
+dependencies {
+    testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
+}
