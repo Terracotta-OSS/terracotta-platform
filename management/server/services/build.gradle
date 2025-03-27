@@ -9,6 +9,8 @@ dependencies {
   service project(':dynamic-config:api')
   service project(':common:json')
   implementation project(':voltron-proxy:common')
+  testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
+  testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

@@ -7,7 +7,9 @@ plugins {
 dependencies {
   api project(':management:registry')
   api project(':management:entities:nms-agent:common')
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
+  // common only pulls in at compile time
+  runtimeOnly project(':management:model')
+  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   api project(':voltron-proxy:client')
 }
 

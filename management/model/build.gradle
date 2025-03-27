@@ -6,9 +6,11 @@ plugins {
 
 dependencies {
   api project(':management:sequence-generator')
-  api "org.terracotta:statistics:$terracottaStatisticVersion"
+  compileOnly "org.terracotta:statistics:$terracottaStatisticVersion"
 
   testImplementation project(':common:json')
+  testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
+  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }
 
 deploy {
