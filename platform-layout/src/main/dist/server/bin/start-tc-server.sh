@@ -46,7 +46,8 @@ done
 while [ 1 ] ; do
 # the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
-    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -Xms256m -Xmx2049m \
+    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS \
+        -XX:+UseG1GC \
 	-XX:+HeapDumpOnOutOfMemoryError \
         -Dtc.install-root="${TC_SERVER_DIR}" \
         ${JAVA_OPTS} \

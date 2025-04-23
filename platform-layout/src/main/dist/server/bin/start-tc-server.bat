@@ -56,7 +56,7 @@ exit /b 1
 
 :setJavaOptsAndClasspath
 
-set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
+set OPTS=%SERVER_OPT% -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 

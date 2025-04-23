@@ -86,15 +86,18 @@ val copyLibs = tasks.register("copyLibs") {
     outputs.dir(working)
 }
 
-val unzip = tasks.register<Copy>("unzip") {
-  dependsOn(copyLibs)
-  val working = layout.buildDirectory.dir("server-libs").get()
-  working.getAsFileTree().matching {
-    include("*.zip")
-  } .forEach {
-    from(zipTree(it))
-  }
-  into(working)
+val unzip = tasks.register("unzip") {
+    dependsOn(copyLibs)
+    doLast {
+        val working = layout.buildDirectory.dir("server-libs").get()
+        val runtime = working.file("server-runtime-$terracottaRuntimeVersion.zip")
+        if (runtime.getAsFile().exists()) {
+            project.sync {
+                from(zipTree(runtime))
+                into(working)
+            }
+        }
+    }
 }
 
 distributions {
