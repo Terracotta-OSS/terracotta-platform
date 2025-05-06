@@ -19,30 +19,12 @@ dependencies {
   testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
   testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
   testImplementation project(':dynamic-config:testing:galvan')
-  testImplementation "org.terracotta:server-api:$terracottaApisVersion"
   testImplementation project(":lease:client")
 
-  pluginsApi project(':dynamic-config:api')
-  pluginsApi project(':management:server:api')
-  pluginsApi project(':resources:offheap')
-  pluginsApi project(':dynamic-config:server:api')
-  pluginsApi project(':diagnostic:server:api')
-  pluginsApi project(':management:server:api')
-  pluginsApi project(':common:json')
+  pluginsImpl (project(':management:testing:entity')) {
+    exclude group: 'org.slf4j'
+  }
 
-  pluginsImpl project(':dynamic-config:entities:management:server')
-  pluginsImpl project(':dynamic-config:entities:nomad:server')
-  pluginsImpl project(':dynamic-config:entities:topology:server')
-  pluginsImpl project(':dynamic-config:server:config-provider')
-  pluginsImpl project(':dynamic-config:server:services')
-  pluginsImpl project(':management:testing:entity')
-  pluginsImpl project(':management:entities:nms:server')
-  pluginsImpl project(':management:entities:nms-agent:server')
-  pluginsImpl project(':management:server:services')
-  pluginsImpl project(':lease:server')
-  pluginsImpl project(':client-message-tracker')
-  pluginsImpl project(':diagnostic:server:services')
-  pluginsImpl project(':platform-base')
 }
 
 sourceSets {
@@ -52,6 +34,10 @@ sourceSets {
     }
   }
 }
+
+var explodedPath = project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins").get().toString()
+
+println "Testing path " + explodedPath
 
 test {
   jvmArgs "-XX:MaxDirectMemorySize=2048m"
@@ -83,7 +69,23 @@ task galvanTestClean(type: Delete) {
     delete layout.buildDirectory.dir("galvan")
 }
 
+task copyBaseKit() {
+    outputs.dir(layout.buildDirectory.dir("plugin/api"))
+    outputs.dir(layout.buildDirectory.dir("plugin/lib"))
+    doLast {
+        project.sync {
+            from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/api")
+            into layout.buildDirectory.dir("plugin/api")
+        }
+        project.sync {
+            from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/lib")
+            into layout.buildDirectory.dir("plugin/lib")
+        }
+    }
+}
+
 test.dependsOn(copyPluginsImpl)
+serverClean.dependsOn(test)
 copyPluginsImpl.dependsOn(copyPluginsApi)
-copyPluginsApi.dependsOn(serverClean)
-serverClean.dependsOn(pluginClean)
+copyPluginsApi.dependsOn(copyBaseKit)
+copyBaseKit.dependsOn(project(":platform-layout").getTasksByName("explodedKit", true))

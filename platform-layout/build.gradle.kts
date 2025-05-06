@@ -81,20 +81,7 @@ dependencies {
    * These roundabout string invokes are necessary until Gradle 8.5 due to: https://github.com/gradle/gradle/issues/26602
    */
   serverLibs.name("org.terracotta.internal:server-runtime:$terracottaRuntimeVersion")
-/*
-  constraints {
-    serverLibs.name("ch.qos.logback:logback-classic") {
-      version {
-        strictly(logbackVersion)
-      }
-    }
-    serverLibs.name("org.slf4j:slf4j-api") {
-      version {
-        strictly(slf4jVersion)
-      }
-    }
-  }
-*/
+
   // voltron server API
   serverPluginApis(project(":common:json"))
   serverPluginApis(project(":diagnostic:server:api"))
@@ -281,6 +268,12 @@ abstract class ClasspathAssembly : DefaultTask() {
               }
             }
           }
+        } else if (file.isFile && file.name.endsWith(".zip", ignoreCase = true)) {
+            System.out.println("exploding " + file)
+            project.sync {
+                from(project.zipTree(file))
+                into(outputDirectory)
+            }
         }
       }
     }
