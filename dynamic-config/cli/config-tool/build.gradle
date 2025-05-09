@@ -3,12 +3,13 @@ plugins {
   id 'org.terracotta.build.convention.deploy'
   id 'org.terracotta.build.convention.tool'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-client'
 }
 
 dependencies {
   implementation project(':dynamic-config:cli:api')
   implementation project(':dynamic-config:cli:jcommander')
-  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
+
   implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
 }

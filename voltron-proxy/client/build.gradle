@@ -8,7 +8,7 @@ dependencies {
   api project(':voltron-proxy:common')
   compileOnly "org.terracotta:client-api:$terracottaApisVersion"
   testImplementation "org.terracotta:client-api:$terracottaApisVersion"
-  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

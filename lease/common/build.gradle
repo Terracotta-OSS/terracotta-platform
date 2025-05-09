@@ -2,13 +2,14 @@ plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-common'
 }
+
+project.ext.set("voltron-type", "common")
 
 dependencies {
   api project(':common:runnel')
   api project(':communicator:common')
-  compileOnly "org.terracotta:common-api:$terracottaApisVersion"
-  testImplementation "org.terracotta:common-api:$terracottaApisVersion"
 }
 
 deploy {

@@ -66,9 +66,17 @@ gradlePlugin {
       id = 'org.terracotta.build.convention.package'
       implementationClass = 'org.terracotta.build.conventions.PackageConvention'
     }
-    voltronConvention {
-      id = 'org.terracotta.build.convention.voltron'
-      implementationClass = 'org.terracotta.build.conventions.VoltronConvention'
+    voltronServerConvention {
+      id = 'org.terracotta.build.convention.voltron-server'
+      implementationClass = 'org.terracotta.build.conventions.VoltronServerConvention'
+    }
+    voltronClientConvention {
+      id = 'org.terracotta.build.convention.voltron-client'
+      implementationClass = 'org.terracotta.build.conventions.VoltronClientConvention'
+    }
+    voltronCommonConvention {
+      id = 'org.terracotta.build.convention.voltron-common'
+      implementationClass = 'org.terracotta.build.conventions.VoltronCommonConvention'
     }
     toolConvention {
       id = 'org.terracotta.build.convention.tool'

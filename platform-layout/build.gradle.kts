@@ -32,8 +32,6 @@ val kit by configurations.registering {
   description = "Outgoing kit configuration"
 }
 
-//copyright.check(fileTree("src/main/dist"))
-
 // tools
 
 val tools by configurations.registering {

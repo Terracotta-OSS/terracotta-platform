@@ -1,7 +1,7 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 deploy {
@@ -11,5 +11,5 @@ deploy {
 }
 
 dependencies {
-    testImplementation "org.terracotta.internal:server-runtime:$terracottaRuntimeVersion"
+
 }

@@ -1,6 +1,7 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
+  id 'org.terracotta.build.convention.voltron-client'
 }
 
 dependencies {
@@ -14,7 +15,6 @@ dependencies {
   compileOnlyApi "org.terracotta:statistics:$terracottaStatisticVersion"
   compileOnly project(':voltron-proxy:client')
   compileOnly project(':management:entities:nms-agent:client')
-  compileOnly "org.terracotta:client-api:$terracottaApisVersion"
 
   testImplementation project(':common:json')
   testImplementation project(':management:entities:nms:client')

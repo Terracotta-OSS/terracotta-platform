@@ -10,7 +10,7 @@ dependencies {
 
   testImplementation project(':common:json')
   testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
-  testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
 }
 
 deploy {
