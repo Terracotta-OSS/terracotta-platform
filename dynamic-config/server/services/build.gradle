@@ -6,7 +6,6 @@ plugins {
 
 dependencies {
   service project(':dynamic-config:api')
-  compileOnly "org.terracotta:server-api:$terracottaApisVersion"
 }
 
 deploy {

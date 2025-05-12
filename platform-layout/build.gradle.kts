@@ -267,7 +267,6 @@ abstract class ClasspathAssembly : DefaultTask() {
             }
           }
         } else if (file.isFile && file.name.endsWith(".zip", ignoreCase = true)) {
-            System.out.println("exploding " + file)
             project.sync {
                 from(project.zipTree(file))
                 into(outputDirectory)

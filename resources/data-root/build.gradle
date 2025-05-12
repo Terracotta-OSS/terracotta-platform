@@ -17,8 +17,6 @@ dependencies {
   service ("org.terracotta:statistics:$terracottaStatisticVersion") {
     exclude group:'org.slf4j'
   }
-    
-  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 
   xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
   xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"

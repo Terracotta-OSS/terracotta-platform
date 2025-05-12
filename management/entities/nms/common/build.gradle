@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-  compileOnlyApi project(':management:model')
+  api project(':management:model')
   implementation project(':voltron-proxy:common')
 }
 

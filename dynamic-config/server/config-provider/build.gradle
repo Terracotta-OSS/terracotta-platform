@@ -8,17 +8,13 @@ dependencies {
   service project(':dynamic-config:server:api')
   service project(':diagnostic:server:api')
 
-  compileOnly "org.terracotta:server-api:$terracottaApisVersion"
-
   implementation project(':dynamic-config:repository')
   implementation "com.beust:jcommander:$jcommanderVersion"
-  compileOnly "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 
   testImplementation project(':common:test-utilities')
   testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
   testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
   testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
-  testImplementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 }
 
 deploy {

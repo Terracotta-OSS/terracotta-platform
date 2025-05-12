@@ -8,8 +8,6 @@ plugins {
 dependencies {
   api project(':management:registry')
   api project(':management:entities:nms-agent:common')
-  // common only pulls in at compile time
-  runtimeOnly project(':management:model')
   api project(':voltron-proxy:client')
 }
 

@@ -5,5 +5,4 @@ plugins {
 
 dependencies {
   service project(':dynamic-config:api')
-  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 }

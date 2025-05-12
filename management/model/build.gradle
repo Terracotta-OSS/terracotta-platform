@@ -2,15 +2,14 @@ plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 dependencies {
   api project(':management:sequence-generator')
-  compileOnly "org.terracotta:statistics:$terracottaStatisticVersion"
+  api "org.terracotta:statistics:$terracottaStatisticVersion"
 
   testImplementation project(':common:json')
-  testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
 }
 
 deploy {

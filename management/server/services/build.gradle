@@ -7,9 +7,8 @@ plugins {
 dependencies {
   service project(':management:server:api')
   service project(':dynamic-config:api')
-  service project(':common:json')
   implementation project(':voltron-proxy:common')
-  testImplementation "org.terracotta:statistics:$terracottaStatisticVersion"
+  testImplementation project(':common:json')
 }
 
 deploy {

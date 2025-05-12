@@ -6,14 +6,12 @@ plugins {
 }
 
 dependencies {
-  api project(':common:json')
   api project(':common:output-service')
   api project(':diagnostic:client')
   api project(':dynamic-config:entities:nomad:client')
   implementation project(':dynamic-config:json')
 
   testImplementation project(':common:test-utilities')
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

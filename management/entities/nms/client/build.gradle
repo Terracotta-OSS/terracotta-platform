@@ -7,9 +7,6 @@ plugins {
 
 dependencies {
   api project(':management:entities:nms:common')
-  // common has the model as compileOnly
-  runtimeOnly project(':management:model')
-
   api project(':voltron-proxy:client')
 }
 

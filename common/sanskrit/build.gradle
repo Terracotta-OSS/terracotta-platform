@@ -5,9 +5,8 @@ plugins {
 }
 
 dependencies {
-  compileOnly "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
 
-  testImplementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
   testImplementation project(':common:json')
   testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }

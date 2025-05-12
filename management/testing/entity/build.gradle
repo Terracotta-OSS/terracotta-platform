@@ -5,11 +5,9 @@ plugins {
 }
 
 dependencies {
-  compileOnly project(':dynamic-config:api')
-  compileOnly (project(':management:server:api')) {
-    exclude group: 'org.slf4j'
-  }
-  compileOnly project(':resources:offheap')
+  service project(':dynamic-config:api')
+  service project(':management:server:api')
+  service project(':resources:offheap')
   implementation project(':voltron-proxy:server')
 
   compileOnlyApi "org.terracotta:statistics:$terracottaStatisticVersion"

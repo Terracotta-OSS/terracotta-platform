@@ -7,10 +7,9 @@ plugins {
 
 dependencies {
   api project(':common:runnel')
-  compileOnlyApi project(':dynamic-config:model')
+  api project(':dynamic-config:model')
 
   testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
-  testImplementation project(':dynamic-config:model')
 }
 
 deploy {
