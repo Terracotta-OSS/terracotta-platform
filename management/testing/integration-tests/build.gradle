@@ -42,6 +42,7 @@ test {
     systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
     systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
     systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+    environment "JAVA_OPTS", "-XX:MaxDirectMemorySize=2048m"
 }
 
 

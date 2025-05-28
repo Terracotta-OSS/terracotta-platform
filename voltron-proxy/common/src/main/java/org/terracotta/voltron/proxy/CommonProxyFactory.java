@@ -93,12 +93,11 @@ public class CommonProxyFactory {
     }
 
     for (Method declaredMethod : declaredMethods) {
-      methods.add(MethodDescriptor.of(declaredMethod));
+      if (!declaredMethod.isSynthetic()) {
+        methods.add(MethodDescriptor.of(declaredMethod));
+      }
     }
 
-    if (methods.size() != declaredMethods.length) {
-      throw new AssertionError("Ouch... looks like that didn't work!");
-    }
     return methods;
   }
 
