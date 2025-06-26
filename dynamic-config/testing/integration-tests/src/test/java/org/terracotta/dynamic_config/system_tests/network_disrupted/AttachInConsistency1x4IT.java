@@ -154,7 +154,6 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
       waitForServerBlocked(active);
       // attach command expects to see an active so wait for it
-      waitForActive(1);
 
       try (ClientToServerDisruptor clientToServerDisruptor = angela.tsa().disruptionController().newClientToServerDisruptor()) {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));

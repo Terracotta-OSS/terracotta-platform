@@ -15,7 +15,7 @@ dependencies {
   service project(':dynamic-config:server:api')
   
   implementation project(':lease:common')
-  
+
   xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
   xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"

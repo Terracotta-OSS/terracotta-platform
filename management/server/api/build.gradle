@@ -7,7 +7,6 @@ plugins {
 
 dependencies {
   api project(':management:registry')
-  api project(':management:model')
 }
 
 deploy {
