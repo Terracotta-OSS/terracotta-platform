@@ -55,6 +55,11 @@ public class LockAwareNomadManager<T> implements NomadManager<T> {
   }
 
   @Override
+  public void runConfigurationChangeThroughDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
+    this.underlying.runConfigurationChangeThroughDiagnostic(onlineNodes, new LockAwareDynamicConfigNomadChange(lockToken, changes), results);
+  }
+
+  @Override
   public void runConfigurationRepair(Map<Endpoint, LogicalServerState> onlineActivatedNodes, int totalNodeCount, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     this.underlying.runConfigurationRepair(onlineActivatedNodes, totalNodeCount, results, forcedState);
   }

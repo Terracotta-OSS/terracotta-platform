@@ -361,6 +361,11 @@ public final class DynamicConfigServiceImpl implements TopologyService, DynamicC
     }
   }
 
+/*  @Override
+  public void activateRelay() {
+
+  }*/
+
   @Override
   public Optional<License> getLicense() {
     return licensing.parse();

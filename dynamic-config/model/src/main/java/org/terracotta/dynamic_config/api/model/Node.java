@@ -47,6 +47,8 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
@@ -77,6 +79,8 @@ public class Node implements Cloneable, PropertyHolder {
   private Map<String, String> tcProperties;
   private Map<String, String> loggerOverrides;
   private Map<String, RawPath> dataDirs;
+  private HostPort relaySource;
+  private HostPort relayDestination;
 
   @Override
   public Scope getScope() {
@@ -146,6 +150,14 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Map<String, RawPath>> getDataDirs() {
     return OptionalConfig.of(DATA_DIRS, dataDirs);
+  }
+
+  public OptionalConfig<HostPort> getRelaySource() {
+    return OptionalConfig.of(RELAY_SOURCE, relaySource);
+  }
+
+  public OptionalConfig<HostPort> getRelayDestination() {
+    return OptionalConfig.of(RELAY_DESTINATION, relayDestination);
   }
 
   public OptionalConfig<Map<String, String>> getLoggerOverrides() {
@@ -331,6 +343,16 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node setDataDirs(Map<String, RawPath> dataDirs) {
     this.dataDirs = dataDirs == null ? null : new ConcurrentHashMap<>(dataDirs);
+    return this;
+  }
+
+  public Node setRelaySource(HostPort relaySource) {
+    this.relaySource = (relaySource);
+    return this;
+  }
+
+  public Node setRelayDestination(HostPort relayDestination) {
+    this.relayDestination = relayDestination;
     return this;
   }
 
@@ -537,6 +559,8 @@ public class Node implements Cloneable, PropertyHolder {
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
     clone.uid = this.uid;
+    clone.relaySource = this.relaySource;
+    clone.relayDestination = this.relayDestination;
     return clone;
   }
 
@@ -562,14 +586,16 @@ public class Node implements Cloneable, PropertyHolder {
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
         Objects.equals(securityLogDir, node.securityLogDir) &&
-        Objects.equals(dataDirs, node.dataDirs);
+        Objects.equals(dataDirs, node.dataDirs) &&
+        Objects.equals(relaySource, node.relaySource) &&
+        Objects.equals(relayDestination, node.relayDestination);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid);
+        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid, relaySource, relayDestination);
   }
 
   @Override

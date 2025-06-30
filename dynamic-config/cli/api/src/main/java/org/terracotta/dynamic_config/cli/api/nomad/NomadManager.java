@@ -35,5 +35,7 @@ public interface NomadManager<T> {
 
   void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results);
 
+  void runConfigurationChangeThroughDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results);
+
   void runConfigurationRepair(Map<Endpoint, LogicalServerState> onlineActivatedNodes, int totalNodeCount, RecoveryResultReceiver<T> results, ChangeRequestState forcedState);
 }

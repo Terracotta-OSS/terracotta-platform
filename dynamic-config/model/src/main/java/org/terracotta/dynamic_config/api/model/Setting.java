@@ -22,6 +22,7 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.common.struct.Unit;
+import org.terracotta.inet.HostPort;
 
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -74,6 +75,7 @@ import static org.terracotta.dynamic_config.api.model.SettingValidator.ADDRESS_V
 import static org.terracotta.dynamic_config.api.model.SettingValidator.DATA_DIRS_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.DEFAULT_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.HOST_VALIDATOR;
+import static org.terracotta.dynamic_config.api.model.SettingValidator.INET_SOCKET_ADDRESS_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.LOGGER_LEVEL_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.NAME_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.OFFHEAP_VALIDATOR;
@@ -100,6 +102,15 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *  node-uid, hostname, port
  *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
  *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  relay-source
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [get, set, unset] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated] allow: [get, unset] at levels: [cluster, stripe, node]
+ *
+ *  relay-destination
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring, activated] allow: [get, set, unset] at levels: [cluster, stripe, node]
  *
  *  name
  *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
@@ -297,6 +308,39 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PUBLIC_PORT, tuple2(key, value))
+  ),
+  RELAY_SOURCE(SettingName.RELAY_SOURCE,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelaySource),
+    intoNode((node, value) -> node.setRelaySource(value == null ? null : HostPort.parse(value, 9410))),
+    asList(
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+      when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
+      when(ACTIVATED).allow(GET).atAnyLevels()
+    ),
+    EnumSet.noneOf(Requirement.class),
+    emptyList(),
+    emptyList(),
+    (key, value) -> INET_SOCKET_ADDRESS_VALIDATOR.accept(SettingName.RELAY_SOURCE, tuple2(key, value))
+  ),
+  RELAY_DESTINATION(SettingName.RELAY_DESTINATION,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayDestination),
+    intoNode((node, value) -> node.setRelayDestination(value == null ? null : HostPort.parse(value, 9410))),
+    asList(
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+    ),
+    of(NODE_RESTART),
+    emptyList(),
+    emptyList(),
+    (key, value) -> INET_SOCKET_ADDRESS_VALIDATOR.accept(SettingName.RELAY_DESTINATION, tuple2(key, value))
   ),
   NODE_GROUP_PORT(SettingName.NODE_GROUP_PORT,
       of(V1, V2),

@@ -29,6 +29,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 
 /**
@@ -49,7 +50,8 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
       // If during a Nomad transaction a server is starting, this server won't be part of the transaction.
       // But this server will eventually become passive, then will get a replication message from active asking to commit
       // a change that it does not know. The passive will restart and sync again.
-      SYNCHRONIZING // we can allow any change to happen if the server is
+      SYNCHRONIZING, // we can allow any change to happen if the server is
+      PASSIVE_RELAY
   );
 
   private final ServerJMX serverJMX;

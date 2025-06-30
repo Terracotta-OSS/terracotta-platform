@@ -95,6 +95,55 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void test_unset_relay_source() {
+    assertThat(
+      configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source=193.123.5.4:7878"),
+      allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-source"),
+        containsOutput("cannot be set when node is activated")
+      ));
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source=193.123.5.4:7878"),
+      allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-source"),
+        containsOutput("cannot be unset when node is activated")
+      ));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      not(containsOutput("relay-source=")));
+  }
+
+    @Test
+  public void unset_relay_destination() {
+    assertThat(
+      configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination="+"193.123.5.4:" + 7878),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        containsOutput("stripe.1.node.1.relay-destination="+"193.123.5.4\\:" + 7878)
+      );
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination"),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        not(containsOutput("relay-destination=")));
+  }
+
+  @Test
   public void unset_tc_properties() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:1,bar:2"),

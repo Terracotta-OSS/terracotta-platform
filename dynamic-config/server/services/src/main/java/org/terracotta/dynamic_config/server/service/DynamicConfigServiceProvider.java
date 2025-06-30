@@ -58,6 +58,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.server.ConfigChangeHandler.accept;
 
@@ -93,6 +94,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
     // settings applied directly without any config handler but which require a restart
     addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
+    addToManager(configChangeHandlerManager, accept(), RELAY_DESTINATION);
 
     // public hostname/port
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);

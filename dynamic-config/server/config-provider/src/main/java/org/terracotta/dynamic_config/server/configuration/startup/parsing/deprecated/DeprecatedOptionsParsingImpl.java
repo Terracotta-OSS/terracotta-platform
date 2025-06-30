@@ -56,6 +56,8 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_SOURCE;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
@@ -80,6 +82,12 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT}, description = "public node port")
   private String publicPort;
+
+  @Parameter(names = {"-c", "--" + RELAY_SOURCE}, description = "relay source")
+  private String relaySource;
+
+  @Parameter(names = {"-q", "--" + RELAY_DESTINATION}, description = "relay destination")
+  private String relayDestination;
 
   @Parameter(names = {"-g", "--" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
   private String groupPort;

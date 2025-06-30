@@ -117,6 +117,13 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
     }
   }
 
+  public void runConfigurationChangeThroughDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
+    List<Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
+    try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
+    }
+  }
+
   public void runConfigurationRepair(Map<Endpoint, LogicalServerState> onlineActivatedNodes, int totalNodeCount, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to repair configuration on nodes: {}", onlineActivatedNodes.keySet());
     List<Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);
