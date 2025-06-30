@@ -120,6 +120,33 @@ class SettingValidator {
     }
   };
 
+  static final BiConsumer<String, Tuple2<String, String>> INET_SOCKET_ADDRESS_VALIDATOR = (setting, kv) -> {
+    DEFAULT_VALIDATOR.accept(setting, kv);
+    final String address = kv.t2;
+
+    String[] parts = address.split(":");
+    if (parts.length != 2) {
+      throw new IllegalArgumentException("Invalid format for " + setting + ". Expected format: <host>:<port>");
+    }
+
+    String hostname = parts[0];
+    String portStr = parts[1];
+
+    if (!Substitutor.containsSubstitutionParams(address) && !isValidIPv4(hostname) && !isValidIPv6(hostname) && !isValidHost(hostname)) {
+      throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid hostname or IP address");
+    }
+
+    try {
+      int port = Integer.parseInt(portStr);
+      if (port < 0 || port > 65535) {
+        throw new IllegalArgumentException("Invalid port in " + setting + ": " + port + " (must be 0-65535)");
+      }
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Port must be a number in " + setting + ": " + portStr);
+    }
+  };
+
+
   static final BiConsumer<String, Tuple2<String, String>> OFFHEAP_VALIDATOR = (setting, kv) -> {
     if (kv.t2 != null && !kv.t2.isEmpty()) {
       validateMappings(kv, setting + " should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...", (k, v) -> {

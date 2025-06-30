@@ -92,6 +92,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
@@ -158,7 +159,7 @@ public abstract class RemoteAction implements Runnable {
         // these are the list of states that we allow to consider a server has restarted
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING, PASSIVE_RELAY));
     output.info("All nodes came back up");
   }
 
@@ -257,6 +258,12 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
+    failures.reThrowReasons();
+  }
+
+  protected final void runConfigurationChangeThroughDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange change) {
+    NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
+    nomadManager.runConfigurationChangeThroughDiagnostic(onlineNodes, change, failures);
     failures.reThrowReasons();
   }
 

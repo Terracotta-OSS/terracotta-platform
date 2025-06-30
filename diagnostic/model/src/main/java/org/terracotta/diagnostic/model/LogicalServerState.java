@@ -39,6 +39,11 @@ public enum LogicalServerState {
   PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
 
   /**
+   * Passive server is up and ready for relay sync
+   */
+  PASSIVE_RELAY("PASSIVE_RELAY"),
+
+  /**
    * Active server is ready to receive clients
    */
   ACTIVE("ACTIVE", "ACTIVE-COORDINATOR"),
