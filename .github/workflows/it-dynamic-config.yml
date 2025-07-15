@@ -56,7 +56,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
-        run: ./gradlew :dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest --no-daemon --info -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
+        run: ./gradlew :dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
         env:
           DC_IT_MAX_FORKS: "1"
 
