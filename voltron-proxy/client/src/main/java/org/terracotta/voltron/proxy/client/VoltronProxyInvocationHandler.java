@@ -121,7 +121,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
           if (endpointListener != null) {
             endpointListener.onDisconnectUnexpectedly();
           }
-          handler.shutdownNow();
+          handler.shutdown();
         }
       });
     }
