@@ -34,8 +34,8 @@ test {
   if (System.getenv("DC_IT_MAX_FORKS") != null) {
       maxParallelForks = Integer.parseInt(System.getenv("DC_IT_MAX_FORKS"))
   }
-  jvmArgs "-XX:MaxDirectMemorySize=2048m"
-  jvmArgs "-Dorg.terracotta.disablePortReleaseCheck=true"
+  // . for java21 memory leak .
+  forkEvery = 1
   systemProperty 'org.terracotta.voter.topology.fetch.interval', '5000'
   hosts {
     customLocalHosts = ["127.0.0.1", "localhost", "${'hostname'.execute().text.trim()}", "testhostname"]
