@@ -23,6 +23,7 @@
               "publicHostname": null,
               "publicPort": null,
               "securityAuditLogDir": null,
+              "securityLogDir": null,
               "securityDir": null,
               "tcProperties": null,
               "uid": "ETKDoCOrSlSdcMdd6tSdUA"
@@ -44,6 +45,7 @@
               "publicHostname": null,
               "publicPort": null,
               "securityAuditLogDir": null,
+              "securityLogDir": null,
               "securityDir": null,
               "tcProperties": null,
               "uid": "HdRNH3G2SIOY0Tlm2QoMPw"
@@ -71,6 +73,7 @@
               "publicHostname": null,
               "publicPort": null,
               "securityAuditLogDir": null,
+              "securityLogDir": null,
               "securityDir": null,
               "tcProperties": null,
               "uid": "bpEkcrGSRXWIKwpEA9QJGA"
@@ -92,6 +95,7 @@
               "publicHostname": null,
               "publicPort": null,
               "securityAuditLogDir": null,
+              "securityLogDir": null,
               "securityDir": null,
               "tcProperties": null,
               "uid": "whajdPIfR7aWnFyxeJE9OQ"
@@ -113,6 +117,7 @@
               "publicHostname": null,
               "publicPort": null,
               "securityAuditLogDir": null,
+              "securityLogDir": null,
               "securityDir": null,
               "tcProperties": null,
               "uid": "i7kpOAV7RT2tVSibd_YukQ"

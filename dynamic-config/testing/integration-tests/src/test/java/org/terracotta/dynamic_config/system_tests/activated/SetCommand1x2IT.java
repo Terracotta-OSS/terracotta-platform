@@ -77,4 +77,23 @@ public class SetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
         containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
   }
+
+  @Test
+  public void testTargetOfflineNode_setSecurityLogDir() {
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
+    stopNode(1, passiveId);
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".security-log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.security-log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "security-log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+  }
 }
