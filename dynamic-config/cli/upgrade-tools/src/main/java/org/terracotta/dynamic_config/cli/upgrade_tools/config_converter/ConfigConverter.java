@@ -108,6 +108,7 @@ public class ConfigConverter {
     node.getMetadataDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
     node.getSecurityDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_DIR));
     node.getSecurityAuditLogDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_AUDIT_LOG_DIR));
+    node.getSecurityLogDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_LOG_DIR));
 
     return placeHolders;
   }
@@ -136,6 +137,11 @@ public class ConfigConverter {
     if (node.getSecurityAuditLogDir().isConfigured() && !node.getSecurityAuditLogDir().get().toPath().isAbsolute()) {
       return SettingName.SECURITY_AUDIT_LOG_DIR;
     }
+
+    if (node.getSecurityLogDir().isConfigured() && !node.getSecurityLogDir().get().toPath().isAbsolute()) {
+      return SettingName.SECURITY_LOG_DIR;
+    }
+
     return null;
   }
 }

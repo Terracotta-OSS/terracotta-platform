@@ -109,7 +109,7 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *      Permission: when: [configuring] allow: [import] at levels: [cluster]
  *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
  *
- *  public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir
+ *  public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir, security-log-dir
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *      Permission: when: [activated, configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
  *
@@ -661,6 +661,22 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
+  ),
+  SECURITY_LOG_DIR(SettingName.SECURITY_LOG_DIR,
+      of(V1, V2),
+      false,
+      always(null),
+      NODE,
+      fromNode(Node::getSecurityLogDir),
+      intoNode((node, value) -> node.setSecurityLogDir(value == null ? null : RawPath.valueOf(value))),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(NODE_RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_LOG_DIR, tuple2(key, value))
   ),
   SECURITY_AUTHC(SettingName.SECURITY_AUTHC,
       of(V1, V2),
