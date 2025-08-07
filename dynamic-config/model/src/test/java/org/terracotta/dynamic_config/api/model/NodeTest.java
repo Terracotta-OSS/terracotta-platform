@@ -45,6 +45,7 @@ public class NodeTest {
       .setMetadataDir(RawPath.valueOf("metadata"))
       .putTcProperty("key", "val")
       .setSecurityAuditLogDir(RawPath.valueOf("audit"))
+      .setSecurityLogDir(RawPath.valueOf("security"))
       .setSecurityDir(RawPath.valueOf("sec"));
 
   Node node3 = Testing.newTestNode("node3", "localhost", 9410)

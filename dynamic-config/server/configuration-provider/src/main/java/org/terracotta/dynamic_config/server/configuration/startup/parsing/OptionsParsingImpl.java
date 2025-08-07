@@ -57,6 +57,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PO
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
@@ -112,6 +113,9 @@ public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-" + SECURITY_AUDIT_LOG_DIR}, description = "Security audit log directory. Default: <unset>")
   private String securityAuditLogDir;
+
+  @Parameter(names = {"-" + SECURITY_LOG_DIR}, description = "Security log directory. Default: <unset>")
+  private String securityLogDir;
 
   @Parameter(names = {"-" + SECURITY_AUTHC}, description = "Security authentication setting (file|ldap|certificate). Default: <unset>")
   private String securityAuthc;

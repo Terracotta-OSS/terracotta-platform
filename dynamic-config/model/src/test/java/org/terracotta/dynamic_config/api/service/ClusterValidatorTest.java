@@ -47,6 +47,7 @@ public class ClusterValidatorTest {
   private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
   private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
   private static final String auditLogDirDisallowedError = "When no security root directories are configured audit-log-dir should also be unconfigured (unset) for all nodes in the cluster";
+  private static final String securityLogDirError = "Within a cluster, all nodes must have a security log directory defined or no security log directory defined";
 
   private final Random random = new Random();
 
@@ -235,6 +236,7 @@ public class ClusterValidatorTest {
         newTestNode("node2", "localhost2", Testing.N_UIDS[2])
     ).map(node -> node
         .setSecurityAuditLogDir(RawPath.valueOf("audit-" + random.nextInt()))
+        .setSecurityLogDir(RawPath.valueOf("securitylog-" + random.nextInt()))
         .setSecurityDir(RawPath.valueOf("security-root" + random.nextInt()))
         .putDataDir("dir-1", RawPath.valueOf("some-path" + random.nextInt()))
         .setBackupDir(RawPath.valueOf("backup-" + random.nextInt()))
@@ -260,8 +262,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_1() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
 
     Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2)).setSecuritySslTls(false).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
@@ -269,8 +271,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_2() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
 
     Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
@@ -295,8 +297,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_5() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
 
     Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2))
         .setSecuritySslTls(true)
@@ -391,6 +393,15 @@ public class ClusterValidatorTest {
     Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
 
     assertClusterValidationFailsContainsMessage(auditLogDirError, cluster);
+  }
+
+  @Test
+  public void testBadSecurity_notAllNodesHaveSecurityLogDirWithSecurityDir() {
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityLogDir(RawPath.valueOf("securitylog"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir"));
+    Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
+
+    assertClusterValidationFailsContainsMessage(securityLogDirError, cluster);
   }
 
   @Test

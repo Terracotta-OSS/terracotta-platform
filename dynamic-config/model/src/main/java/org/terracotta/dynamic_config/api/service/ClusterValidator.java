@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
@@ -315,6 +316,7 @@ public class ClusterValidator {
     boolean securityDirIsConfigured = validateSecurityDirs();
     validateSecurityRequirements(securityDirIsConfigured);
     validateAuditLogDir(securityDirIsConfigured);
+    validateSecurityLogDir(securityDirIsConfigured);
   }
 
   private boolean validateSecurityDirs() {
@@ -378,4 +380,22 @@ public class ClusterValidator {
       }
     }
   }
+
+  private void validateSecurityLogDir(boolean securityDirIsConfigured) {
+    // 'security-log-dir' is an 'all-or-none' node configuration.
+    // Check that all nodes have/do not have an security log directory configured
+    List<String> nodesWithSecurityLogDirs = cluster.getNodes().stream()
+        .filter(node -> node.getSecurityLogDir().isConfigured())
+        .map(Node::getName)
+        .collect(toList());
+    int count = nodesWithSecurityLogDirs.size();
+    if (securityDirIsConfigured) {
+      if (count > 0 && count != cluster.getNodeCount()) {
+        throw new MalformedClusterException("Nodes: " + nodesWithSecurityLogDirs +
+            " currently have (or will have) security log directories defined, while some nodes in the cluster do not (or will not)." +
+            " Within a cluster, all nodes must have a security log directory defined or no security log directory defined.");
+      }
+    }
+  }
+
 }
