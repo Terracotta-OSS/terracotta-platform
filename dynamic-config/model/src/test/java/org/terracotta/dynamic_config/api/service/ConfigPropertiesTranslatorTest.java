@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -628,6 +629,42 @@ public class ConfigPropertiesTranslatorTest {
 
     // these clusters need to be identical
     assertEquals(clusterFromPropertiesFile, clusterFromConfigFile);
+  }
+
+  @Test
+  public void test_cluster_from_cfg_properties() throws URISyntaxException {
+    Cluster cluster = new ClusterFactory().create(Paths.get(getClass().getResource("/tc-config.cfg").toURI()));
+    assertThat(cluster.getStripes().get(0).getNodeCount(), is(4));
+    for (int i = 0; i < 4; i++) {
+      Map<String, String> properties = cluster.getStripes().get(0).getNodes().get(i).getTcProperties().get();
+      assert(properties != null);
+      assertThat(properties.size(), is(25));
+      assertThat(properties.get("prop-01"), is("true"));
+      assertThat(properties.get("prop-02"), is("5000"));
+      assertThat(properties.get("prop-03"), is("1000"));
+      assertThat(properties.get("prop-04"), is("3"));
+      assertThat(properties.get("prop-05"), is("true"));
+      assertThat(properties.get("prop-06"), is("2"));
+      assertThat(properties.get("prop-07"), is("5"));
+      assertThat(properties.get("prop-08"), is("true"));
+      assertThat(properties.get("prop-09"), is("5000"));
+      assertThat(properties.get("prop-10"), is("1000"));
+      assertThat(properties.get("prop-11"), is("3"));
+      assertThat(properties.get("prop-12"), is("true"));
+      assertThat(properties.get("prop-13"), is("2"));
+      assertThat(properties.get("prop-14"), is("5"));
+      assertThat(properties.get("prop-15"), is("true"));
+      assertThat(properties.get("prop-16"), is("5000"));
+      assertThat(properties.get("prop-17"), is("1000"));
+      assertThat(properties.get("prop-18"), is("3"));
+      assertThat(properties.get("prop-19"), is("true"));
+      assertThat(properties.get("prop-20"), is("2"));
+      assertThat(properties.get("prop-21"), is("5"));
+      assertThat(properties.get("prop-22"), is("true"));
+      assertThat(properties.get("prop-23"), is("15000"));
+      assertThat(properties.get("prop-24"), is("true"));
+      assertThat(properties.get("prop-25"), is("15000"));
+    }
   }
 
   private Reader getReader(String[] params) {
