@@ -6,6 +6,9 @@ import org.gradle.api.Project;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.plugins.signing.SigningExtension;
 import org.gradle.plugins.signing.SigningPlugin;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
+import org.jfrog.gradle.plugin.artifactory.utils.ExtensionsUtils;
 import org.terracotta.build.plugins.DeployPlugin;
 
 /**
@@ -23,6 +26,23 @@ public class DeployConvention implements ConventionPlugin<Project, DeployPlugin>
     project.getPlugins().apply(BaseConvention.class);
     project.getPlugins().apply(DeployPlugin.class);
     project.getPlugins().apply(SigningPlugin.class);
+    project.getPlugins().apply("maven-publish");
+    project.getPlugins().apply(ArtifactoryPlugin.class);
+
+    project.getTasks().getByPath("publish").dependsOn(project.getTasks().getByPath("artifactoryPublish"));
+
+    ArtifactoryPluginConvention apc = ExtensionsUtils.getOrCreateArtifactoryExtension(project);
+    apc.setContextUrl("https://na.artifactory.swg-devops.com/artifactory");
+    apc.buildInfo(handler -> handler.setBuildName("hyc-webmriab-team-tc01/terracotta/" + project.getRootProject().getName()));
+    apc.publish(config -> {
+      config.defaults(defaults -> { defaults.publications("mavenJava", "distribution"); });
+      config.repository(repo -> {
+        repo.setReleaseRepoKey("hyc-webmriab-team-tc01-os-releases-maven-local");
+        repo.setSnapshotRepoKey("hyc-webmriab-team-tc01-os-snapshots-maven-local");
+        repo.setUsername(project.hasProperty("artifactory_user") ? String.valueOf(project.findProperty("artifactory_user")) : System.getenv("ARTIFACTORY_DEPLOY_USERNAME"));
+        repo.setPassword(project.hasProperty("artifactory_password") ? String.valueOf(project.findProperty("artifactory_password")) : System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"));
+      });
+    });
 
     final String gpgSigningKey = Optional.ofNullable(System.getenv("GPG_SIGNING_KEY"))
         .orElse(project.hasProperty("signingKey") ? project.property("signingKey").toString() : null);
