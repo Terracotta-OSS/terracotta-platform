@@ -126,19 +126,3 @@ include ':common:test-utilities',
     
 File core = file("terracotta-core")
 
-if (core.exists() && core.isDirectory()) {
-    includeBuild("terracotta-core") {
-        dependencySubstitution {
-            substitute(module("org.terracotta:server-api")).using(project(":server-api"))
-            substitute(module("org.terracotta:client-api")).using(project(":client-api"))
-            substitute(module("org.terracotta:common-api")).using(project(":common-api"))
-            substitute(module("org.terracotta.internal:client-runtime")).using(project(":client-runtime"))
-            substitute(module("org.terracotta.internal:server-runtime")).using(project(":server-runtime"))
-            substitute(module("org.terracotta:passthrough-server")).using(project(":passthrough-server"))
-            substitute(module("org.terracotta:galvan")).using(project(":galvan"))
-            substitute(module("org.terracotta.internal:test-interfaces")).using(project(":test-interfaces"))
-            substitute(module("org.terracotta.internal:galvan-support")).using(project(":galvan-support"))
-        }
-    }
-}
-

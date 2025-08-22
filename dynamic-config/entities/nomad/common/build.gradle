@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-  compileOnlyApi project(':common:nomad')
+  compileOnly project(':common:nomad')
   implementation project(':dynamic-config:json')
 }
 

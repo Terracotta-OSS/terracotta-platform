@@ -70,7 +70,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   private long timeoutMs = 5000;
   private Executor managementCallExecutor = Runnable::run;
   private final ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
-  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.error("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
+  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.warn("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(CAPABILITY_NAME, Object.class) {
     @Override

@@ -8,7 +8,7 @@ plugins {
 dependencies {
   api project(':dynamic-config:entities:nomad:common')
   // above has below as compile only
-  runtimeOnly project(':common:nomad')
+  api project(':common:nomad')
 }
 
 deploy {

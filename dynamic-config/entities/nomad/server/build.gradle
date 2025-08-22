@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+  service project(":common:nomad")
   service project(':dynamic-config:api')
   implementation project(':dynamic-config:entities:nomad:common')
 }

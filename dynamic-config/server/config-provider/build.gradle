@@ -9,6 +9,7 @@ dependencies {
   service project(':diagnostic:server:api')
 
   implementation project(':dynamic-config:repository')
+  implementation project(':dynamic-config:json')
   implementation "com.beust:jcommander:$jcommanderVersion"
 
   testImplementation project(':common:test-utilities')

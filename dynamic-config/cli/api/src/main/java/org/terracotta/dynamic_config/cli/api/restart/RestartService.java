@@ -194,7 +194,7 @@ public class RestartService {
     executorService.shutdown();
     try {
       if (!executorService.awaitTermination(30, SECONDS)) {
-        executorService.shutdown();
+        executorService.shutdownNow();
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

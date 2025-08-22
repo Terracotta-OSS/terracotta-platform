@@ -82,6 +82,7 @@ dependencies {
 
   // voltron server API
   serverPluginApis(project(":common:json"))
+  serverPluginApis(project(":common:nomad"))
   serverPluginApis(project(":diagnostic:server:api"))
   serverPluginApis(project(":dynamic-config:server:api"))
   serverPluginApis(project(":management:server:api"))

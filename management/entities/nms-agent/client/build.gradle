@@ -6,6 +6,7 @@ plugins {
 }
 
 dependencies {
+  api project(":management:model")
   api project(':management:registry')
   api project(':management:entities:nms-agent:common')
   api project(':voltron-proxy:client')

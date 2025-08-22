@@ -7,7 +7,7 @@ plugins {
 dependencies {
   api project(':dynamic-config:api')
   api project(':common:sanskrit')
-  api project(':dynamic-config:json')
+  implementation project(':dynamic-config:json')
 
   testImplementation project(':common:test-utilities')
   testImplementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
