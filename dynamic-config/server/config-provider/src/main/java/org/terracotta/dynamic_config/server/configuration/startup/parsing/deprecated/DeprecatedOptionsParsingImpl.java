@@ -58,7 +58,6 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PO
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
@@ -114,9 +113,6 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR}, description = "security audit log directory")
   private String securityAuditLogDir;
-
-  @Parameter(names = {"-v", "--" + SECURITY_LOG_DIR}, description = "security log directory")
-  private String securityLogDir;
 
   @Parameter(names = {"-z", "--" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
   private String securityAuthc;
