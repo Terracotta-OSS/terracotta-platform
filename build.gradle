@@ -35,3 +35,13 @@ allprojects {
     }
   }
 }
+
+allprojects {
+  afterEvaluate {
+    project.configurations {
+      all {
+        resolutionStrategy.preferProjectModules()
+      }
+    }
+  }
+}

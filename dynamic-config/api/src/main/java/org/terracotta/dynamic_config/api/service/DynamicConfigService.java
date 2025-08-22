@@ -50,6 +50,14 @@ public interface DynamicConfigService {
   void upgradeLicense(String licenseContent);
 
   /**
+   * After the NOMAD transaction, do we need to call activateRelay() ?
+   * config-tool unset relay-source
+   * 1. Update the cluster-config ?? -> Do we prepare the transaction ?
+   *
+   * Through this method, I can go to DynamicServiceConfigImpl and swap the runtimeTopology with upComingTopology
+   */
+ // void activateRelay();
+  /**
    * Reset
    * <p>
    * This method will back up and reset the configurations and Nomad append log,
