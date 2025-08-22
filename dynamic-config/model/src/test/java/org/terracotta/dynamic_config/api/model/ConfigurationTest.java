@@ -69,6 +69,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -115,6 +116,7 @@ public class ConfigurationTest {
         NODE_METADATA_DIR,
         OFFHEAP_RESOURCES,
         SECURITY_AUDIT_LOG_DIR,
+        SECURITY_LOG_DIR,
         SECURITY_AUTHC,
         SECURITY_DIR,
         SECURITY_SSL_TLS,
@@ -208,6 +210,7 @@ public class ConfigurationTest {
         NODE_LOG_DIR,
         NODE_METADATA_DIR,
         SECURITY_AUDIT_LOG_DIR,
+        SECURITY_LOG_DIR,
         SECURITY_DIR,
         TC_PROPERTIES
     ).forEach(setting -> {
@@ -268,6 +271,7 @@ public class ConfigurationTest {
         NODE_LOG_DIR,
         NODE_METADATA_DIR,
         SECURITY_AUDIT_LOG_DIR,
+        SECURITY_LOG_DIR,
         SECURITY_DIR,
         TC_PROPERTIES
     ).forEach(setting -> {
@@ -350,7 +354,8 @@ public class ConfigurationTest {
           tuple2(NODE_BACKUP_DIR, "foo/bar"),
           tuple2(SECURITY_DIR, "foo/bar"),
           tuple2(NODE_LOG_DIR, "foo/bar"),
-          tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
+          tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar"),
+          tuple2(SECURITY_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
         allowInput(tuple.t1 + "=", tuple.t1, CLUSTER, null, null, null, null);

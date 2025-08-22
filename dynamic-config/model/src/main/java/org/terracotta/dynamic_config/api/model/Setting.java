@@ -662,6 +662,22 @@ public enum Setting {
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
   ),
+  SECURITY_LOG_DIR(SettingName.SECURITY_LOG_DIR,
+      of(V1, V2),
+      false,
+      always(null),
+      NODE,
+      fromNode(Node::getSecurityLogDir),
+      intoNode((node, value) -> node.setSecurityLogDir(value == null ? null : RawPath.valueOf(value))),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(NODE_RESTART),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_LOG_DIR, tuple2(key, value))
+  ),
   SECURITY_AUTHC(SettingName.SECURITY_AUTHC,
       of(V1, V2),
       false,
