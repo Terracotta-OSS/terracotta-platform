@@ -5,7 +5,6 @@ plugins {
   id 'org.terracotta.build.convention.voltron-common'
 }
 
-project.ext.set("voltron-type", "common")
 
 dependencies {
   api project(':common:runnel')

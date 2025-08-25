@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
   service project(':diagnostic:server:api')
+  service project(":common:json")
   implementation project(':diagnostic:common')
   testImplementation project(':common:test-utilities')
 }

@@ -8,6 +8,7 @@ plugins {
 dependencies {
   api project(':diagnostic:model')
   api project(':diagnostic:common')
+  api project(":common:json")
 
   testImplementation project(':common:test-utilities')
 }

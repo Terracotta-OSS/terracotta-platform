@@ -8,7 +8,7 @@ plugins {
 dependencies {
   api project(':dynamic-config:entities:topology:common')
   //  common above pulls compileOnly for below
-  runtimeOnly project(':dynamic-config:model')
+  api project(':dynamic-config:model')
 }
 
 deploy {

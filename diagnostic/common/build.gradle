@@ -5,9 +5,10 @@ plugins {
 }
 
 dependencies {
-  api project(':common:json')
+  compileOnly project(':common:json')
 
   testImplementation project(':common:structures')
+  testImplementation project(':common:json')
   testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }
 
