@@ -16,6 +16,8 @@
  */
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
+import java.time.Duration;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
@@ -45,6 +47,9 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false, netDisruptionEnabled = true)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
+  public AttachInConsistency1x4IT() {
+    super(Duration.ofMinutes(5));
+  }
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
