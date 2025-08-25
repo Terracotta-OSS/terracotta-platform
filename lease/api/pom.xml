@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>lease</artifactId>
-    <version>5.10-SNAPSHOT</version>
+    <version>5.10.23</version>
     <relativePath>..</relativePath>
   </parent>
 

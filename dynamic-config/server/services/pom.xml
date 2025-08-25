@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.server</groupId>
     <artifactId>dynamic-config-server</artifactId>
-    <version>5.10-SNAPSHOT</version>
+    <version>5.10.23</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
