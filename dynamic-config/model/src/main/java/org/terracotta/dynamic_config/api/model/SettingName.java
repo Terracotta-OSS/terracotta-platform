@@ -42,6 +42,7 @@ public class SettingName {
   public static final String NODE_LOGGER_OVERRIDES = "logger-overrides";
   public static final String SECURITY_DIR = "security-dir";
   public static final String SECURITY_AUDIT_LOG_DIR = "audit-log-dir";
+  public static final String SECURITY_LOG_DIR = "security-log-dir";
   public static final String SECURITY_AUTHC = "authc";
   public static final String SECURITY_SSL_TLS = "ssl-tls";
   public static final String SECURITY_WHITELIST = "whitelist";
