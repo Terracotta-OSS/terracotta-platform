@@ -32,8 +32,6 @@ val kit by configurations.registering {
   description = "Outgoing kit configuration"
 }
 
-copyright.check(fileTree("src/main/dist"))
-
 // tools
 
 val tools by configurations.registering {
@@ -74,29 +72,17 @@ val serverPluginLibs = dependencies.extensions.create<ServerPluginExtension>("se
 
 val logbackVersion: String by properties
 val slf4jVersion: String by properties
-val terracottaCoreVersion: String by properties
+val terracottaRuntimeVersion: String by properties
 
 dependencies {
   /*
    * These roundabout string invokes are necessary until Gradle 8.5 due to: https://github.com/gradle/gradle/issues/26602
    */
-  serverLibs.name("org.terracotta.internal:terracotta:$terracottaCoreVersion")
-  serverLibs.name("org.terracotta.internal:tc-server:$terracottaCoreVersion")
-  constraints {
-    serverLibs.name("ch.qos.logback:logback-classic") {
-      version {
-        strictly(logbackVersion)
-      }
-    }
-    serverLibs.name("org.slf4j:slf4j-api") {
-      version {
-        strictly(slf4jVersion)
-      }
-    }
-  }
+  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaRuntimeVersion")
 
   // voltron server API
   serverPluginApis(project(":common:json"))
+  serverPluginApis(project(":common:nomad"))
   serverPluginApis(project(":diagnostic:server:api"))
   serverPluginApis(project(":dynamic-config:server:api"))
   serverPluginApis(project(":management:server:api"))
@@ -280,6 +266,11 @@ abstract class ClasspathAssembly : DefaultTask() {
               }
             }
           }
+        } else if (file.isFile && file.name.endsWith(".zip", ignoreCase = true)) {
+            project.sync {
+                from(project.zipTree(file))
+                into(outputDirectory)
+            }
         }
       }
     }

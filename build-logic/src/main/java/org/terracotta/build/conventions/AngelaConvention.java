@@ -48,8 +48,9 @@ public class AngelaConvention implements ConventionPlugin<Project, AngelaPlugin>
 
     project.getTasks().withType(Test.class).configureEach(task -> {
       task.setMaxParallelForks(3);
-      task.jvmArgs("-XX:MaxDirectMemorySize=1536m");
+      task.jvmArgs("-XX:MaxDirectMemorySize=4096m");
       task.jvmArgs("-XX:SoftRefLRUPolicyMSPerMB=0");
+      task.jvmArgs("-Xmx1g");
       task.systemProperty("angela.skipUninstall", "false");
       task.systemProperty("org.terracotta.disablePortReleaseCheck", "true");
     });

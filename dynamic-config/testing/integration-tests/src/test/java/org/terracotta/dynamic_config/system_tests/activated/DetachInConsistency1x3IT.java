@@ -124,7 +124,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
 
     //create prepare failure on active
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
 
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
@@ -152,17 +152,18 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     final int passiveId2 = passives[1];
 
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
-
     //setup for failover in commit phase on active
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
 
     // To ensure that passiveId don't become active during failover since that is what we will remove
+
     stopNode(1, passiveId1);
 
     entityOperationTimeout = Duration.ofSeconds(5); // to not be stuck in failover
     assertThat(
         configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId1)),
         containsOutput("Two-Phase commit failed"));
+
     waitForStopped(1, activeId);
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
@@ -193,10 +194,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     //create prepare failure on active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
-
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
     stopNode(1, passiveId1);
-
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
         configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId1)),
@@ -222,7 +221,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
 
     stopNode(1, passiveId1);
 
@@ -246,3 +245,4 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(2)));
   }
 }
+

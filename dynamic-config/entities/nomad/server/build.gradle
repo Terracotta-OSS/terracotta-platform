@@ -1,10 +1,11 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 dependencies {
+  service project(":common:nomad")
   service project(':dynamic-config:api')
   implementation project(':dynamic-config:entities:nomad:common')
 }

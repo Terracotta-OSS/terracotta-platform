@@ -1,12 +1,12 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 dependencies {
-  service project(':common:json')
   service project(':diagnostic:server:api')
+  service project(":common:json")
   implementation project(':diagnostic:common')
   testImplementation project(':common:test-utilities')
 }

@@ -69,6 +69,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 4);
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     // attach failure (forcing attach otherwise we have to restart cluster)
@@ -129,6 +130,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     int passiveId2 = passives[1];
 
     startNode(1, 4);
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active

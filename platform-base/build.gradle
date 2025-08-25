@@ -1,11 +1,15 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 deploy {
   groupId = 'org.terracotta'
   artifactId = 'terracotta-platform-base'
   name = 'ServerInfo Server Plugin'
+}
+
+dependencies {
+
 }

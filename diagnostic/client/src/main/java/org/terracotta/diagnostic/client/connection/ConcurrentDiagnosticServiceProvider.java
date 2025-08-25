@@ -178,11 +178,13 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
 
     public void interrupt() {
       executor.shutdownNow();
+      executor.shutdown();
     }
 
     @Override
     public void close() {
       executor.shutdownNow();
+      executor.shutdown();
     }
   }
 }

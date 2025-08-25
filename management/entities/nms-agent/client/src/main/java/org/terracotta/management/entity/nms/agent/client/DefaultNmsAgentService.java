@@ -70,7 +70,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   private long timeoutMs = 5000;
   private Executor managementCallExecutor = Runnable::run;
   private final ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
-  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.trace("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
+  private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.warn("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(CAPABILITY_NAME, Object.class) {
     @Override
@@ -373,10 +373,17 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     // needed before calling refreshManagementRegistry();
     this.entity = entity;
 
-    // this will call again getEntity();
-    refreshManagementRegistry();
+//  do this to prevent recursion when running the regular ops will call getEntity but the entity may have been flushed
+//  by a poor connection
+    final ManagementRegistry registry = getRegistry();
+    final NmsAgentEntity newEntity = entity;
+
+    if (registry != null) {
+      runOperation(() -> newEntity.exposeManagementMetadata(null, root, registry.getContextContainer(), registry.getCapabilities().toArray(Capability[]::new)));
+    }
+
     if (previouslyExposedTags != null) {
-      setTags(previouslyExposedTags);
+      runOperation(() -> newEntity.exposeTags(null, previouslyExposedTags));
     }
 
     return entity;

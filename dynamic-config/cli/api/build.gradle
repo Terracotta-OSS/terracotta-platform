@@ -2,15 +2,15 @@ plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-client'
 }
 
 dependencies {
-  api project(':common:json')
   api project(':common:output-service')
   api project(':diagnostic:client')
   api project(':dynamic-config:entities:nomad:client')
   implementation project(':dynamic-config:json')
-  implementation "org.terracotta.internal:common-spi:$terracottaCoreVersion"
+
   testImplementation project(':common:test-utilities')
 }
 

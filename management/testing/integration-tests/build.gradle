@@ -1,21 +1,28 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'org.terracotta.build.convention.galvan'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 configurations {
-  galvanServerPlugins 
+  pluginsImpl 
+  pluginsApi 
 }
 
 dependencies {
-  galvanServerPlugins project(':management:testing:entity')
-
   testImplementation project(':common:json')
   testImplementation project(':diagnostic:client')
   testImplementation project(':management:entities:nms:client')
   testImplementation project(':management:entities:nms-agent:client')
   testImplementation project(':management:testing:entity')
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
+  testImplementation project(':dynamic-config:testing:galvan')
+  testImplementation project(":lease:client")
+
+  pluginsImpl (project(':management:testing:entity')) {
+    exclude group: 'org.slf4j'
+  }
+
 }
 
 sourceSets {
@@ -26,7 +33,58 @@ sourceSets {
   }
 }
 
+var explodedPath = project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins").get().toString()
+
+println "Testing path " + explodedPath
+
 test {
   jvmArgs "-XX:MaxDirectMemorySize=2048m"
-  systemProperty 'serverWorkingDir', project.layout.buildDirectory.get().dir('galvan').getAsFile().absolutePath
+    systemProperty "galvan.plugin", layout.buildDirectory.dir("plugin").get().toString()
+    systemProperty "galvan.dir", layout.buildDirectory.dir("galvan").get().toString()
+    systemProperty "galvan.server", layout.buildDirectory.dir("tmp/tcserver").get().toString()
+    environment "JAVA_OPTS", "-XX:MaxDirectMemorySize=2048m"
 }
+
+
+task copyPluginsImpl(type: Copy) {
+    from (configurations.pluginsImpl)
+    into layout.buildDirectory.dir("plugin/lib")
+}
+
+task copyPluginsApi(type: Copy) {
+    from (configurations.pluginsApi)
+    into layout.buildDirectory.dir("plugin/api")
+}
+
+task serverClean(type: Delete) {
+    delete layout.buildDirectory.dir("tmp/tcserver")
+}
+
+task pluginClean(type: Delete) {
+    delete layout.buildDirectory.dir("plugin")
+}
+
+task galvanTestClean(type: Delete) {
+    delete layout.buildDirectory.dir("galvan")
+}
+
+task copyBaseKit() {
+    outputs.dir(layout.buildDirectory.dir("plugin/api"))
+    outputs.dir(layout.buildDirectory.dir("plugin/lib"))
+    doLast {
+        project.sync {
+            from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/api")
+            into layout.buildDirectory.dir("plugin/api")
+        }
+        project.sync {
+            from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/lib")
+            into layout.buildDirectory.dir("plugin/lib")
+        }
+    }
+}
+
+test.dependsOn(copyPluginsImpl)
+serverClean.dependsOn(test)
+copyPluginsImpl.dependsOn(copyPluginsApi)
+copyPluginsApi.dependsOn(copyBaseKit)
+copyBaseKit.dependsOn(project(":platform-layout").getTasksByName("explodedKit", true))
