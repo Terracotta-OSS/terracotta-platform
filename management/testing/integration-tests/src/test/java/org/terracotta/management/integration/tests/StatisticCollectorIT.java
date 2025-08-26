@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.tc.util.Assert.assertFalse;
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Mathieu Carbou

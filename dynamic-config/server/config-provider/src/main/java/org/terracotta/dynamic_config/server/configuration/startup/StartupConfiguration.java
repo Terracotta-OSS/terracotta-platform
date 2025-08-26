@@ -68,6 +68,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final Json json;
   private final GroupPortMapper groupPortMapper;
 
+  @SuppressWarnings("deprecation")
   StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;

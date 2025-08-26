@@ -1,14 +1,11 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
-  id 'org.terracotta.build.convention.voltron'
+  id 'org.terracotta.build.convention.voltron-server'
 }
 
 dependencies {
   service project(':dynamic-config:api')
-  voltron "org.terracotta.internal:management:$terracottaCoreVersion"
-  voltron "org.terracotta.internal:server-spi:$terracottaCoreVersion"
-  voltron "ch.qos.logback:logback-classic:$logbackVersion"
 }
 
 deploy {

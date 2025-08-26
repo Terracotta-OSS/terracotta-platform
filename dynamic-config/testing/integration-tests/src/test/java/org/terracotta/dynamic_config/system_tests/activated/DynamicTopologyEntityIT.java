@@ -16,7 +16,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.entity.EntityRef;
@@ -31,6 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import org.terracotta.connection.ConnectionFactory;
 
 /**
  * @author Mathieu Carbou
@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.nullValue;
 public class DynamicTopologyEntityIT extends DynamicConfigIT {
   @Test
   public void test_topology_entity() throws Exception {
-    try (Connection connection = new TerracottaConnectionService().connect(URI.create("terracotta://localhost:" + getNodePort()), new Properties())) {
+    try (Connection connection = ConnectionFactory.connect(URI.create("terracotta://localhost:" + getNodePort()), new Properties())) {
       EntityRef<DynamicTopologyEntity, Void, Void> ref = connection.getEntityRef(DynamicTopologyEntity.class, 1L, "dynamic-config-topology-entity");
       DynamicTopologyEntity entity = ref.fetchEntity(null);
 

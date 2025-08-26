@@ -124,4 +124,5 @@ include ':common:test-utilities',
     ':dynamic-config:testing:entity',
     ':dynamic-config:testing:integration-tests'
     
-    
+File core = file("terracotta-core")
+

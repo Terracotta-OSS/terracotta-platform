@@ -16,7 +16,6 @@
  */
 package org.terracotta.management.integration.tests;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
@@ -33,6 +32,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.fail;
+import org.terracotta.connection.Diagnostics;
 
 /**
  * @author Mathieu Carbou

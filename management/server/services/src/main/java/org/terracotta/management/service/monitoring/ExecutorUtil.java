@@ -16,13 +16,12 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
-
 import static java.util.concurrent.TimeUnit.SECONDS;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author cdennis
@@ -41,6 +40,7 @@ class ExecutorUtil {
         }
       }
     }
+    executor.shutdown();
     terminate(executor);
   }
 

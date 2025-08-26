@@ -93,6 +93,7 @@ class Defaults {
     return pid;
   }
 
+  @SuppressWarnings("deprecation")
   private static <T> T findBest(Class<T> type, T def) {
     // try first a JVM sysprop
     String cName = System.getProperty(type.getName());

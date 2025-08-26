@@ -71,8 +71,9 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
 
     Matcher matcher = Pattern.compile("^(?<date>.*) \\(Revision (?<revision>.*) from (?<branch>.*)\\)$").matcher(b);
     if (matcher.matches()) {
-      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
-      Instant timestamp = dtf.parse(matcher.group("date"), Instant::from);
+  //    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+      DateTimeFormatter isoInstant = DateTimeFormatter.ISO_INSTANT;
+      Instant timestamp = isoInstant.parse(matcher.group("date"), Instant::from);
       return new KitInformation(Version.valueOf(version), matcher.group("revision"), matcher.group("branch"), timestamp);
     } else {
       return new KitInformation(Version.valueOf(version), "UNKNOWN", "UNKNOWN", Instant.ofEpochMilli(0L));

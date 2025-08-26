@@ -2,12 +2,12 @@ plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-client'
 }
 
 dependencies {
-  api "org.terracotta:connection-api:$terracottaApisVersion"
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
   implementation project(':healthchecker:common')
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
 }
 
 deploy {

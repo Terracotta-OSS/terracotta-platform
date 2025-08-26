@@ -6,7 +6,6 @@ plugins {
 
 dependencies {
   api project(':management:model')
-
   testImplementation project(':common:json')
 }
 

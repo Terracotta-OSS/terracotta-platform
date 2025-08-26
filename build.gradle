@@ -5,12 +5,6 @@ plugins {
   id 'org.terracotta.build.convention.base'
 }
 
-gradle.includedBuilds.forEach { includedBuild ->
-  project.tasks.named('check') { parentBuildCheckTask ->
-    parentBuildCheckTask.dependsOn(includedBuild.task(':check'))
-  }
-}
-
 wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }

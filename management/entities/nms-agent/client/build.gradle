@@ -2,12 +2,13 @@ plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.deploy'
   id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.voltron-client'
 }
 
 dependencies {
+  api project(":management:model")
   api project(':management:registry')
   api project(':management:entities:nms-agent:common')
-  api "org.terracotta:entity-client-api:$terracottaApisVersion"
   api project(':voltron-proxy:client')
 }
 
