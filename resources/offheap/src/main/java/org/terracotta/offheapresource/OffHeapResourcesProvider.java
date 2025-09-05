@@ -183,7 +183,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   }
 
   private void warnIfOffheapExceedsPhysicalMemory(long totalConfiguredOffheap) {
-    Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
+    Long physicalMemory = PhysicalMemory.totalMemory();
     if (physicalMemory != null && totalConfiguredOffheap > physicalMemory) {
       LOGGER.warn("Configured offheap: {} is more than physical memory: {}", totalConfiguredOffheap, physicalMemory);
     }

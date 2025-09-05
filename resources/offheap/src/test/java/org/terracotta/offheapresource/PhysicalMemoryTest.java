@@ -29,21 +29,9 @@ public class PhysicalMemoryTest {
   @Test
   public void invocations_do_not_fail() {
     int version = getVersion();
-    if (version < 9) {
-      assertNotNull(PhysicalMemory.totalPhysicalMemory());
-      assertNotNull(PhysicalMemory.freePhysicalMemory());
-      assertNotNull(PhysicalMemory.totalSwapSpace());
-      assertNotNull(PhysicalMemory.freeSwapSpace());
-      assertNotNull(PhysicalMemory.ourCommittedVirtualMemory());
-    } else if (version == 17 || version == 21) {
-      assertNotNull(PhysicalMemory.totalPhysicalMemory());
-      assertNotNull(PhysicalMemory.freePhysicalMemory());
-      assertNull(PhysicalMemory.totalSwapSpace());
-      assertNull(PhysicalMemory.freeSwapSpace());
-      assertNull(PhysicalMemory.ourCommittedVirtualMemory());
-    } else if(version == 11) {
-      assertNull(PhysicalMemory.totalPhysicalMemory());
-      assertNull(PhysicalMemory.freePhysicalMemory());
+    if (version == 17 || version == 21) {
+      assertNotNull(PhysicalMemory.totalMemory());
+      assertNotNull(PhysicalMemory.freeMemory());
       assertNull(PhysicalMemory.totalSwapSpace());
       assertNull(PhysicalMemory.freeSwapSpace());
       assertNull(PhysicalMemory.ourCommittedVirtualMemory());
