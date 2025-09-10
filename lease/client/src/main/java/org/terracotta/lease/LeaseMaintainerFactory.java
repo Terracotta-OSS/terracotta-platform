@@ -16,6 +16,8 @@
  */
 package org.terracotta.lease;
 
+import java.util.Properties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
@@ -23,9 +25,6 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-
-import java.util.Properties;
-
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_NAME;
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_VERSION;
 
@@ -42,7 +41,7 @@ public class LeaseMaintainerFactory {
    * @return the LeaseMaintainer that will maintain leases on the connection
    */
   public static LeaseMaintainer createLeaseMaintainer(Connection connection) {
-    LOGGER.info("Creating LeaseMaintainer for connection: " + connection);
+    LOGGER.debug("Creating LeaseMaintainer for connection: " + connection);
     ProxyLeaseReconnectListener leaseReconnectListener = new ProxyLeaseReconnectListener();
     LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection, leaseReconnectListener);
 
