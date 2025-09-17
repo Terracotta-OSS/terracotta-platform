@@ -148,6 +148,15 @@
       <artifactId>dynamic-config-cli-config-tool</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api-json</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
 
     <!--
       tools/voter/lib
