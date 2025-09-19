@@ -1,8 +1,15 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
   id 'org.terracotta.build.convention.voltron-server'
+  id 'org.terracotta.build.convention.deploy'
 }
 
 dependencies {
   service project(':dynamic-config:api')
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-dynamic-testing-entity'
+  name = 'Dynamic Config Testing Entity'
 }
