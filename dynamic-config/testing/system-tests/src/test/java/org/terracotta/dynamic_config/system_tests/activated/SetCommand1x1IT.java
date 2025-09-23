@@ -296,4 +296,22 @@ public class SetCommand1x1IT extends DynamicConfigIT {
       called.await();
     }
   }
+
+  @Test
+  public void setSecurityLogDir_restart() {
+    assertThat(
+            configTool("set", "-s", "localhost:" + getNodePort(), "-c", "security-log-dir=abc/def"),
+            containsOutput("Restart required for nodes:")
+    );
+
+    // Restart node and verify that the change has taken effect
+    stopNode(1, 1);
+    startNode(1, 1);
+    waitForActive(1);
+
+    assertThat(
+            configTool("get", "-s", "localhost:" + getNodePort(), "-c", "security-log-dir", "-t", "index"),
+            containsOutput("stripe.1.node.1.security-log-dir=abc/def")
+    );
+  }
 }

@@ -48,6 +48,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
@@ -72,6 +73,7 @@ public class Node implements Cloneable, PropertyHolder {
   private RawPath backupDir;
   private RawPath securityDir;
   private RawPath securityAuditLogDir;
+  private RawPath securityLogDir;
   private Map<String, String> tcProperties;
   private Map<String, String> loggerOverrides;
   private Map<String, RawPath> dataDirs;
@@ -136,6 +138,10 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<RawPath> getSecurityAuditLogDir() {
     return OptionalConfig.of(SECURITY_AUDIT_LOG_DIR, securityAuditLogDir);
+  }
+
+  public OptionalConfig<RawPath> getSecurityLogDir() {
+    return OptionalConfig.of(SECURITY_LOG_DIR, securityLogDir);
   }
 
   public OptionalConfig<Map<String, RawPath>> getDataDirs() {
@@ -229,6 +235,11 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node setSecurityAuditLogDir(RawPath securityAuditLogDir) {
     this.securityAuditLogDir = securityAuditLogDir;
+    return this;
+  }
+
+  public Node setSecurityLogDir(RawPath securityLogDir) {
+    this.securityLogDir = securityLogDir;
     return this;
   }
 
@@ -522,6 +533,7 @@ public class Node implements Cloneable, PropertyHolder {
     clone.publicHostname = this.publicHostname;
     clone.publicPort = this.publicPort;
     clone.securityAuditLogDir = this.securityAuditLogDir;
+    clone.securityLogDir = this.securityLogDir;
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
     clone.uid = this.uid;
@@ -549,6 +561,7 @@ public class Node implements Cloneable, PropertyHolder {
         Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
+        Objects.equals(securityLogDir, node.securityLogDir) &&
         Objects.equals(dataDirs, node.dataDirs);
   }
 
@@ -556,7 +569,7 @@ public class Node implements Cloneable, PropertyHolder {
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, dataDirs, uid);
+        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid);
   }
 
   @Override

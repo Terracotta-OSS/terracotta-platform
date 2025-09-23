@@ -42,6 +42,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -158,7 +159,7 @@ public class SettingValidatorTest {
       setting.validate(null); // unset - switch back to default value
     });
 
-    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR, NODE_LOG_DIR).forEach(setting -> {
+    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR, SECURITY_LOG_DIR, NODE_LOG_DIR).forEach(setting -> {
       validateOptional(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),

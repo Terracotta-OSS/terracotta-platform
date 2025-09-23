@@ -35,6 +35,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 
@@ -79,6 +80,18 @@ public class SetSettingTest {
     SECURITY_AUDIT_LOG_DIR.setProperty(node, null);
     assertNull(node.getSecurityAuditLogDir().orDefault());
     assertFalse(node.getSecurityAuditLogDir().isConfigured());
+  }
+
+  @Test
+  public void test_setProperty_SECURITY_LOG_DIR() {
+    Node node = Testing.newTestNode("node1", "localhost");
+    assertFalse(node.getSecurityLogDir().isConfigured());
+    SECURITY_LOG_DIR.setProperty(node, ".");
+    assertTrue(node.getSecurityLogDir().isConfigured());
+    assertThat(node.getSecurityLogDir().get(), is(equalTo(RawPath.valueOf("."))));
+    SECURITY_LOG_DIR.setProperty(node, null);
+    assertNull(node.getSecurityLogDir().orDefault());
+    assertFalse(node.getSecurityLogDir().isConfigured());
   }
 
   @Test

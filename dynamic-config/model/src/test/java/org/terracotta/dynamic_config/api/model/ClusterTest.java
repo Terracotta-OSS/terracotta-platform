@@ -49,7 +49,8 @@ public class ClusterTest {
       .setGroupPort(9430)
       .setLogDir(RawPath.valueOf("log"))
       .setMetadataDir(RawPath.valueOf("metadata"))
-      .setSecurityAuditLogDir(RawPath.valueOf("audit"));
+      .setSecurityAuditLogDir(RawPath.valueOf("audit"))
+      .setSecurityLogDir(RawPath.valueOf("security"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411, Testing.N_UIDS[2])
       .putDataDir("data", RawPath.valueOf("/data/cache2"));

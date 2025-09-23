@@ -1,0 +1,15 @@
+format version: 2
+2025-09-18T10:09:53.441Z
+{"currentVersion":0,"highestVersion":0,"mode":"ACCEPTING","mutativeMessageCount":1}
+444a180c804d3d6c35d405a8dd5100610b9fe2b7
+
+format version: 2
+2025-09-18T10:09:53.525Z
+{"be69f2ca-08d8-4f1d-8133-7690ef8e5f30":{"changeResultHash":"43694835b1448258415bf836db01dfad04c539a1","creationHost":"IBM-G7X8H24","creationTimestamp":"2025-09-18T10:09:53.508Z","creationUser":"NishchayNaresh","formatVersion":"2","operation":{"applicability":{"level":"CLUSTER"},"cluster":{"name":"mycluster","stripes":[{"name":"Mercury","nodes":[{"hostname":"localhost","name":"node1","port":9414,"uid":"C56fisD7TpKk4wgMRBBkQA"}],"uid":"rAm0JYvlQwG01KhYEdVCdA"}],"uid":"7DordRgJRdGFcXj6gGPA_A"},"summary":"Activating cluster: mycluster","type":"ClusterActivationNomadChange"},"state":"PREPARED","version":1},"currentVersion":0,"highestVersion":1,"lastMutationHost":"IBM-G7X8H24","lastMutationTimestamp":"2025-09-18T10:09:53.508Z","lastMutationUser":"NishchayNaresh","latestChangeUuid":"be69f2ca-08d8-4f1d-8133-7690ef8e5f30","mode":"PREPARED","mutativeMessageCount":2,"request":"PREPARE"}
+04c3cc9d8ded7dd0725c23ce2099767c5d8c86c0
+
+format version: 2
+2025-09-18T10:09:53.609Z
+{"be69f2ca-08d8-4f1d-8133-7690ef8e5f30":{"changeResultHash":"43694835b1448258415bf836db01dfad04c539a1","creationHost":"IBM-G7X8H24","creationTimestamp":"2025-09-18T10:09:53.508Z","creationUser":"NishchayNaresh","formatVersion":"2","operation":{"applicability":{"level":"CLUSTER"},"cluster":{"name":"mycluster","stripes":[{"name":"Mercury","nodes":[{"hostname":"localhost","name":"node1","port":9414,"uid":"C56fisD7TpKk4wgMRBBkQA"}],"uid":"rAm0JYvlQwG01KhYEdVCdA"}],"uid":"7DordRgJRdGFcXj6gGPA_A"},"summary":"Activating cluster: mycluster","type":"ClusterActivationNomadChange"},"state":"COMMITTED","version":1},"currentVersion":1,"lastMutationHost":"IBM-G7X8H24","lastMutationTimestamp":"2025-09-18T10:09:53.570Z","lastMutationUser":"NishchayNaresh","latestChangeUuid":"be69f2ca-08d8-4f1d-8133-7690ef8e5f30","mode":"ACCEPTING","mutativeMessageCount":3,"request":"COMMIT"}
+83a5bd27927372533628b091cc5957325254897c
+
