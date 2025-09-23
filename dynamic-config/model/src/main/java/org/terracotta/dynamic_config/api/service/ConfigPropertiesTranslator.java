@@ -27,6 +27,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -111,19 +112,34 @@ public class ConfigPropertiesTranslator {
    * Warning: caller who created the stream is also responsible for closing it
    */
   public Properties convert(Reader stream) throws IOException {
-
     // Read each line in the file stream, ignoring all line comments
     // Line format is: [[stripe|node :]<stripe_or_node_name>:]<setting>=<value>
-    // splits happen at '='
+    // splits only happen at '='
+    // line continuations are supported
 
     errors.clear();
     inputConfigSettings.clear();
     try (BufferedReader reader = new BufferedReader(stream)) {
-      reader.lines()
-          .map(String::trim)
-          .filter(line -> !line.isEmpty() && !line.startsWith("#") && !line.startsWith("!"))
-          .map(line -> line.split(EQUALS))
-          .forEach(splits -> inputConfigSettings.put(splits[0].trim(), splits.length > 1 ? splits[1].trim() : ""));
+      List<String> lines = reader.lines()
+        .filter(line -> {
+           line = line.trim();
+           return !line.isEmpty() && !line.startsWith("#") && !line.startsWith("!");
+        })
+        .collect(Collectors.toList());
+      Iterator<String> itr = lines.iterator();
+      String line = "";
+      while (itr.hasNext()) {
+        String thisLine = itr.next();
+        int continuationIndex = thisLine.lastIndexOf('\\');
+        if (continuationIndex == -1) {
+          line += thisLine;
+          String[] splits = line.split("=");
+          inputConfigSettings.put(splits[0].trim(), splits.length > 1 ? splits[1].trim() : "");
+          line = "";
+        } else {
+          line += thisLine.substring(0, continuationIndex);
+        }
+      }
     } catch (Exception ex) {
       throw errorsWith(ex.getMessage());
     }

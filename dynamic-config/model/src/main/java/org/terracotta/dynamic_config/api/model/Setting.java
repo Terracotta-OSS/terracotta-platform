@@ -507,7 +507,7 @@ public enum Setting {
           // tuple.t2 != null
           // complete reset of all entries
           node.setTcProperties(emptyMap());
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.putTcProperty(kv[0], kv[1]));
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.putTcProperty(kv[0].trim(), kv[1].trim()));
         } else {
           // tuple.t1 != null && tuple.t2 != null
           node.putTcProperty(tuple.t1, tuple.t2);
