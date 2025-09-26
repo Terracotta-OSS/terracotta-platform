@@ -20,7 +20,7 @@ dependencies {
   xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
   xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
-  implementation project(':common:structures')
+  api project(':common:structures')
 
   xmlXjcEpisodes "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 }
