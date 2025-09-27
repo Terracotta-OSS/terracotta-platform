@@ -85,6 +85,11 @@ public class BackwardCompatibilityTest {
     assertThatConfigDirIsCompatible("config-v2-10.7.0.0.315", "node1", 2);
   }
 
+  @Test
+  public void test_automatic_upgrade_of_config_repository_for_security_log_dir() throws Exception {
+    assertThatConfigDirIsCompatible("config-v2-5.10", "node1", 2);
+  }
+
   private URL read(String resource)  {
     URL url = getClass().getResource(resource);
     if (url == null) {

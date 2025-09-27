@@ -393,4 +393,50 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         not(containsOutput("client-lease-duration=")));
   }
 
+  @Test
+  public void unset_security_log_dir() {
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(),
+            "-c", "stripe.1.node.1.security-log-dir=a/b",
+            "-c", "stripe.1.node.2.security-log-dir=c/d"),
+        is(successful())
+    );
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        allOf(
+            containsOutput("stripe.1.node.1.security-log-dir=a/b"),
+            containsOutput("stripe.1.node.2.security-log-dir=c/d")
+        ));
+
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(),
+            "-c", "stripe.1.node.1.security-log-dir",
+            "-c", "stripe.1.node.2.security-log-dir"),
+        is(successful()));
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        not(containsOutput("security-log-dir=")));
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "security-log-dir=e/f"),
+        is(successful()));
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        allOf(
+            containsOutput("stripe.1.node.1.security-log-dir=e/f"),
+            containsOutput("stripe.1.node.2.security-log-dir=e/f")
+        ));
+
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "security-log-dir"),
+        is(successful()));
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        not(containsOutput("security-log-dir=")));
+  }
 }
