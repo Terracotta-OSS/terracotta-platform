@@ -97,7 +97,7 @@ class Topologies {
     try {
       new ClusterValidator(updatedCluster).validate(ClusterState.CONFIGURING);
 
-      Node newMe = findMe(updatedCluster);
+      Node newMe = updatedCluster.findMatch(getUpcomingNodeContext().getNode()).orElse(null);
 
       if (newMe != null) {
         // we have updated the topology, and I am still part of this cluster
@@ -121,29 +121,8 @@ class Topologies {
     }
   }
 
-  /**
-   * Tries to find the node representing this process within the updated cluster.
-   * <p>
-   * - We cannot use the node hostname or port only, since they might have changed through a set command.
-   * - We cannot use the node name and stripe ID only, since the stripe ID can have changed in the new cluster with the attach/detach commands
-   * - Name could change following a set command when un-configured
-   * <p>
-   * So we try to find the best match we can...
-   */
-  private Node findMe(Cluster updatedCluster) {
-    final Node me = getUpcomingNodeContext().getNode();
-    for (Node node : updatedCluster.getNodes()) {
-      if (node.getUID().equals(me.getUID())
-          || node.getInternalHostPort().equals(me.getInternalHostPort())
-          || node.getName().equals(me.getName())) {
-        return node;
-      }
-    }
-    return null;
-  }
-
   public boolean containsMe(Cluster maybeUpdatedCluster) {
-    return findMe(maybeUpdatedCluster) != null;
+    return maybeUpdatedCluster.findMatch(getUpcomingNodeContext().getNode()).isPresent();
   }
 
   public void update(List<? extends DynamicConfigNomadChange> nomadChanges) {

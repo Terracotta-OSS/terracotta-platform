@@ -332,6 +332,26 @@ public class Cluster implements Cloneable, PropertyHolder {
     return clone;
   }
 
+  /**
+   * Tries to find the node "candidate" within this cluster.
+   * <p>
+   * - We cannot use the node hostname or port only, since they might have changed through a set command.
+   * - We cannot use the node name and stripe ID only, since the stripe ID can have changed in the new cluster with the attach/detach commands
+   * - Name could change following a set command when un-configured
+   * <p>
+   * So we try to find the best match we can...
+   */
+  public Optional<Node> findMatch(Node candidate) {
+    for (Node node : getNodes()) {
+      if (node.getUID().equals(candidate.getUID())
+          || node.getInternalHostPort().equals(candidate.getInternalHostPort())
+          || node.getName().equals(candidate.getName())) {
+        return Optional.of(node);
+      }
+    }
+    return Optional.empty();
+  }
+
   public boolean removeStripe(Stripe stripe) {
     return stripes.remove(stripe);
   }
