@@ -28,6 +28,7 @@ import javax.management.ObjectInstance;
 import javax.management.StandardMBean;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,9 +72,18 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
 
     Matcher matcher = Pattern.compile("^(?<date>.*) \\(Revision (?<revision>.*) from (?<branch>.*)\\)$").matcher(b);
     if (matcher.matches()) {
-  //    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
-      DateTimeFormatter isoInstant = DateTimeFormatter.ISO_INSTANT;
-      Instant timestamp = isoInstant.parse(matcher.group("date"), Instant::from);
+      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z");
+      String date = matcher.group("date");
+      Instant timestamp;
+      try {
+        timestamp = dtf.parse(date, Instant::from);
+      } catch (DateTimeParseException parsing) {
+        try {
+          timestamp = DateTimeFormatter.ISO_INSTANT.parse(matcher.group("date"), Instant::from);
+        } catch (DateTimeParseException parsing2) {
+          timestamp = Instant.ofEpochMilli(0L);
+        }
+      }
       return new KitInformation(Version.valueOf(version), matcher.group("revision"), matcher.group("branch"), timestamp);
     } else {
       return new KitInformation(Version.valueOf(version), "UNKNOWN", "UNKNOWN", Instant.ofEpochMilli(0L));
