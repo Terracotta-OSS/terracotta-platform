@@ -3,6 +3,7 @@ name: Management Integration Tests
 on:
   workflow_dispatch:
   push:
+    branches: ["master", "release/**"]
   pull_request:
 
 concurrency:
