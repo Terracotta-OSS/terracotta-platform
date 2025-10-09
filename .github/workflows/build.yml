@@ -41,7 +41,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-${{ github.workflow }}-${{ matrix.os }}-jdk${{ matrix.jdk }}-jvm${{ matrix.jvm }}
           restore-keys: gradle
 
       - name: "Setup JDK ${{ matrix.jdk }}"
