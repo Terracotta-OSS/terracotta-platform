@@ -56,6 +56,25 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Enable long paths
+        if: runner.os == 'Windows'
+        run: |
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
+      - name: Increase process limits
+        if: runner.os == 'Windows'
+        run: |
+          # Increase process priority for the PowerShell session
+          $process = Get-Process -Id $pid
+          $process.PriorityClass = 'High'
+          
+          # Configure Windows to allow more processes and handles
+          wmic computersystem set AutomaticManagedPagefile=False
+          wmic pagefileset create name="C:\\pagefile.sys" initialsize=8192 maximumsize=16384
+          
+          # Disable Windows Defender real-time monitoring during tests
+          Set-MpPreference -DisableRealtimeMonitoring $true
+
       - name: Build with Gradle
         run: ./gradlew :dynamic-config:testing:integration-tests:test -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
         env:
