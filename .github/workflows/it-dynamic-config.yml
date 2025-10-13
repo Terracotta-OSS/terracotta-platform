@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # windows-latest (== windows-2025) is too limited in process resources to run DC IT tests
+        os: [ubuntu-latest, windows-2022]
         jdk: [17]
         jvm: [17, 21]
 
