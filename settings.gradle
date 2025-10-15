@@ -89,6 +89,9 @@ include ':common:test-utilities',
     ':management:entities:nms-agent:client',
     ':management:entities:nms-agent:server',
 
+    // stats entities
+    ':stats-entity',
+
     // dynamic-config CLI
     ':dynamic-config:cli:api',
     ':dynamic-config:cli:jcommander',
