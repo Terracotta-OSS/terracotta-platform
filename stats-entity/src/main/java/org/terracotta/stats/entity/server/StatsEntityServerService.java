@@ -16,64 +16,81 @@
  */
 package org.terracotta.stats.entity.server;
 
+import com.tc.classloader.PermanentEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
+import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.NoConcurrencyStrategy;
+import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.management.registry.CombiningCapabilityManagementSupport;
+import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
-import org.terracotta.management.service.monitoring.ServerManagementRegistryConfiguration;
-import org.terracotta.management.service.monitoring.SharedEntityManagementRegistry;
-import org.terracotta.stats.entity.common.Stats;
-import org.terracotta.stats.entity.common.StatsConfig;
-import org.terracotta.stats.entity.common.StatsVersion;
-import org.terracotta.voltron.proxy.SerializationCodec;
-import org.terracotta.voltron.proxy.server.ProxyServerEntityService;
+import org.terracotta.management.service.monitoring.EntityManagementRegistryConfiguration;
 
-import java.util.Objects;
-
-import static java.util.regex.Pattern.compile;
-
-public class StatsEntityServerService extends ProxyServerEntityService<StatsConfig, Void, Void, StatsCallback> {
+@PermanentEntity(type = "org.terracotta.stats.entity.server.StatsEntityServerService", name = "stats-entity")
+public class StatsEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsEntityServerService.class);
-
-  public StatsEntityServerService() {
-    super(Stats.class, StatsConfig.class, new Class<?>[]{}, null, null, StatsCallback.class);
-    setCodec(new SerializationCodec(compile("^(?:org\\.ehcache\\.shadow|com\\.terracottatech\\.shadow)\\.(org\\.terracotta\\.statistics\\..*)$")));
-  }
-
-  @Override
-  public ActiveStatsServerEntity createActiveEntity(ServiceRegistry registry, StatsConfig configuration) throws ConfigurationException {
-    LOGGER.trace("createActiveEntity()");
-    try {
-      TopologyService topologyService = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(TopologyService.class)));
-      EntityManagementRegistry entityManagementRegistry = Objects.requireNonNull(registry.getService(new ServerManagementRegistryConfiguration(registry, true)));
-      SharedEntityManagementRegistry sharedEntityManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedEntityManagementRegistry.class)));
-      ActiveStatsServerEntity entity = new ActiveStatsServerEntity(configuration, entityManagementRegistry, sharedEntityManagementRegistry, topologyService);
-      return entity;
-    } catch (ServiceException e) {
-      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage());
-    }
-  }
-
-  @Override
-  protected PassiveStatsServerEntity createPassiveEntity(ServiceRegistry registry, StatsConfig configuration) throws ConfigurationException {
-    LOGGER.trace("createPassiveEntity()");
-    return new PassiveStatsServerEntity();
-  }
+  private static final String ENTITY_TYPE = StatsEntityServerService.class.getName();
 
   @Override
   public long getVersion() {
-    return StatsVersion.LATEST.version();
+    return 1;
   }
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return StatsConfig.ENTITY_TYPE.equals(typeName);
+    return ENTITY_TYPE.equals(typeName);
   }
 
+  @Override
+  public ActiveServerEntity<EntityMessage, EntityResponse> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
+    LOGGER.trace("createActiveEntity()");
+    try {
+      EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, true));
+      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
+      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
+      return new StatsActiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
+    } catch (ServiceException e) {
+      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public PassiveServerEntity<EntityMessage, EntityResponse> createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
+    LOGGER.trace("createPassiveEntity()");
+    try {
+      EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, false));
+      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
+      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
+      return new StatsPassiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
+    } catch (ServiceException e) {
+      throw new ConfigurationException("Unable to retrieve service: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public ConcurrencyStrategy<EntityMessage> getConcurrencyStrategy(byte[] configuration) {
+    return new NoConcurrencyStrategy<>();
+  }
+
+  @Override
+  public MessageCodec<EntityMessage, EntityResponse> getMessageCodec() {
+    return null;
+  }
+
+  @Override
+  public SyncMessageCodec<EntityMessage> getSyncMessageCodec() {
+    return null;
+  }
 }

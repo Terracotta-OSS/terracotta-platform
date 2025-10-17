@@ -10,8 +10,6 @@ dependencies {
   service "org.terracotta:statistics:$terracottaStatisticVersion"
   implementation project(':management:entities:nms:common')
   implementation project(':voltron-proxy:server')
-  api project(':voltron-proxy:client')
-  implementation "org.terracotta:client-api:$terracottaApisVersion"
 }
 
 deploy {
