@@ -28,16 +28,15 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.inet.HostPort;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.System.lineSeparator;
-import java.util.Objects;
 import static java.util.stream.Collectors.toList;
 
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 
@@ -49,14 +48,14 @@ public class ImportAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
 
   private List<HostPort> nodes = Collections.emptyList();
-  private Path configFile;
+  private ConfigSource configSource;
 
   public void setNodes(List<HostPort> nodes) {
     this.nodes = nodes;
   }
 
-  public void setConfigFile(Path configFile) {
-    this.configFile = configFile;
+  public void setConfigSource(ConfigSource configSource) {
+    this.configSource = configSource;
   }
 
   @Override
@@ -94,7 +93,7 @@ public class ImportAction extends RemoteAction {
       }
     }
 
-    output.info("Importing cluster configuration from config file: {} to nodes: {}", configFile, toString(nodes));
+    output.info("Importing cluster configuration from config file: {} to nodes: {}", configSource, toString(nodes));
 
     try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortsToMap(nodes))) {
       diagnosticServices.getOnlineEndpoints().forEach(((hostPort, diagnosticService) -> {
@@ -120,7 +119,7 @@ public class ImportAction extends RemoteAction {
 
   private Cluster loadCluster() {
     ClusterFactory clusterCreator = new ClusterFactory();
-    Cluster cluster = clusterCreator.create(configFile);
+    Cluster cluster = clusterCreator.create(configSource);
     LOGGER.debug("Config property file parsed and cluster topology validation successful");
     return cluster;
   }

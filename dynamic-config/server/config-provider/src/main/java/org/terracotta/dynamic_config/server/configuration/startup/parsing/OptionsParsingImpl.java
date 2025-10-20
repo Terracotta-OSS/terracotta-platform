@@ -137,8 +137,8 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + DATA_DIRS}, description = "Data directories. Default: main:%H/terracotta/user-data/main")
   private String dataDirs;
 
-  @Parameter(names = {"-" + CONFIG_FILE}, description = "Configuration file to load")
-  private String configFile;
+  @Parameter(names = {"-" + CONFIG_FILE}, description = "Configuration file to load ('*.properties', '*.cfg' or '-'' for stdin)")
+  private String configSource;
 
   @Parameter(names = {"-" + TC_PROPERTIES}, description = "Node properties. Default: <unset>")
   private String tcProperties;
@@ -170,7 +170,7 @@ public class OptionsParsingImpl implements OptionsParsing {
     Options options = new Options(paramValueMap);
     // set settings not in paramValueMap
     options.setConfigDir(configDir);
-    options.setConfigFile(configFile);
+    options.setConfigSource(configSource);
     options.setLicenseFile(licenseFile);
     options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
@@ -209,7 +209,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   }
 
   private void validateOptions(CustomJCommander jCommander) {
-    if (configFile != null) {
+    if (configSource != null) {
       if (nodeName != null && (port != null || hostname != null)) {
         throw new IllegalArgumentException("'" + addDash(NODE_NAME) + "' parameter cannot be used with '"
             + addDash(NODE_HOSTNAME) + "' or '" + addDash(NODE_PORT) + "' parameter");

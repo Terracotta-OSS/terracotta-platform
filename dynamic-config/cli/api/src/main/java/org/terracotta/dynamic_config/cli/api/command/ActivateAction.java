@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.HostPort;
@@ -42,7 +43,7 @@ import static java.util.stream.Collectors.toList;
 public class ActivateAction extends RemoteAction {
 
   private List<HostPort> nodes = Collections.emptyList();
-  private Path configPropertiesFile;
+  private ConfigSource configSource;
   private String clusterName;
   private Path licenseFile;
   private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
@@ -54,8 +55,8 @@ public class ActivateAction extends RemoteAction {
     this.nodes = nodes;
   }
 
-  public void setConfigPropertiesFile(Path configPropertiesFile) {
-    this.configPropertiesFile = configPropertiesFile;
+  public void setConfigSource(ConfigSource configSource) {
+    this.configSource = configSource;
   }
 
   public void setClusterName(String clusterName) {
@@ -167,9 +168,9 @@ public class ActivateAction extends RemoteAction {
   }
 
   private Optional<Cluster> loadTopologyFromConfig() {
-    return Optional.ofNullable(configPropertiesFile).map(path -> {
+    return Optional.ofNullable(configSource).map(path -> {
       ClusterFactory clusterCreator = new ClusterFactory();
-      Cluster cluster = clusterCreator.create(configPropertiesFile);
+      Cluster cluster = clusterCreator.create(configSource);
       output.info("Cluster topology loaded and validated from configuration file: " + cluster.toShapeString());
       return cluster;
     });
