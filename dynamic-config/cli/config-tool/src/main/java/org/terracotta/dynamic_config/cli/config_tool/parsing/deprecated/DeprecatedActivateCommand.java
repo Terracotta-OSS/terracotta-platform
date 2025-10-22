@@ -22,10 +22,12 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.cli.api.command.ActivateAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.ConfigSourceConverter;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.HostPort;
@@ -40,8 +42,8 @@ public class DeprecatedActivateCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = HostPortConverter.class)
   private HostPort node;
 
-  @Parameter(names = {"-f"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
-  private Path configPropertiesFile;
+  @Parameter(names = {"-f"}, description = "Configuration properties file containing nodes to be activated", converter = ConfigSourceConverter.class)
+  private ConfigSource configSource;
 
   @Parameter(names = {"-n"}, description = "Cluster name")
   private String clusterName;
@@ -72,7 +74,7 @@ public class DeprecatedActivateCommand extends Command {
   @Override
   public void run() {
     // basic validations first
-    if (!restrictedActivation && node != null && configPropertiesFile != null) {
+    if (!restrictedActivation && node != null && configSource != null) {
       throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
     }
 
@@ -84,7 +86,7 @@ public class DeprecatedActivateCommand extends Command {
       throw new ParameterException("License file not found: " + licenseFile);
     }
     action.setNodes(singletonList(node));
-    action.setConfigPropertiesFile(configPropertiesFile);
+    action.setConfigSource(configSource);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);
     action.setRestartWaitTime(restartWaitTime);
