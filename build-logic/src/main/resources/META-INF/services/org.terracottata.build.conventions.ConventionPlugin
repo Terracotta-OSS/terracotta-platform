@@ -8,6 +8,7 @@ org.terracotta.build.conventions.GalvanConvention
 org.terracotta.build.conventions.JavaBaseConvention
 org.terracotta.build.conventions.JavaConvention
 org.terracotta.build.conventions.JavaLibraryConvention
+org.terracotta.build.conventions.OsgiPackageConvention
 org.terracotta.build.conventions.SpotBugsConvention
 org.terracotta.build.conventions.ToolConvention
 org.terracotta.build.conventions.VoltronConvention
