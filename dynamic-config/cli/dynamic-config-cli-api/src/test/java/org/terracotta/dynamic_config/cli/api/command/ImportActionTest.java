@@ -34,6 +34,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import static org.terracotta.dynamic_config.cli.api.command.ActivateActionTest.rethrow;
 import static org.terracotta.dynamic_config.cli.api.command.Injector.inject;
 
@@ -52,7 +53,7 @@ public class ImportActionTest extends BaseTest {
 
     ImportAction command = new ImportAction();
     inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService, jsonFactory, json));
-    command.setConfigFile(Paths.get(getClass().getResource("/my-cluster.cfg").toURI()));
+    command.setConfigSource(ConfigSource.from(Paths.get(getClass().getResource("/my-cluster.cfg").toURI())));
     command.run();
 
     int[] ports = {9411, 9421, 9422};

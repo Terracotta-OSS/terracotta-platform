@@ -84,7 +84,7 @@ public class Props {
   }
 
   /**
-   * Warning: caller whi created the stream is also responsible for closing it
+   * Warning: caller which created the stream is also responsible for closing it
    */
   public static Properties load(Reader reader) {
     Properties props = new Properties();

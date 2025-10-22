@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
-import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Map.Entry.comparingByKey;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -64,17 +62,11 @@ public class ClusterFactory {
    * @return a {@code Cluster} object
    */
   public Cluster create(Path configFile) {
-    requireNonNull(configFile);
-    final ConfigFormat configFormat = ConfigFormat.from(configFile);
-    switch (configFormat) {
-      case PROPERTIES:
-        return create(Props.load(configFile));
-      case CONFIG:
-        return create(new ConfigPropertiesTranslator().load(configFile));
-      default:
-        // json or anything else
-        throw new IllegalArgumentException("Invalid format: " + configFormat + ". Supported formats: " + String.join(", ", ConfigFormat.supported()));
-    }
+    return create(ConfigSource.from(configFile));
+  }
+
+  public Cluster create(ConfigSource configSource) {
+    return create(configSource.getConfigProperties());
   }
 
   public Cluster create(Properties properties) {

@@ -24,7 +24,7 @@ import java.util.Map;
 public class Options {
 
   private String configDir;
-  private String configFile;
+  private String configSource;
   private String licenseFile;
   private String serverHome;
   private boolean wantsRepairMode;
@@ -69,12 +69,12 @@ public class Options {
     return paramValueMap.get(Setting.CLUSTER_NAME);
   }
 
-  public void setConfigFile(String configFile) {
-    this.configFile = configFile;
+  public void setConfigSource(String configSource) {
+    this.configSource = configSource;
   }
 
-  public String getConfigFile() {
-    return configFile;
+  public String getConfigSource() {
+    return configSource;
   }
 
   public void setLicenseFile(String licenseFile) {
