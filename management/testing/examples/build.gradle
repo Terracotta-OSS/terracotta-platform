@@ -1,6 +1,6 @@
 plugins {
   id 'org.terracotta.build.convention.java-library'
-  id 'biz.aQute.bnd.builder'
+  id 'org.terracotta.build.convention.osgi-package'
 }
 
 dependencies {

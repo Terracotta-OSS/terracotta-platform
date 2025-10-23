@@ -13,6 +13,7 @@ dependencies {
   api 'org.unbroken-dome.gradle-plugins:gradle-xjc-plugin:2.0.0'
   api 'org.owasp:dependency-check-gradle:8.4.3'
   api 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.5'
+  api 'biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0'
 
   implementation 'org.terracotta:terracotta-utilities-tools:0.0.16'
 
@@ -65,6 +66,10 @@ gradlePlugin {
     packageConvention {
       id = 'org.terracotta.build.convention.package'
       implementationClass = 'org.terracotta.build.conventions.PackageConvention'
+    }
+    osgiPackageConvention {
+      id = 'org.terracotta.build.convention.osgi-package'
+      implementationClass = 'org.terracotta.build.conventions.OsgiPackageConvention'
     }
     voltronServerConvention {
       id = 'org.terracotta.build.convention.voltron-server'
