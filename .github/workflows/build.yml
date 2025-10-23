@@ -60,7 +60,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
-        run: ./gradlew build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x checkstyleMain -x checkstyleTest -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
+        run: ./gradlew build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x spotbugsXml -x checkstyleMain -x checkstyleTest -x checkstyleXml -x copyright -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
 
       - name: Upload Test Results
         if: failure()
