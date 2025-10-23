@@ -20,11 +20,9 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.Server;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
@@ -50,21 +48,21 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
 
   @Override
   public void process() {
-    if (options.getConfigFile() == null) {
+    if (options.getConfigSource() == null) {
       // If config file wasn't specified - pass the responsibility to the next starter
       nextStarter.process();
       return;
     }
 
-    Path substitutedConfigFile = Paths.get(parameterSubstitutor.substitute(options.getConfigFile()));
-    server.console("Starting node from config file: {}", substitutedConfigFile);
-    Cluster cluster = clusterCreator.create(substitutedConfigFile);
+    ConfigSource configSource = ConfigSource.from(parameterSubstitutor.substitute(options.getConfigSource()));
+    server.console("Starting node from config file: {}", configSource);
+    Cluster cluster = clusterCreator.create(configSource);
 
     Node node;
     if (options.getNodeName() != null) {
-      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), options.getConfigFile(), cluster);
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), configSource, cluster);
     } else {
-      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getHostname(), options.getPort(), options.getConfigFile(), cluster);
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getHostname(), options.getPort(), configSource, cluster);
     }
 
     if (options.allowsAutoActivation()) {

@@ -20,10 +20,12 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.cli.api.command.ActivateAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.ConfigSourceConverter;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.ShapeConverter;
 import org.terracotta.inet.HostPort;
@@ -35,14 +37,14 @@ import java.util.List;
 import java.util.Map;
 
 @Parameters(commandDescription = "Activate a cluster")
-@Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties> | -stripe-shape <[name/]hostname[:port]|hostname[:port]|...>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties|-> | -stripe-shape <[name/]hostname[:port]|hostname[:port]|...>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class ActivateCommand extends RestartCommand {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
   private List<HostPort> nodes = Collections.emptyList();
 
-  @Parameter(names = {"-config-file"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
-  private Path configPropertiesFile;
+  @Parameter(names = {"-config-file"}, description = "Configuration properties file containing nodes to be activated", converter = ConfigSourceConverter.class)
+  private ConfigSource configSource;
 
   @Parameter(names = {"-cluster-name"}, description = "Cluster name")
   private String clusterName;
@@ -76,14 +78,14 @@ public class ActivateCommand extends RestartCommand {
   public void run() {
     // basic validations first
 
-    if (!shape.isEmpty() && (!nodes.isEmpty() || configPropertiesFile != null)) {
+    if (!shape.isEmpty() && (!nodes.isEmpty() || configSource != null)) {
       throw new IllegalArgumentException("Fast activation with '-stripe' cannot be used with '-config-file' and '-connect-to'");
     }
     if (!shape.isEmpty() && clusterName == null) {
       throw new IllegalArgumentException("Fast activation with '-stripe' requires '-cluster-name' to be used");
     }
 
-    if (!restrictedActivation && !nodes.isEmpty() && configPropertiesFile != null) {
+    if (!restrictedActivation && !nodes.isEmpty() && configSource != null) {
       throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
     }
 
@@ -95,7 +97,7 @@ public class ActivateCommand extends RestartCommand {
       throw new ParameterException("License file not found: " + licenseFile);
     }
     action.setNodes(nodes);
-    action.setConfigPropertiesFile(configPropertiesFile);
+    action.setConfigSource(configSource);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);
     action.setRestartWaitTime(getRestartWaitTime());

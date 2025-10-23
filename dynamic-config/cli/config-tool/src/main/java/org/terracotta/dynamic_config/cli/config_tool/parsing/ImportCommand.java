@@ -18,15 +18,15 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.cli.api.command.ImportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.ConfigSourceConverter;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,8 +37,8 @@ public class ImportCommand extends Command {
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
   private List<HostPort> nodes = Collections.emptyList();
 
-  @Parameter(names = {"-config-file"}, description = "Config file", required = true, converter = PathConverter.class)
-  private Path configFile;
+  @Parameter(names = {"-config-file"}, description = "Config file", required = true, converter = ConfigSourceConverter.class)
+  private ConfigSource configSource;
 
   @Inject
   public ImportAction action;
@@ -54,7 +54,7 @@ public class ImportCommand extends Command {
   @Override
   public void run() {
     action.setNodes(nodes);
-    action.setConfigFile(configFile);
+    action.setConfigSource(configSource);
 
     action.run();
   }

@@ -26,6 +26,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.BaseTest;
 import org.terracotta.dynamic_config.cli.api.NomadTestHelper;
@@ -103,7 +104,7 @@ public class ActivateActionTest extends BaseTest {
     when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
 
     ActivateAction command = command();
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
     doRunAndVerify("my-cluster", command);
   }
 
@@ -115,7 +116,7 @@ public class ActivateActionTest extends BaseTest {
 
     ActivateAction command = command();
     command.setClusterName("foo");
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
     doRunAndVerify("foo", command);
   }
 
@@ -128,7 +129,7 @@ public class ActivateActionTest extends BaseTest {
     assertThat(
         () -> {
           ActivateAction cmd = command();
-          cmd.setConfigPropertiesFile(config);
+          cmd.setConfigSource(ConfigSource.from(config));
           cmd.run();
         },
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(startsWith("Nodes are already activated: "))))
@@ -144,7 +145,7 @@ public class ActivateActionTest extends BaseTest {
     assertThat(
         () -> {
           ActivateAction cmd = command();
-          cmd.setConfigPropertiesFile(config);
+          cmd.setConfigSource(ConfigSource.from(config));
           cmd.run();
         },
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Detected a mix of activated and unconfigured nodes (or being repaired). Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
@@ -154,7 +155,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_nomad_prepare_fails() {
     ActivateAction command = command();
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
 
     UUID lastChangeUUID = UUID.randomUUID();
 
@@ -192,7 +193,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_nomad_commit_fails() {
     ActivateAction command = command();
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
 
     UUID lastChangeUUID = UUID.randomUUID();
 
@@ -230,14 +231,14 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_activate_from_config_file() {
     ActivateAction command = command();
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
     doRunAndVerify("my-cluster", command);
   }
 
   @Test
   public void test_activate_from_config_file_and_cluster_name() {
     ActivateAction command = command();
-    command.setConfigPropertiesFile(config);
+    command.setConfigSource(ConfigSource.from(config));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }

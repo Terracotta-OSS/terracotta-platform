@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -186,8 +187,8 @@ public class ConfigurationGeneratorVisitor {
 
   }
 
-  Node getMatchingNodeFromConfigFileUsingHostPort(String specifiedHostName, String specifiedPort, String configFilePath, Cluster cluster) {
-    requireNonNull(configFilePath);
+  Node getMatchingNodeFromConfigFileUsingHostPort(String specifiedHostName, String specifiedPort, ConfigSource configSource, Cluster cluster) {
+    requireNonNull(configSource);
 
     boolean isHostnameSpecified = specifiedHostName != null;
     boolean isPortSpecified = specifiedPort != null;
@@ -208,19 +209,19 @@ public class ConfigurationGeneratorVisitor {
     Node node;
     // See if we find a match for a node based on the specified logParams. If not, we see if the config file contains just one node
     if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
-      server.console("Found only one node information in config file: {}", configFilePath);
+      server.console("Found only one node information in config file: {}", configSource);
       node = allNodes.iterator().next();
     } else if (matchingNode.isPresent()) {
-      server.console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configSource, logParams));
       node = matchingNode.get();
     } else {
-      throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
+      throw new IllegalArgumentException(log("Did not find a matching node entry", configSource, logParams));
     }
     return node;
   }
 
-  Node getMatchingNodeFromConfigFileUsingNodeName(String specifiedNodeName, String configFilePath, Cluster cluster) {
-    requireNonNull(configFilePath);
+  Node getMatchingNodeFromConfigFileUsingNodeName(String specifiedNodeName, ConfigSource configSource, Cluster cluster) {
+    requireNonNull(configSource);
     requireNonNull(specifiedNodeName);
 
     Collection<Node> allNodes = cluster.getNodes();
@@ -231,12 +232,12 @@ public class ConfigurationGeneratorVisitor {
     HashMap<String, String> logParams = new HashMap<>();
     logParams.put(NODE_NAME, specifiedNodeName);
     if (matchingNodes.size() == 1) {
-      server.console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configSource, logParams));
       return matchingNodes.get(0);
     } else if (matchingNodes.size() > 1) {
-      throw new IllegalArgumentException(log("Found multiple matching node entries", configFilePath, logParams));
+      throw new IllegalArgumentException(log("Found multiple matching node entries", configSource, logParams));
     } else {
-      throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
+      throw new IllegalArgumentException(log("Did not find a matching node entry", configSource, logParams));
     }
   }
 
@@ -249,11 +250,11 @@ public class ConfigurationGeneratorVisitor {
     return NomadConfigurationManager.findNodeName(configPath, parameterSubstitutor);
   }
 
-  private String log(String msgFragment, String configFilePath, Map<String, String> params) {
+  private String log(String msgFragment, ConfigSource configSource, Map<String, String> params) {
     return String.format(
         "%s in config file: %s based on %s",
         msgFragment,
-        parameterSubstitutor.substitute(configFilePath),
+        configSource,
         params
     );
   }

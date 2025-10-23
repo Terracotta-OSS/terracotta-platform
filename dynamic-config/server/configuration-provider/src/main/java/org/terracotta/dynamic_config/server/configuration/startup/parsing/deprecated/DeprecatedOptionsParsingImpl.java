@@ -139,7 +139,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
   private String dataDirs;
 
   @Parameter(names = {"-f", "--" + CONFIG_FILE}, description = "configuration properties file")
-  private String configFile;
+  private String configSource;
 
   @Parameter(names = {"-T", "--" + TC_PROPERTIES}, description = "tc-properties")
   private String tcProperties;
@@ -174,7 +174,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
     Options options = new Options(paramValueMap);
     // set settings not in paramValueMap
     options.setConfigDir(configDir);
-    options.setConfigFile(configFile);
+    options.setConfigSource(configSource);
     options.setLicenseFile(licenseFile);
     options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
@@ -213,7 +213,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
   }
 
   private void validateOptions(CustomJCommander jCommander) {
-    if (configFile != null) {
+    if (configSource != null) {
       if (nodeName != null && (port != null || hostname != null)) {
         throw new IllegalArgumentException("'" + addDashDash(NODE_NAME) + "' parameter cannot be used with '"
             + addDashDash(NODE_HOSTNAME) + "' or '" + addDashDash(NODE_PORT) + "' parameter");

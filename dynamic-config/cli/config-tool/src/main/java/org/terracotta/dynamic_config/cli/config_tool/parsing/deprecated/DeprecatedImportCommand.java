@@ -18,11 +18,12 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.cli.api.command.ImportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.ConfigSourceConverter;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
@@ -38,8 +39,8 @@ public class DeprecatedImportCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = HostPortConverter.class)
   private HostPort node;
 
-  @Parameter(names = {"-f"}, description = "Config file", required = true, converter = PathConverter.class)
-  private Path configFile;
+  @Parameter(names = {"-f"}, description = "Config file", required = true, converter = ConfigSourceConverter.class)
+  private ConfigSource configSource;
 
   @Inject
   public ImportAction action;
@@ -55,7 +56,7 @@ public class DeprecatedImportCommand extends Command {
   @Override
   public void run() {
     action.setNodes(node == null ? emptyList() : singletonList(node));
-    action.setConfigFile(configFile);
+    action.setConfigSource(configSource);
 
     action.run();
   }

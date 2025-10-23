@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
@@ -29,13 +28,17 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.inet.HostPort;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
+
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.ConfigSource;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 
 /**
  * @author Mathieu Carbou
@@ -45,14 +48,14 @@ public class ImportAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
 
   private List<HostPort> nodes = Collections.emptyList();
-  private Path configFile;
+  private ConfigSource configSource;
 
   public void setNodes(List<HostPort> nodes) {
     this.nodes = nodes;
   }
 
-  public void setConfigFile(Path configFile) {
-    this.configFile = configFile;
+  public void setConfigSource(ConfigSource configSource) {
+    this.configSource = configSource;
   }
 
   @Override
@@ -90,20 +93,33 @@ public class ImportAction extends RemoteAction {
       }
     }
 
-    output.info("Importing cluster configuration from config file: {} to nodes: {}", configFile, toString(nodes));
+    output.info("Importing cluster configuration from config file: {} to nodes: {}", configSource, toString(nodes));
 
     try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortsToMap(nodes))) {
-      dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.setUpcomingCluster(cluster));
+      diagnosticServices.getOnlineEndpoints().forEach(((hostPort, diagnosticService) -> {
+        TopologyService topologyService = diagnosticService.getProxy(TopologyService.class);
+        // Load the information of the node where we want to import the config
+        NodeContext nodeContext = topologyService.getUpcomingNodeContext();
+        if (cluster.findMatch(nodeContext.getNode()).isPresent()) {
+          // The imported file contains a reference to the node we are connected to.
+          // So we can proceed with the import
+          DynamicConfigService dynamicConfigService = diagnosticService.getProxy(DynamicConfigService.class);
+          dynamicConfigService.setUpcomingCluster(cluster);
+          output.info("Node {} updated successfully", hostPort);
+        } else {
+          // The imported file does not contain a reference to the node we are connected to,
+          // so this is impossible to import the configuration into this node.
+          // We should fail the command.
+          throw new IllegalArgumentException("Node: " + hostPort + " not found in the cluster configuration file");
+        }
+      }));
     }
-
     output.info("Command successful!");
   }
 
   private Cluster loadCluster() {
     ClusterFactory clusterCreator = new ClusterFactory();
-    Cluster cluster = clusterCreator.create(configFile);
+    Cluster cluster = clusterCreator.create(configSource);
     LOGGER.debug("Config property file parsed and cluster topology validation successful");
     return cluster;
   }
