@@ -40,4 +40,6 @@ test {
   hosts {
     customLocalHosts = ["127.0.0.1", "localhost", "${'hostname'.execute().text.trim()}", "testhostname"]
   }
+// short lived inline servers and clients
+  jvmArgs "-Dcom.tc.tc.messages.grouping.enabled=false", "-Dcom.tc.tc.messages.packup.enabled=false"
 }
