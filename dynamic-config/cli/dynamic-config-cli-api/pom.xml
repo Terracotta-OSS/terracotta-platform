@@ -24,7 +24,7 @@
     <parent>
         <artifactId>dynamic-config-cli</artifactId>
         <groupId>org.terracotta.dynamic-config.cli</groupId>
-        <version>5.10-SNAPSHOT</version>
+        <version>5.10.25</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
