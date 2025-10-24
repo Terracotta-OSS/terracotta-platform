@@ -17,6 +17,11 @@
 package org.terracotta.stats.entity.server;
 
 import com.tc.classloader.PermanentEntity;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -42,6 +47,7 @@ public class StatsEntityServerService implements EntityServerService<EntityMessa
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsEntityServerService.class);
   private static final String ENTITY_TYPE = StatsEntityServerService.class.getName();
+  private static final String THREAD_NAME = "Stats-Collector";
 
   @Override
   public long getVersion() {
@@ -58,9 +64,14 @@ public class StatsEntityServerService implements EntityServerService<EntityMessa
     LOGGER.trace("createActiveEntity()");
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, true));
-      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
-      return new StatsActiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
+      // Create a scheduled executor service for statistics collection
+      ScheduledExecutorService statsExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+          Thread t = new Thread(r, THREAD_NAME);
+          t.setDaemon(true);
+          return t;
+      });
+
+      return new StatsActiveEntity(managementRegistry, statsExecutor);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage(), e);
     }
@@ -71,9 +82,13 @@ public class StatsEntityServerService implements EntityServerService<EntityMessa
     LOGGER.trace("createPassiveEntity()");
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, false));
-      DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
-      return new StatsPassiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
+      // Create a scheduled executor service for statistics collection
+      ScheduledExecutorService statsExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+          Thread t = new Thread(r, THREAD_NAME);
+          t.setDaemon(true);
+          return t;
+      });
+      return new StatsPassiveEntity(managementRegistry, statsExecutor);
     } catch (ServiceException e) {
       throw new ConfigurationException("Unable to retrieve service: " + e.getMessage(), e);
     }

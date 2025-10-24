@@ -17,6 +17,7 @@
 package org.terracotta.stats.entity.server;
 
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import java.util.concurrent.ScheduledExecutorService;
 import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -25,8 +26,8 @@ import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 public class StatsPassiveEntity extends StatsCommonEntity implements PassiveServerEntity<EntityMessage, EntityResponse> {
 
-  StatsPassiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
-    super(managementRegistry, dynamicConfigEventService, topologyService);
+  StatsPassiveEntity(EntityManagementRegistry managementRegistry, ScheduledExecutorService statsExecutor) {
+    super(managementRegistry, statsExecutor);
   }
 
   @Override

@@ -23,14 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.server.EventRegistration;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -43,20 +41,18 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsCommonEntity.class);
   private static final long STATS_COLLECTION_INTERVAL_MINUTE = 5;
   private static final String THREAD_NAME = "Stats-Collector";
+  private ScheduledFuture<?> statsHandle = null;
 
   final EntityManagementRegistry managementRegistry;
   final boolean active;
 
-  private final DynamicConfigEventService dynamicConfigEventService;
-  private final TopologyService topologyService;
   private volatile EventRegistration eventRegistration;
   private volatile ScheduledExecutorService statsExecutor;
 
-  public StatsCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
+  public StatsCommonEntity(EntityManagementRegistry managementRegistry, ScheduledExecutorService statsExecutor) {
     this.managementRegistry = managementRegistry;
-    this.dynamicConfigEventService = dynamicConfigEventService;
-    this.topologyService = topologyService;
-    this.active = managementRegistry != null && dynamicConfigEventService != null;
+    this.statsExecutor = statsExecutor;
+    this.active = managementRegistry != null;
   }
 
 
@@ -79,10 +75,11 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
 
       // Shutdown the stats executor if it exists
       if (statsExecutor != null) {
-        statsExecutor.shutdownNow();
+        statsExecutor.shutdown();
         try {
           if (!statsExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
             LOGGER.warn("Stats collector thread did not terminate in time");
+            statsExecutor.shutdownNow();
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -91,6 +88,7 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
         statsExecutor = null;
       }
 
+      statsHandle.cancel();
       managementRegistry.close();
     }
   }
@@ -103,15 +101,8 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
   final void listen() {
     if (eventRegistration == null) {
 
-      // Create a scheduled executor service for statistics collection
-      statsExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-          Thread t = new Thread(r, THREAD_NAME);
-          t.setDaemon(true);
-          return t;
-      });
-
       // Schedule periodic statistics collection
-      statsExecutor.scheduleWithFixedDelay(() -> {
+       statsHandle = statsExecutor.scheduleWithFixedDelay(() -> {
           try {
               collectAndPublishStatistics();
           } catch (Exception e) {

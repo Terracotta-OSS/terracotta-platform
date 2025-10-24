@@ -11,17 +11,11 @@ configurations {
 dependencies {
   testImplementation project(':common:json')
   testImplementation project(':diagnostic:client')
-  testImplementation project(':management:entities:nms:client')
-  testImplementation project(':management:entities:nms-agent:client')
-  testImplementation project(':management:testing:entity')
   testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
   testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
   testImplementation project(':dynamic-config:testing:galvan')
   testImplementation project(":lease:client")
 
-  pluginsImpl (project(':management:testing:entity')) {
-    exclude group: 'org.slf4j'
-  }
 
 }
 

@@ -1,0 +1,76 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.voltron-server'
+}
+
+configurations {
+  pluginsImpl
+  pluginsApi
+}
+
+dependencies {
+  testImplementation project(':common:json')
+  testImplementation project(':diagnostic:client')
+  testImplementation project(':stats-entity:server')
+  testImplementation project(':dynamic-config:testing:galvan')
+  testImplementation project(':lease:client')
+
+  pluginsImpl (project(':stats-entity:server')) {
+    exclude group: 'org.slf4j'
+  }
+}
+
+sourceSets {
+  test {
+    copyright {
+      exclude '**/*.txt'
+    }
+  }
+}
+
+test {
+  jvmArgs "-XX:MaxDirectMemorySize=2048m"
+}
+
+task copyPluginsImpl(type: Copy) {
+  from (configurations.pluginsImpl)
+  into layout.buildDirectory.dir("plugin/lib")
+}
+
+task copyPluginsApi(type: Copy) {
+  from (configurations.pluginsApi)
+  into layout.buildDirectory.dir("plugin/api")
+}
+
+task serverClean(type: Delete) {
+  delete layout.buildDirectory.dir("tmp/tcserver")
+}
+
+task pluginClean(type: Delete) {
+  delete layout.buildDirectory.dir("plugin")
+}
+
+task galvanTestClean(type: Delete) {
+  delete layout.buildDirectory.dir("galvan")
+}
+
+task copyBaseKit() {
+  outputs.dir(layout.buildDirectory.dir("plugin/api"))
+  outputs.dir(layout.buildDirectory.dir("plugin/lib"))
+  doLast {
+    project.sync {
+      from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/api")
+      into layout.buildDirectory.dir("plugin/api")
+    }
+    project.sync {
+      from project(":platform-layout").layout.buildDirectory.dir("exploded-kit/server/plugins/lib")
+      into layout.buildDirectory.dir("plugin/lib")
+    }
+  }
+}
+
+test.dependsOn(copyPluginsImpl)
+serverClean.dependsOn(test)
+copyPluginsImpl.dependsOn(copyPluginsApi)
+copyPluginsApi.dependsOn(copyBaseKit)
+copyBaseKit.dependsOn(project(":platform-layout").getTasksByName("explodedKit", true))
