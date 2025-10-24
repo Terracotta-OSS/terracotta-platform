@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+  <!-- Suppress copyright check for test resources -->
+  <suppress files=".*\.txt" checks="Copyright"/>
+  <suppress files=".*\.json" checks="Copyright"/>
+</suppressions>
