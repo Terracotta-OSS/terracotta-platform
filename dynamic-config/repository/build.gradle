@@ -18,3 +18,13 @@ deploy {
   artifactId = 'terracotta-dynamic-config-repository'
   name = 'Dynamic Config Repository'
 }
+
+sourceSets {
+  test {
+    copyright {
+      exclude 'config-*'
+      exclude '*.properties'
+      exclude '*.json'
+    }
+  }
+}

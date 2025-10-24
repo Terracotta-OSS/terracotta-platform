@@ -40,4 +40,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Checks
-        run: ./gradlew checkstyleMain checkstyleTest spotbugsMain spotbugsTest
+        run: ./gradlew checkstyleMain checkstyleTest checkstyleXml spotbugsMain spotbugsTest spotbugsXml copyright
