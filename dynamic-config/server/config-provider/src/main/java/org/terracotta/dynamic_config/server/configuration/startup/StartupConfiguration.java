@@ -35,9 +35,11 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -121,6 +123,34 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   @Override
   public boolean isPartialConfiguration() {
     return unConfigured || repairMode;
+  }
+
+  @Override
+  public boolean isRelaySource() {
+    HostPort hostPort = nodeContextSupplier.get().getNode().getRelaySource().orDefault();
+    return hostPort != null;
+  }
+
+  @Override
+  public boolean isRelayDestination() {
+    HostPort hostPort = nodeContextSupplier.get().getNode().getRelayDestination().orDefault();
+    return hostPort != null;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeer() {
+    HostPort source = nodeContextSupplier.get().getNode().getRelaySource().orDefault();
+    if (source != null) {
+      return source.createInetSocketAddress();
+    }
+
+    HostPort destination = nodeContextSupplier.get().getNode().getRelayDestination().orDefault();
+    if (destination != null) {
+      return destination.createInetSocketAddress();
+    }
+
+    LOGGER.warn("No relay source or destination configured in node: {}", nodeContextSupplier.get().getNode().getName());
+    return null;
   }
 
   @Override

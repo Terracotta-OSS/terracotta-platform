@@ -47,6 +47,28 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setRelaySource() {
+    assertThat(
+      configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "relay-source="+ "193.123.5.4:" +7878),
+      allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-source"),
+        containsOutput("cannot be set when node is activated")
+      ));
+  }
+
+  @Test
+  public void setRelayDestination() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-destination=" + "localhost:" + 8787), is(successful()));
+
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-destination", "-t", "index"),
+      containsOutput("stripe.1.node.1.relay-destination=localhost:" + 8787));
+  }
+
+  @Test
   public void setOffheapResource_increaseSize() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB"), is(successful()));
 

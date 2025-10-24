@@ -101,6 +101,7 @@ public class DiagnosticServiceFactory {
 
   private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout, Json.Factory jsonFactory)
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
+    // Through diagnostic it comes here.
     EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
     Properties properties = new Properties();
     if (diagnosticInvokeTimeout != null) {
