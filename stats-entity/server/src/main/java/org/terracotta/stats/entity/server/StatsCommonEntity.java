@@ -21,7 +21,9 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -33,12 +35,17 @@ import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.management.registry.ManagementProvider;
+import org.terracotta.management.registry.ManagementProviderAdapter;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 
 public class StatsCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(StatsCommonEntity.class);
+  private static final String CAPABILITY_NAME = "StatsCapability";
+
+  private final ManagementProvider<?> capabilityManagementSupport;
   private static final long STATS_COLLECTION_INTERVAL_MINUTE = 5;
   private static final String THREAD_NAME = "Stats-Collector";
   private ScheduledFuture<?> statsHandle = null;
@@ -53,13 +60,23 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
     this.managementRegistry = managementRegistry;
     this.statsExecutor = statsExecutor;
     this.active = managementRegistry != null;
-  }
 
+    // Initialize the management provider
+    if (managementRegistry != null) {
+      this.capabilityManagementSupport = new ManagementProviderAdapter<>(CAPABILITY_NAME, Object.class);
+    } else {
+      this.capabilityManagementSupport = null;
+    }
+  }
 
   @Override
   public final void createNew() {
     if (active) {
       managementRegistry.entityCreated();
+
+      // Register the management provider
+      managementRegistry.addManagementProvider(capabilityManagementSupport);
+
       managementRegistry.refresh();
       listen();
     }
@@ -88,7 +105,12 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
         statsExecutor = null;
       }
 
-      statsHandle.cancel();
+      // Remove the management provider
+      managementRegistry.removeManagementProvider(capabilityManagementSupport);
+
+      if (statsHandle != null) {
+        statsHandle.cancel(true);
+      }
       managementRegistry.close();
     }
   }
@@ -119,11 +141,11 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
    */
   private void collectAndPublishStatistics() {
       // Collect and publish cache statistics
-      Map<String, Object> cacheStats = collectCacheStatistics();
+      Map<String, Object> cacheStats = extractCacheStatistics();
       LOGGER.info("SERVER_WORKLOAD|CACHE_STATS {}", cacheStats);
 
       // Collect and publish dataset statistics
-      Map<String, Object> datasetStats = collectDatasetStatistics();
+      Map<String, Object> datasetStats = extractDatasetStatistics();
       LOGGER.info("SERVER_WORKLOAD|DATASET_STATS {}", datasetStats);
 
       // Collect and publish server statistics
@@ -131,27 +153,23 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
       LOGGER.info("SERVER_WORKLOAD|RESOURCE_USAGE {}", serverStats);
   }
 
-  /**
-   * Collect cache statistics such as hit/miss rates, size, etc.
-   * Fetches real statistics from the Management Service and JMX if available.
-   */
-  private Map<String, Object> collectCacheStatistics() {
+
+  private Map<String, Object> extractCacheStatistics() {
     Map<String, Object> stats = new HashMap<>();
     try {
-      simulateCacheStatistics(stats);
+      // Try to get real statistics from the Management Service
+      if (managementRegistry != null) {
+        Map<String, Object> realStats = collectCacheStatisticsAsync().get();
+        if (!realStats.isEmpty()) {
+          return realStats;
+        }
+      }
     } catch (Exception e) {
-     populateDefaultCacheStatistics(stats);
+      LOGGER.warn("Failed to collect real cache statistics, falling back to simulated data", e);
     }
-    return stats;
-  }
 
-
-  /**
-   * Generate simulated cache statistics
-   */
-  private void simulateCacheStatistics(Map<String, Object> stats) {
+    // Fall back to simulated data
     double randomFactor = Math.random() * 0.2 + 0.9; // 0.9-1.1 random factor
-
     stats.put("cacheHitCount", (long)(1000 * randomFactor));
     stats.put("cacheMissCount", (long)(250 * randomFactor));
     stats.put("cacheHitRatio", 0.8 * randomFactor);
@@ -160,32 +178,67 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
     stats.put("cacheExpirationCount", (long)(25 * randomFactor));
     stats.put("cacheAverageGetTime", 1.2 * randomFactor);
     stats.put("cacheAveragePutTime", 2.5 * randomFactor);
-  }
-
-  private void populateDefaultCacheStatistics(Map<String, Object> stats) {
-      stats.put("cacheHitCount", 0);
-      stats.put("cacheMissCount", 0);
-      stats.put("cacheHitRatio", 0.0);
-      stats.put("cacheSize", 0);
-      stats.put("cacheEvictionCount", 0);
-  }
-
-private Map<String, Object> collectDatasetStatistics() {
-    Map<String, Object> stats = new HashMap<>();
-    try {
-      simulateDatasetStatistics(stats);
-    } catch (Exception e) {
-      populateDefaultDatasetMetrics(stats);
-    }
     return stats;
   }
 
   /**
-   * Generate simulated dataset statistics
+   * Collect cache statistics from the Management Service
    */
-  private void simulateDatasetStatistics(Map<String, Object> stats) {
-    double randomFactor = Math.random() * 0.2 + 0.9; // 0.9-1.1 random factor
+  public Future<Map<String, Object>> collectCacheStatisticsAsync() {
+    Map<String, Object> stats = new HashMap<>();
+    try {
+      // Query all statistics from all capabilities that support cache statistics
+      if (managementRegistry != null) {
+        managementRegistry.getCapabilities().forEach(capability -> {
+          try {
+            managementRegistry.withCapability(capability.getName())
+                .queryAllStatistics()
+                .build()
+                .execute()
+                .forEach(contextualStats -> {
+                  contextualStats.getStatistics().forEach((key, value) -> {
+                    if (key.toLowerCase().contains("cache") || key.toLowerCase().contains("hit") || key.toLowerCase().contains("miss")) {
+                      stats.put(key, value.getLatestSampleValue().orElse(null));
+                    }
+                  });
+                });
+          } catch (Exception e) {
+            LOGGER.warn("Failed to collect statistics from capability {}: {}", capability.getName(), e.getMessage());
+          }
+        });
+      }
+    } catch (Exception e) {
+      LOGGER.error("Error collecting cache statistics", e);
+    }
 
+    if (stats.isEmpty()) {
+      // Fallback to basic server stats if no cache stats available
+      stats.put("cacheHitRate", 0.0);
+      stats.put("cacheMissRate", 0.0);
+      stats.put("cacheSize", 0L);
+      stats.put("cacheEvictions", 0L);
+    }
+
+    LOGGER.info("Collected cache statistics: {}", stats);
+    return CompletableFuture.completedFuture(stats);
+  }
+
+  private Map<String, Object> extractDatasetStatistics() {
+    Map<String, Object> stats = new HashMap<>();
+    try {
+      // Try to get real statistics from the Management Service
+      if (managementRegistry != null) {
+        Map<String, Object> realStats = collectDatasetStatisticsAsync().get();
+        if (!realStats.isEmpty()) {
+          return realStats;
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.warn("Failed to collect real dataset statistics, falling back to simulated data", e);
+    }
+
+    // Fall back to simulated data
+    double randomFactor = Math.random() * 0.2 + 0.9; // 0.9-1.1 random factor
     stats.put("datasetSize", (long)(1048576 * randomFactor));
     stats.put("datasetRecordCount", (long)(5000 * randomFactor));
     stats.put("datasetReadOperations", (long)(15000 * randomFactor));
@@ -195,16 +248,53 @@ private Map<String, Object> collectDatasetStatistics() {
     stats.put("datasetIndexSize", (long)(204800 * randomFactor));
     stats.put("datasetQueryCount", (long)(2500 * randomFactor));
     stats.put("datasetAvgQueryLatency", 8 * randomFactor);
+
+    return stats;
   }
 
-  private void populateDefaultDatasetMetrics(Map<String, Object> stats) {
-    stats.put("datasetSize", 0);
-    stats.put("datasetRecordCount", 0);
-    stats.put("datasetReadOperations", 0);
-    stats.put("datasetWriteOperations", 0);
-    stats.put("datasetAvgReadLatency", 0);
-    stats.put("datasetAvgWriteLatency", 0);
-}
+  /**
+   * Collect dataset statistics from the Management Service
+   */
+  public Future<Map<String, Object>> collectDatasetStatisticsAsync() {
+    Map<String, Object> stats = new HashMap<>();
+    try {
+      // Query all statistics from all capabilities that support dataset statistics
+      if (managementRegistry != null) {
+        managementRegistry.getCapabilities().forEach(capability -> {
+          try {
+            managementRegistry.withCapability(capability.getName())
+                .queryAllStatistics()
+                .build()
+                .execute()
+                .forEach(contextualStats -> {
+                  contextualStats.getStatistics().forEach((key, value) -> {
+                    if (key.toLowerCase().contains("dataset") || key.toLowerCase().contains("storage") ||
+                        key.toLowerCase().contains("operation") || key.toLowerCase().contains("size")) {
+                      stats.put(key, value.getLatestSampleValue().orElse(null));
+                    }
+                  });
+                });
+          } catch (Exception e) {
+            LOGGER.warn("Failed to collect statistics from capability {}: {}", capability.getName(), e.getMessage());
+          }
+        });
+      }
+    } catch (Exception e) {
+      LOGGER.error("Error collecting dataset statistics", e);
+    }
+
+    if (stats.isEmpty()) {
+      // Fallback to basic dataset stats if no dataset stats available
+      stats.put("datasetStorageUsage", 0L);
+      stats.put("datasetOperations", 0L);
+      stats.put("datasetSize", 0L);
+      stats.put("datasetReadOperations", 0L);
+      stats.put("datasetWriteOperations", 0L);
+    }
+
+    LOGGER.info("Collected dataset statistics: {}", stats);
+    return CompletableFuture.completedFuture(stats);
+  }
 
   /**
    * Collect server statistics such as CPU, memory, connections, etc.
