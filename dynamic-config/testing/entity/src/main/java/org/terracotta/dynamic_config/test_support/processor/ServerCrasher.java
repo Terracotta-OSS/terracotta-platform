@@ -16,11 +16,8 @@
  */
 package org.terracotta.dynamic_config.test_support.processor;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public class ServerCrasher {
   //  CANNOT BE USED WITH INLINE SERVER TESTS
-  @SuppressFBWarnings("DM_EXIT")
   static void crash() {
     if (Boolean.getBoolean("restart.inline")) {
       throw new RuntimeException("server cannot be crashed in inline mode");

@@ -26,12 +26,6 @@ resources:
 jobs:
   - template: build-templates/maven-common.yml@templates
     parameters:
-      jobName: Linux_Java_8
-      timeoutInMinutes: 180
-      options: -B -Djava.test.version=1.8 -Dtest.parallel.forks=3
-      mavenGoals: 'clean verify'
-  - template: build-templates/maven-common.yml@templates
-    parameters:
       jobName: Linux_Java_11
       timeoutInMinutes: 180
       options: -B -Djava.test.version=1.11 -Dtest.parallel.forks=3
@@ -41,13 +35,6 @@ jobs:
       jobName: Linux_Java_17
       timeoutInMinutes: 180
       options: -B -Djava.test.version=1.17 -Dtest.parallel.forks=3
-      mavenGoals: 'clean verify'
-  - template: build-templates/maven-common.yml@templates
-    parameters:
-      jobName: Windows_Java_8
-      timeoutInMinutes: 180
-      vmImage: 'windows-latest'
-      options: -B -Djava.test.version=1.8 -Dtest.parallel.forks=3
       mavenGoals: 'clean verify'
   - template: build-templates/maven-common.yml@templates
     parameters:

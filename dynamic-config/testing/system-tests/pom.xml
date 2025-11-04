@@ -67,6 +67,12 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>angela</artifactId>
+      <exclusions>
+        <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -133,7 +139,7 @@
       <plugin>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>1.13.0</version>
+        <version>4.2.1</version>
         <executions>
           <execution>
             <id>fake-hosts</id>
@@ -177,7 +183,7 @@ println(new File(project.build.directory, "angela/platform-kit-${project.version
           <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>3.0.7</version>
+            <version>3.0.25</version>
             <scope>runtime</scope>
           </dependency>
         </dependencies>

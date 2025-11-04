@@ -34,7 +34,6 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 public class Testing {
 
   // some UIDs that never change over time
-  @SuppressFBWarnings("MS_PKGPROTECT")
   public static final UID A_UID = UID.newUID(new Random(0));
   @SuppressFBWarnings("MS_PKGPROTECT")
   public static final UID[] C_UIDS = IntStream.range(0, 10).mapToObj(idx -> UID.newUID(new Random(idx))).toArray(UID[]::new);

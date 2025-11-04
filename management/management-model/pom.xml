@@ -36,7 +36,18 @@
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
       <version>${statistics.version}</version>
-    </dependency>
+      <exclusions>
+          <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-api</artifactId>
+          </exclusion>
+      </exclusions>
+   </dependency>
+   <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+   </dependency>
+
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>sequence-generator</artifactId>

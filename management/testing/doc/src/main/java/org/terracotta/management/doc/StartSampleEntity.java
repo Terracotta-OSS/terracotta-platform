@@ -30,6 +30,7 @@ import java.util.concurrent.TimeoutException;
  * @author Mathieu Carbou
  */
 public class StartSampleEntity {
+  private static final Random RG = new Random();
   public static void main(String[] args) throws ConnectionException, ExecutionException, TimeoutException, InterruptedException {
     CacheFactory cacheFactory = new CacheFactory(UUID.randomUUID().toString(), URI.create("terracotta://localhost:9510"), "pet-clinic");
 
@@ -39,11 +40,11 @@ public class StartSampleEntity {
 
     while (true) {
 
-      String key = "pet-" + new Random().nextInt(100);
+      String key = "pet-" + RG.nextInt(100);
       System.out.println("put(" + key + ")");
       pets.put(key, "Garfield");
 
-      key = "pet-" + new Random().nextInt(100);
+      key = "pet-" + RG.nextInt(100);
       System.out.println("get(" + key + ")");
       pets.get(key);
 

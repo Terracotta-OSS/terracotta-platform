@@ -54,6 +54,12 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-utilities-tools</artifactId>
+      <exclusions>
+          <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-api</artifactId>
+          </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

@@ -32,10 +32,10 @@
 
   <properties>
     <maven.version>3.6.3</maven.version>
-    <slf4j.base.version>1.7.32</slf4j.base.version>
-    <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
-    <logback.base.version>1.2.11</logback.base.version>
-    <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
+    <slf4j.base.version>2.0.17</slf4j.base.version>
+    <slf4j.range.version>[${slf4j.base.version},2.0.9999)</slf4j.range.version>
+    <logback.base.version>1.5.20</logback.base.version>
+    <logback.range.version>[${logback.base.version},1.5.9999)</logback.range.version>
     <terracotta-apis.version>1.9.1</terracotta-apis.version>
     <terracotta-configuration.version>10.7.5</terracotta-configuration.version>
     <passthrough-testing.version>1.9.1</passthrough-testing.version>
@@ -48,6 +48,7 @@
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <test.parallel.forks>4</test.parallel.forks>
     <jna.version>5.9.0</jna.version>
+    <java.build.version>1.17</java.build.version>
   </properties>
 
   <modules>
@@ -289,7 +290,7 @@
         <plugin>
           <groupId>org.jvnet.jaxb2.maven2</groupId>
           <artifactId>maven-jaxb2-plugin</artifactId>
-          <version>0.14.0</version>
+          <version>0.15.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
@@ -345,7 +346,7 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.5.4</version>
+          <version>3.5.1</version>
           <executions>
             <execution>
               <phase>process-classes</phase>
@@ -396,17 +397,33 @@
     </pluginManagement>
 
     <plugins>
-      <plugin>
+            <plugin>
+              <groupId>com.github.spotbugs</groupId>
+              <artifactId>spotbugs-maven-plugin</artifactId>
+              <version>4.9.8.1</version>
+              <configuration>
+                <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+              </configuration>
+              <dependencies>
+                <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+                <dependency>
+                  <groupId>com.github.spotbugs</groupId>
+                  <artifactId>spotbugs</artifactId>
+                  <version>4.9.8</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+            <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version>
         <configuration>
-          <source>${java.build.version}</source>
-          <target>${java.build.version}</target>
+            <release>11</release>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
           <failOnWarning>true</failOnWarning>
           <compilerArgs>
-            <arg>-Xlint:all</arg>
+            <!--arg>-Xlint:all</arg -->
             <!-- -path is required because of the class-path manifest entries generated (jars won't be found) -->
             <arg>-Xlint:-path</arg>
             <arg>-Werror</arg>

@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
+import java.lang.reflect.InvocationTargetException;
 import static java.util.Collections.singletonList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
@@ -160,8 +161,9 @@ public class DefaultJsonFactory implements Json.Factory {
         .filter(type -> !resolvedModules.containsKey(type)) // avoid duplicates
         .map(type -> {
           try {
-            return type.newInstance();
-          } catch (InstantiationException | IllegalAccessException e) {
+            return type.getDeclaredConstructor().newInstance();
+          } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                  | NoSuchMethodException | SecurityException e) {
             throw new RuntimeException(e);
           }
         })
