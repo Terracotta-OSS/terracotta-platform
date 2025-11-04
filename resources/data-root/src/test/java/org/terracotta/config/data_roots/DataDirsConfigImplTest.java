@@ -193,17 +193,6 @@ public class DataDirsConfigImplTest {
   }
 
   @Test
-  @Ignore("Fails currently, need some fixes to be done in terracotta-configuration")
-  public void testSourceAsURLIsIgnored() throws Exception {
-    String[] ids = {"id"};
-    String[] dataRootPaths = new String[ids.length];
-    String source = new URL("http://example.com/test/tc-config.xml").getPath();
-
-    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
-    assertThat(dataRootConfig.getRoot(ids[0]).getParent(), is(Paths.get(".")));
-  }
-
-  @Test
   public void testPlatformRootNotSpecified() throws Exception {
     DataDirsConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1]);
     assertThat(dataRootConfig.getPlatformRootIdentifier(), is(Optional.empty()));

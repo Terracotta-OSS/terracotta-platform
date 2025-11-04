@@ -30,6 +30,8 @@ import org.terracotta.lease.LeaseMaintainerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import org.terracotta.lease.TimeSource;
+
 
 public class BasicLeasedConnection implements LeasedConnection {
   private final static Logger LOGGER = LoggerFactory.getLogger(BasicLeasedConnection.class);
@@ -37,8 +39,8 @@ public class BasicLeasedConnection implements LeasedConnection {
   private final Connection base;
   private final LeaseMaintainer leaseMaintainer;
 
-  public static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+  public static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget, TimeSource timeSource) throws ConnectionException {
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection, timeSource);
 
     Exception exception = null;
     try {

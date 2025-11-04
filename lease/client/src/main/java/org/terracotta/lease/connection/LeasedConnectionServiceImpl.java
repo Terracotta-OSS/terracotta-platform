@@ -27,10 +27,19 @@ import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.terracotta.lease.SystemTimeSource;
+import org.terracotta.lease.TimeSource;
+
 public class LeasedConnectionServiceImpl implements LeasedConnectionService {
 
   private static final String SCHEME = "terracotta";
   private static final String DEFAULT_LEASED_CONNECTION_TIMEOUT = "150000";
+
+  private TimeSource timeSource = new SystemTimeSource();
+
+  public void setTimeSource(TimeSource timeSource) {
+    this.timeSource = timeSource;
+  }
 
   @Override
   public boolean handlesURI(URI uri) {
@@ -56,7 +65,7 @@ public class LeasedConnectionServiceImpl implements LeasedConnectionService {
 
   private LeasedConnection createLeasedConnection(Properties properties, Connection connection) throws ConnectionException {
     TimeBudget timeBudget = createTimeBudget(properties);
-    return BasicLeasedConnection.create(connection, timeBudget);
+    return BasicLeasedConnection.create(connection, timeBudget, timeSource);
   }
 
   private static TimeBudget createTimeBudget(Properties properties) {

@@ -16,7 +16,6 @@
  */
 package org.terracotta.lease;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -42,16 +41,11 @@ public class LeaseMaintenanceThreadTest {
   @Mock
   private LeaseMaintainerImpl leaseMaintainer;
 
-  @Before
-  public void before() throws Exception {
-    TimeSourceProvider.setTimeSource(timeSource);
-  }
-
   @Test
   public void callsRefreshOccasionally() throws Exception {
     when(leaseMaintainer.refreshLease()).thenReturn(2000L);
 
-    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
+    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer, timeSource);
     assertEquals("LeaseMaintenanceThread", leaseMaintenanceThread.getName());
     assertTrue(leaseMaintenanceThread.isDaemon());
     leaseMaintenanceThread.start();
@@ -71,7 +65,7 @@ public class LeaseMaintenanceThreadTest {
   public void callsRefreshImmediatelyIfZeroWaitLength() throws Exception {
     when(leaseMaintainer.refreshLease()).thenReturn(1000L, 0L, 1000L);
 
-    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
+    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer, timeSource);
     leaseMaintenanceThread.start();
 
     verify(timeSource, timeout(1000L).times(1)).sleep(1000L);
@@ -87,7 +81,7 @@ public class LeaseMaintenanceThreadTest {
   public void closedConnectionKillsThread() throws Exception {
     when(leaseMaintainer.refreshLease()).thenThrow(new ConnectionClosedException("Connection closed"));
 
-    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
+    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer, timeSource);
     leaseMaintenanceThread.start();
 
     leaseMaintenanceThread.join(5000L);

@@ -32,14 +32,15 @@ public class LeaseExpiryConnectionKillingThread extends Thread implements Closea
 
   private volatile boolean shutdown = false;
 
-  LeaseExpiryConnectionKillingThread(LeaseMaintainer leaseMaintainer, Connection connection) {
+  LeaseExpiryConnectionKillingThread(LeaseMaintainer leaseMaintainer, Connection connection, TimeSource timeSource) {
     this.leaseMaintainer = leaseMaintainer;
     this.connection = connection;
-    this.timeSource = TimeSourceProvider.getTimeSource();
+    this.timeSource = timeSource;
     setName("LeaseExpiryConnectionKillingThread");
     setDaemon(true);
   }
 
+  @Override
   public void run() {
     while (!shutdown) {
       try {

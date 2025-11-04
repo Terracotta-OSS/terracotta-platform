@@ -16,10 +16,11 @@
  */
 package org.terracotta.lease;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -47,8 +48,7 @@ public class LeaseExpiryConnectionKillingThreadTest {
 
   @Before
   public void before() throws Exception {
-    TimeSourceProvider.setTimeSource(timeSource);
-    thread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection);
+    thread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection, timeSource);
   }
 
   @Test
@@ -58,20 +58,20 @@ public class LeaseExpiryConnectionKillingThreadTest {
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void whenLeaseIsValidConnectionIsNotClosed() throws Exception {
     when(leaseMaintainer.getCurrentLease()).thenReturn(new LeaseImpl(timeSource, 100L, 200L));
     thread.start();
-    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
+    verify(timeSource, timeout(60_000).times(1)).sleep(200L);
     verifyNoMoreInteractions(connection);
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void whenLeaseWasNeverValidConnectionIsNotClosed() throws Exception {
     when(leaseMaintainer.getCurrentLease()).thenReturn(new NullLease());
     thread.start();
-    verify(timeSource, timeout(1000L).times(1)).sleep(200L);
+    assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
+    verify(timeSource, timeout(60_000).times(1)).sleep(200L);
     verifyNoMoreInteractions(connection);
   }
 
