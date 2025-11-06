@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.fail;
 
 public class ClassTest {
@@ -85,7 +86,7 @@ public class ClassTest {
         mapper.toString(o);
         fail();
       } catch (Exception e) {
-        assertThat(e.getMessage(), is(equalTo("Attempted to serialize java.lang.Class: java.util.ArrayList. Forgot to register a type adapter?")));
+        assertThat(e.getMessage(), is(startsWith("Attempted to serialize java.lang.Class: java.util.ArrayList. Forgot to register a type adapter?")));
       }
     }
   }

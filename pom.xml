@@ -238,7 +238,7 @@
       <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
-        <version>2.10.1</version>
+        <version>2.11.0</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -423,10 +423,8 @@
           <showDeprecation>true</showDeprecation>
           <failOnWarning>true</failOnWarning>
           <compilerArgs>
-            <!--arg>-Xlint:all</arg -->
             <!-- -path is required because of the class-path manifest entries generated (jars won't be found) -->
             <arg>-Xlint:-path</arg>
-            <arg>-Werror</arg>
           </compilerArgs>
         </configuration>
       </plugin>

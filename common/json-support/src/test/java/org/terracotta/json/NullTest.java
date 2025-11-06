@@ -24,10 +24,9 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import org.junit.Ignore;
 
 public class NullTest {
-  @Test @Ignore
+  @Test
   public void test() {
     Json json = new DefaultJsonFactory().create();
     assertThat(json.toString(Json.NULL), is(equalTo("null")));
