@@ -16,17 +16,23 @@
  */
 package org.terracotta.lease;
 
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class TestTimeSource implements TimeSource {
   private volatile long time = 1L;
+  private final Semaphore sleeping = new Semaphore(0);
+
+  public boolean waitUntilSleeping(long timeout, TimeUnit unit) throws InterruptedException {
+    return sleeping.tryAcquire(1, timeout, unit);
+  }
 
   public void tickNanos(long increment) {
     time += increment;
   }
 
   public void tickMillis(long increment) {
-    time += TimeUnit.NANOSECONDS.convert(increment, TimeUnit.MILLISECONDS);
+    tickNanos(TimeUnit.NANOSECONDS.convert(increment, TimeUnit.MILLISECONDS));
   }
 
   @Override
@@ -39,6 +45,7 @@ public class TestTimeSource implements TimeSource {
     long now = time;
     long end = now + TimeUnit.NANOSECONDS.convert(milliseconds, TimeUnit.MILLISECONDS);
 
+    sleeping.release();
     while (time - end < 0) {
       Thread.sleep(10);
     }

@@ -22,9 +22,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -44,10 +41,9 @@ public class LeaseMaintainerImplTest {
 
   @Before
   public void before() throws Exception {
-    TimeSourceProvider.setTimeSource(timeSource);
     when(leaseAcquirer.acquireLease()).thenReturn(6000L);
     delayedLeaseAcquirer = new DelayedLeaseAcquirer(leaseAcquirer);
-    leaseMaintainer = new LeaseMaintainerImpl(delayedLeaseAcquirer);
+    leaseMaintainer = new LeaseMaintainerImpl(delayedLeaseAcquirer, timeSource);
   }
 
   @Test

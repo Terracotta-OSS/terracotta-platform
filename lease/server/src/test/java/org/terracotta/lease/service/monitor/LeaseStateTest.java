@@ -167,73 +167,72 @@ public class LeaseStateTest {
   public void multiThreadedThrashing() throws Exception {
     final ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
     final AtomicBoolean acquired = new AtomicBoolean();
-    final AtomicBoolean disconnected = new AtomicBoolean();
-    final AtomicBoolean runningTest = new AtomicBoolean(true);
-    final AtomicBoolean stopTest = new AtomicBoolean(false);
     final AtomicLong count = new AtomicLong();
     final AtomicLong disconnectedCount = new AtomicLong();
     final AtomicLong countSinceLastAcquire = new AtomicLong(-1);
 
     final CyclicBarrier latch = new CyclicBarrier(2, () -> {
-      timeSource.tickMillis(5L);
-
       if (countSinceLastAcquire.get() > 3) {
         assertFalse(acquired.get());
       }
 
       if (acquired.get()) {
+        // lease was acquired
         countSinceLastAcquire.set(0);
-      }
-
-      if (disconnected.get()) {
+      } else {
+        // lease expired
         leaseState.disconnected(clientDescriptor);
         disconnectedCount.incrementAndGet();
         countSinceLastAcquire.set(-1);
       }
 
       acquired.set(false);
-      disconnected.set(false);
       count.incrementAndGet();
 
       if (countSinceLastAcquire.get() >= 0) {
         countSinceLastAcquire.incrementAndGet();
       }
 
-      if (stopTest.get()) {
-        runningTest.set(false);
-      }
+      // incrementing clock by 5 ms.
+      // Next run: an acquired lease (if any) will be invalidated
+      timeSource.tickMillis(5L);
     });
 
+    // Thread trying to acquire leases of 10ms ~ 1/3 of the time
+    // Note: the minimal sleep time of the test time source is 10ms
     Thread acquireThread = new Thread() {
       @Override
       public void run() {
-        while (runningTest.get()) {
+        while (!Thread.currentThread().isInterrupted()) {
           if (ThreadLocalRandom.current().nextInt(3) < 1) {
             boolean success = leaseState.acquireLease(clientDescriptor, 10L);
             acquired.set(success);
-            disconnected.set(!success);
           }
+          // wait for the check to be done
           await(latch);
         }
       }
     };
+
+    // Thread checking leases continuously
     Thread checkThread = new Thread() {
       @Override
       public void run() {
-        while (runningTest.get()) {
+        while (!Thread.currentThread().isInterrupted()) {
           leaseState.checkLeases();
+          // wait for the acquire thread to be done
           await(latch);
         }
       }
     };
 
+    // start the test for 10 seconds
     acquireThread.start();
     checkThread.start();
-
     Thread.sleep(10_000L);
 
-    stopTest.set(true);
-
+    acquireThread.interrupt();
+    checkThread.interrupt();
     acquireThread.join();
     checkThread.join();
 

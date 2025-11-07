@@ -26,7 +26,6 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.lease.TimeSource;
-import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.closer.ProxyClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
@@ -36,6 +35,8 @@ import org.terracotta.lease.service.monitor.LeaseState;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
+
+import org.terracotta.lease.SystemTimeSource;
 
 /**
  * LeaseServiceProvider consumes the LeaseConfiguration objects (generated from XML parsing) and then creates the
@@ -49,6 +50,11 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
   private LeaseState leaseState;
   private LeaseMonitorThread leaseMonitorThread;
   private ProxyClientConnectionCloser proxyClientConnectionCloser;
+  private TimeSource timeSource = new SystemTimeSource();
+
+  public void setTimeSource(TimeSource timeSource) {
+    this.timeSource = timeSource;
+  }
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
@@ -59,7 +65,6 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
       LOGGER.info("Initializing LeaseServiceProvider with default lease length of " + LeaseConstants.DEFAULT_LEASE_LENGTH + " ms");
       leaseConfiguration = new LeaseConfiguration(LeaseConstants.DEFAULT_LEASE_LENGTH);
     }
-    TimeSource timeSource = TimeSourceProvider.getTimeSource();
     proxyClientConnectionCloser = new ProxyClientConnectionCloser();
     leaseState = new LeaseState(timeSource, proxyClientConnectionCloser);
     leaseMonitorThread = new LeaseMonitorThread(timeSource, leaseState);
@@ -105,7 +110,9 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public void close() {
-    leaseMonitorThread.interrupt();
+    if (leaseMonitorThread != null) {
+      leaseMonitorThread.interrupt();
+    }
   }
 
   @Override

@@ -40,16 +40,16 @@ public class LeaseMaintainerFactory {
    * @param connection the connection on which leases should be maintained
    * @return the LeaseMaintainer that will maintain leases on the connection
    */
-  public static LeaseMaintainer createLeaseMaintainer(Connection connection) {
+  public static LeaseMaintainer createLeaseMaintainer(Connection connection, TimeSource timeSource) {
     LOGGER.debug("Creating LeaseMaintainer for connection: " + connection);
     ProxyLeaseReconnectListener leaseReconnectListener = new ProxyLeaseReconnectListener();
     LeaseAcquirer leaseAcquirer = getLeaseAcquirer(connection, leaseReconnectListener);
 
-    LeaseMaintainerImpl leaseMaintainer = new LeaseMaintainerImpl(leaseAcquirer);
+    LeaseMaintainerImpl leaseMaintainer = new LeaseMaintainerImpl(leaseAcquirer, timeSource);
     leaseReconnectListener.setUnderlying(leaseMaintainer);
 
-    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer);
-    LeaseExpiryConnectionKillingThread leaseExpiryConnectionKillingThread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection);
+    LeaseMaintenanceThread leaseMaintenanceThread = new LeaseMaintenanceThread(leaseMaintainer, timeSource);
+    LeaseExpiryConnectionKillingThread leaseExpiryConnectionKillingThread = new LeaseExpiryConnectionKillingThread(leaseMaintainer, connection, timeSource);
 
     leaseMaintenanceThread.start();
     leaseExpiryConnectionKillingThread.start();

@@ -26,9 +26,6 @@ import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
 
 public class NoLeaseConfigurationTest {
   private static PassthroughClusterControl cluster;
@@ -53,7 +50,7 @@ public class NoLeaseConfigurationTest {
   public void defaultConfigurationAllowsALease() throws Exception {
     URI clusterURI = URI.create("passthrough://stripe");
     Connection connection = ConnectionFactory.connect(clusterURI, new Properties());
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection, new SystemTimeSource());
 
     LeaseTestUtil.waitForValidLease(leaseMaintainer);
   }

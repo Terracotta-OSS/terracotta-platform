@@ -16,8 +16,10 @@
  */
 package org.terracotta.lease;
 
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,33 +51,33 @@ public class LeaseMaintainerFactoryTest {
 
   @Before
   public void before() throws Exception {
-    TimeSourceProvider.setTimeSource(timeSource);
-
     when(connection.getEntityRef(LeaseAcquirer.class, ENTITY_VERSION, ENTITY_NAME)).thenReturn(entityRef);
     when(entityRef.fetchEntity(any())).thenReturn(leaseAcquirer);
     when(leaseAcquirer.acquireLease()).thenReturn(6000L);
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void objectsWiredTogetherCorrectly() throws Exception {
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection, timeSource);
 
-    verify(timeSource, timeout(1000L).times(1)).sleep(2000L);
+    assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
+    verify(timeSource, timeout(60_000).times(1)).sleep(2000L);
     verify(leaseAcquirer, times(1)).acquireLease();
     verify(leaseAcquirer, times(0)).close();
 
+    assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
     timeSource.tickMillis(5000L);
 
-    verify(timeSource, timeout(1000L).times(2)).sleep(2000L);
+    verify(timeSource, timeout(60_000).times(2)).sleep(2000L); // additional call to sleep
     verify(leaseAcquirer, times(2)).acquireLease();
     verify(leaseAcquirer, times(0)).close();
 
     leaseMaintainer.close();
 
+    assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
     timeSource.tickMillis(5000L);
 
-    verify(timeSource, timeout(1000L).times(2)).sleep(2000L);
+    verify(timeSource, timeout(60_000).times(2)).sleep(2000L); // no more call to sleep
     verify(leaseAcquirer, times(2)).acquireLease();
     verify(leaseAcquirer, times(1)).close();
   }

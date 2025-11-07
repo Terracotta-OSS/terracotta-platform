@@ -17,6 +17,7 @@
 package org.terracotta.lease.service;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,8 +25,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import org.junit.Ignore;
 import org.junit.Test;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -36,7 +37,6 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
-import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
 
@@ -45,45 +45,47 @@ import com.tc.classloader.BuiltinService;
 public class LeaseServiceProviderTest {
   @Test
   public void serviceTypes() {
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
-    Collection<Class<?>> serviceTypes = serviceProvider.getProvidedServiceTypes();
-    assertEquals(2, serviceTypes.size());
-    assertEquals(LeaseService.class, serviceTypes.iterator().next());
+    try(LeaseServiceProvider serviceProvider = new LeaseServiceProvider()) {
+      Collection<Class<?>> serviceTypes = serviceProvider.getProvidedServiceTypes();
+      assertEquals(2, serviceTypes.size());
+      assertEquals(LeaseService.class, serviceTypes.iterator().next());
+    }
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void singleLeaseConfigured() throws Exception {
     testLeaseLengths(1500L, new LeaseConfiguration(1500L));
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void noLeaseConfigured() throws Exception {
     testLeaseLengths(150_000L, () -> LeaseServiceProvider.class);
   }
 
   private void testLeaseLengths(long expectedLeaseLength, ServiceProviderConfiguration configuredLease) throws Exception {
     TestTimeSource timeSource = spy(new TestTimeSource());
-    TimeSourceProvider.setTimeSource(timeSource);
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
     ClientConnectionCloser closer = mock(ClientConnectionCloser.class);
     ServiceConfiguration<LeaseService> serviceConfiguration = new LeaseServiceConfiguration(closer);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
-    serviceProvider.initialize(configuredLease, platformConfiguration);
-    LeaseService service = serviceProvider.getService(1L, serviceConfiguration);
+    try(LeaseServiceProvider serviceProvider = new LeaseServiceProvider()) {
+      serviceProvider.setTimeSource(timeSource);
+      serviceProvider.initialize(configuredLease, platformConfiguration);
+      LeaseService service = serviceProvider.getService(1L, serviceConfiguration);
 
-    LeaseResult leaseResult = service.acquireLease(clientDescriptor);
-    assertTrue(leaseResult.isLeaseGranted());
-    assertEquals(expectedLeaseLength, leaseResult.getLeaseLength());
+      LeaseResult leaseResult = service.acquireLease(clientDescriptor);
+      assertTrue(leaseResult.isLeaseGranted());
+      assertEquals(expectedLeaseLength, leaseResult.getLeaseLength());
 
-    verify(timeSource, timeout(1000L)).sleep(200L);
+      assertTrue(timeSource.waitUntilSleeping(60, TimeUnit.SECONDS));
+      verify(timeSource, timeout(60_000).atLeast(1)).sleep(200L);
 
-    timeSource.tickMillis(expectedLeaseLength);
-    timeSource.tickMillis(100L);
-    verify(closer, timeout(1000L)).closeClientConnection(clientDescriptor);
+      // advance the time to after lease expiration
+      timeSource.tickMillis(expectedLeaseLength + 100L);
+      // eventually, Mockito will see 1 call to closeClientConnection when the monitor thread will have seen the lease expiration
+      verify(closer, timeout(60_000L).times(1)).closeClientConnection(clientDescriptor);
+    }
   }
 
   @Test
@@ -94,17 +96,18 @@ public class LeaseServiceProviderTest {
   @Test
   public void testStateDump() throws Exception {
     TestTimeSource timeSource = spy(new TestTimeSource());
-    TimeSourceProvider.setTimeSource(timeSource);
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
 
     LeaseConfiguration providerConfig = new LeaseConfiguration(1500L);
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
-    serviceProvider.initialize(providerConfig, platformConfiguration);
+    try(LeaseServiceProvider serviceProvider = new LeaseServiceProvider()) {
+      serviceProvider.setTimeSource(timeSource);
+      serviceProvider.initialize(providerConfig, platformConfiguration);
 
-    MockStateDumpCollector dumper = new MockStateDumpCollector();
-    serviceProvider.addStateTo(dumper);
-    assertThat(dumper.getMapping("LeaseLength"), is("1500"));
-    assertThat(dumper.getMapping("LeaseState"), notNullValue());
+      MockStateDumpCollector dumper = new MockStateDumpCollector();
+      serviceProvider.addStateTo(dumper);
+      assertThat(dumper.getMapping("LeaseLength"), is("1500"));
+      assertThat(dumper.getMapping("LeaseState"), notNullValue());
+    }
   }
 
 }

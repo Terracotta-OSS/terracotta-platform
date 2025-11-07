@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
@@ -62,26 +62,25 @@ public class LeaseSystemTest {
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void operationLongerThanLeaseLength() throws Exception {
     Properties properties = new Properties();
     properties.put(ConnectionPropertyNames.CONNECTION_NAME, "LeaseSystemTest");
 
     URI clusterURI = URI.create("passthrough://stripe");
     Connection connection = ConnectionFactory.connect(clusterURI, properties);
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection, new SystemTimeSource());
 
     LeaseTestUtil.waitForValidLease(leaseMaintainer);
 
     Lease lease1 = leaseMaintainer.getCurrentLease();
     Thread.sleep(1000L);
+    assertTrue(leaseMaintainer.waitForLease(1, TimeUnit.MINUTES));
     Lease lease2 = leaseMaintainer.getCurrentLease();
 
     assertTrue(lease2.isValidAndContiguous(lease1));
   }
 
   @Test
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1196")
   public void operationLongerThanLeaseLengthWithIterableBasedAPI() throws Exception {
     Properties properties = new Properties();
     properties.put(ConnectionPropertyNames.CONNECTION_NAME, "LeaseSystemTest");
@@ -89,12 +88,13 @@ public class LeaseSystemTest {
 
     InetSocketAddress server = InetSocketAddress.createUnresolved("stripe", 0);
     Connection connection = ConnectionFactory.connect(Collections.singletonList(server), properties);
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection, new SystemTimeSource());
 
     LeaseTestUtil.waitForValidLease(leaseMaintainer);
 
     Lease lease1 = leaseMaintainer.getCurrentLease();
     Thread.sleep(1000L);
+    assertTrue(leaseMaintainer.waitForLease(1, TimeUnit.MINUTES));
     Lease lease2 = leaseMaintainer.getCurrentLease();
 
     assertTrue(lease2.isValidAndContiguous(lease1));
@@ -108,7 +108,7 @@ public class LeaseSystemTest {
     URI clusterURI = URI.create("passthrough://stripe");
     Connection connection = ConnectionFactory.connect(clusterURI, properties);
     LeaseDelayedConnection delayedConnection = new LeaseDelayedConnection(connection);
-    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(delayedConnection);
+    LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(delayedConnection, new SystemTimeSource());
 
     LeaseTestUtil.waitForValidLease(leaseMaintainer);
 

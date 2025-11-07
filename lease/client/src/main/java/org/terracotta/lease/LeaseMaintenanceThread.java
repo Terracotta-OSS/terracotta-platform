@@ -31,13 +31,14 @@ class LeaseMaintenanceThread extends Thread implements Closeable {
 
   private volatile boolean shutdown = false;
 
-  LeaseMaintenanceThread(LeaseMaintainerImpl leaseMaintainer) {
+  LeaseMaintenanceThread(LeaseMaintainerImpl leaseMaintainer, TimeSource timeSource) {
     this.leaseMaintainer = leaseMaintainer;
-    this.timeSource = TimeSourceProvider.getTimeSource();
+    this.timeSource = timeSource;
     setName("LeaseMaintenanceThread");
     setDaemon(true);
   }
 
+  @Override
   public void run() {
     while (!shutdown) {
       try {
