@@ -17,7 +17,6 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
@@ -361,7 +360,6 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  @SuppressFBWarnings("BC_VACUOUS_INSTANCEOF")
   protected final Optional<LockAwareNomadManager<NodeContext>> findLockAwareNomadManager() {
     return isLockAwareNomadManager() ? Optional.of((LockAwareNomadManager<NodeContext>) nomadManager) : Optional.empty();
   }

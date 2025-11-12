@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 public class MoveOperation {
 
   private final Path destination;
-  protected final String markFile = "mark.txt";
+  protected static final String markFile = "mark.txt";
   private static final Logger LOGGER = LoggerFactory.getLogger(MoveOperation.class);
 
   public MoveOperation(Path destination) {

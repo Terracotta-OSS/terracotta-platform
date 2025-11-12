@@ -58,7 +58,6 @@ public class FileConfigStorage implements ConfigStorage {
 
   @SuppressWarnings("unused")
   @Override
-  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   public Config getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
     LOGGER.debug("Loading version: {} from file: {}", version, file.getFileName());

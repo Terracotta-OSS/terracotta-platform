@@ -16,6 +16,8 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
+import java.lang.reflect.InvocationTargetException;
+
 import com.tc.text.PrettyPrintable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,8 +82,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     Class<? extends GroupPortMapper> gi = mappers.iterator().next();
     GroupPortMapper mapper;
     try {
-      mapper = gi.newInstance();
-    } catch (IllegalAccessException | InstantiationException i) {
+      mapper = gi.getConstructor().newInstance();
+    } catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
       mapper = new DefaultGroupPortMapperImpl();
     }
     this.groupPortMapper = mapper;

@@ -98,7 +98,7 @@ class Defaults {
     String cName = System.getProperty(type.getName());
     if (cName != null) {
       try {
-        return type.cast(Defaults.class.getClassLoader().loadClass(cName).newInstance());
+        return type.cast(Defaults.class.getClassLoader().loadClass(cName).getDeclaredConstructor().newInstance());
       } catch (Exception e) {
         throw new IllegalArgumentException("Unable to instantiate  " + type.getSimpleName() + " " + cName + " set from system property");
       }

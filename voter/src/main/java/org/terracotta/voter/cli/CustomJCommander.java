@@ -97,7 +97,6 @@ public class CustomJCommander extends JCommander {
     }
   }
 
-  @SuppressFBWarnings("SBSC_USE_STRINGBUFFER_CONCATENATION")
   @SuppressWarnings("StringConcatenationInLoop")
   private static String pad(String str, int colSize) {
     while (str.length() < colSize) {
