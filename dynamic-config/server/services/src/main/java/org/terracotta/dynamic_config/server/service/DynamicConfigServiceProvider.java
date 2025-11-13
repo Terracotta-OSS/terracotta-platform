@@ -38,7 +38,6 @@ import org.terracotta.dynamic_config.api.server.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
-import org.terracotta.dynamic_config.server.service.handler.SecurityLogDirChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -55,7 +54,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
@@ -86,10 +84,6 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // log-dir
     ConfigChangeHandler nodeLogDirChangeHandler = new NodeLogDirChangeHandler(parameterSubstitutor, pathResolver);
     addToManager(configChangeHandlerManager, nodeLogDirChangeHandler, NODE_LOG_DIR);
-
-    // security-log-dir
-    ConfigChangeHandler securityLogDirChangeHandler = new SecurityLogDirChangeHandler(parameterSubstitutor, pathResolver);
-    addToManager(configChangeHandlerManager, securityLogDirChangeHandler, SECURITY_LOG_DIR);
 
     // settings applied directly without any config handler but which require a restart
     addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);

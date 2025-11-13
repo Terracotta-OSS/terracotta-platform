@@ -1,0 +1,12 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.deploy'
+  id 'org.terracotta.build.convention.osgi-package'
+  id 'org.terracotta.build.convention.voltron-server'
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-security-logger-server-api'
+  name = 'Security Logger Server API'
+}
