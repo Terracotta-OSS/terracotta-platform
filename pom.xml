@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>platform-root</artifactId>
-  <version>5.10-SNAPSHOT</version>
+  <version>5.10.26</version>
   <packaging>pom</packaging>
 
   <properties>

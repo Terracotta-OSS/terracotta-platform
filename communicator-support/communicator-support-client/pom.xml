@@ -23,7 +23,7 @@
   <parent>
     <artifactId>communicator-support</artifactId>
     <groupId>org.terracotta.voltron.communicator</groupId>
-    <version>5.10-SNAPSHOT</version>
+    <version>5.10.26</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 

@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>healthchecker-entity</artifactId>
-    <version>5.10-SNAPSHOT</version>
+    <version>5.10.26</version>
     <relativePath>..</relativePath>
   </parent>
 
