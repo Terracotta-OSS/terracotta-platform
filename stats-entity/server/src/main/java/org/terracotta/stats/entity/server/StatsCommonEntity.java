@@ -20,9 +20,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,8 +36,11 @@ import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.management.model.context.Context;
+import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.ManagementProvider;
 import org.terracotta.management.registry.ManagementProviderAdapter;
+import org.terracotta.management.registry.collect.StatisticProvider;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 
@@ -137,172 +141,89 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
   }
 
   /**
-   * Collects and logging all types of statistics
+   * Collects and publishes all available server statistics
    */
   private void collectAndPublishStatistics() {
-      // Collect and publish cache statistics
-      Map<String, Object> cacheStats = extractCacheStatistics();
-      LOGGER.info("SERVER_WORKLOAD|CACHE_STATS {}", cacheStats);
+      try {
+        // Collect all available server statistics
+        Map<String, Object> allStats = collectServerStatisticsAsync().get();
 
-      // Collect and publish dataset statistics
-      Map<String, Object> datasetStats = extractDatasetStatistics();
-      LOGGER.info("SERVER_WORKLOAD|DATASET_STATS {}", datasetStats);
-
-      // Collect and publish server statistics
-      Map<String, Object> serverStats = collectServerStatistics();
-      LOGGER.info("SERVER_WORKLOAD|RESOURCE_USAGE {}", serverStats);
-  }
-
-
-  private Map<String, Object> extractCacheStatistics() {
-    Map<String, Object> stats = new HashMap<>();
-    try {
-      // Try to get real statistics from the Management Service
-      if (managementRegistry != null) {
-        Map<String, Object> realStats = collectCacheStatisticsAsync().get();
-        if (!realStats.isEmpty()) {
-          return realStats;
+        if (!allStats.isEmpty()) {
+          LOGGER.info("SERVER_WORKLOAD|STATISTICS {}", allStats);
+        } else {
+          LOGGER.debug("No statistics available to publish");
         }
+      } catch (Exception e) {
+        LOGGER.warn("Failed to collect and publish statistics", e);
       }
-    } catch (Exception e) {
-      LOGGER.warn("Failed to collect real cache statistics, falling back to simulated data", e);
-    }
-
-    // Fall back to simulated data
-    double randomFactor = Math.random() * 0.2 + 0.9; // 0.9-1.1 random factor
-    stats.put("cacheHitCount", (long)(1000 * randomFactor));
-    stats.put("cacheMissCount", (long)(250 * randomFactor));
-    stats.put("cacheHitRatio", 0.8 * randomFactor);
-    stats.put("cacheSize", (long)(10240 * randomFactor));
-    stats.put("cacheEvictionCount", (long)(50 * randomFactor));
-    stats.put("cacheExpirationCount", (long)(25 * randomFactor));
-    stats.put("cacheAverageGetTime", 1.2 * randomFactor);
-    stats.put("cacheAveragePutTime", 2.5 * randomFactor);
-    return stats;
   }
 
   /**
-   * Collect cache statistics from the Management Service
+   * Collect all available server statistics from the Management Service.
+   * This includes:
+   * - SovereignDataset statistics (RecordCount, AllocatedMemory, OccupiedStorage, etc.)
+   * - SovereignIndex statistics (OccupiedStorage, AccessCount, IndexedRecordCount)
+   * - Pool statistics (AllocatedSize)
+   * - Store statistics (DataSize, AllocatedMemory, Entries)
+   * - OffHeapResource statistics (AllocatedMemory)
+   * - DataRoot statistics (TotalDiskUsage)
+   * - RestartStore statistics (TotalUsage)
+   * - Sequence statistics (SequenceValues)
+   *
+   * Structure follows DefaultStatisticCollector pattern
    */
-  public Future<Map<String, Object>> collectCacheStatisticsAsync() {
+  public Future<Map<String, Object>> collectServerStatisticsAsync() {
     Map<String, Object> stats = new HashMap<>();
     try {
-      // Query all statistics from all capabilities that support cache statistics
       if (managementRegistry != null) {
-        managementRegistry.getCapabilities().forEach(capability -> {
-          try {
-            managementRegistry.withCapability(capability.getName())
-                .queryAllStatistics()
-                .build()
-                .execute()
-                .forEach(contextualStats -> {
-                  contextualStats.getStatistics().forEach((key, value) -> {
-                    if (key.toLowerCase().contains("cache") || key.toLowerCase().contains("hit") || key.toLowerCase().contains("miss")) {
-                      stats.put(key, value.getLatestSampleValue().orElse(null));
-                    }
-                  });
-                });
-          } catch (Exception e) {
-            LOGGER.warn("Failed to collect statistics from capability {}: {}", capability.getName(), e.getMessage());
+        for (String capabilityName : managementRegistry.getCapabilityNames()) {
+
+          Set<Context> allContexts = new LinkedHashSet<>();
+
+          for (ManagementProvider<?> managementProvider : managementRegistry.getManagementProvidersByCapability(capabilityName)) {
+            if (managementProvider.getClass().isAnnotationPresent(StatisticProvider.class)) {
+              for (ExposedObject<?> exposedObject : managementProvider.getExposedObjects()) {
+                allContexts.add(exposedObject.getContext());
+              }
+            }
           }
-        });
-      }
-    } catch (Exception e) {
-      LOGGER.error("Error collecting cache statistics", e);
-    }
 
-    if (stats.isEmpty()) {
-      // Fallback to basic server stats if no cache stats available
-      stats.put("cacheHitRate", 0.0);
-      stats.put("cacheMissRate", 0.0);
-      stats.put("cacheSize", 0L);
-      stats.put("cacheEvictions", 0L);
-    }
-
-    LOGGER.info("Collected cache statistics: {}", stats);
-    return CompletableFuture.completedFuture(stats);
-  }
-
-  private Map<String, Object> extractDatasetStatistics() {
-    Map<String, Object> stats = new HashMap<>();
-    try {
-      // Try to get real statistics from the Management Service
-      if (managementRegistry != null) {
-        Map<String, Object> realStats = collectDatasetStatisticsAsync().get();
-        if (!realStats.isEmpty()) {
-          return realStats;
+          if (!allContexts.isEmpty()) {
+            try {
+              managementRegistry.withCapability(capabilityName)
+                  .queryAllStatistics()
+                  .on(allContexts)
+                  .build()
+                  .execute()
+                  .forEach(contextualStats -> {
+                    contextualStats.getStatistics().forEach((statName, statistic) -> {
+                      Object value = statistic.getLatestSampleValue().orElse(null);
+                      if (value != null) {
+                        stats.put(statName, value);
+                      }
+                    });
+                  });
+            } catch (RuntimeException e) {
+              LOGGER.warn("Failed to collect statistics from capability {}: {}", capabilityName, e.getMessage(), e);
+            }
+          }
         }
       }
-    } catch (Exception e) {
-      LOGGER.warn("Failed to collect real dataset statistics, falling back to simulated data", e);
+    } catch (RuntimeException e) {
+      LOGGER.error("Error collecting server statistics: " + e.getMessage(), e);
     }
 
-    // Fall back to simulated data
-    double randomFactor = Math.random() * 0.2 + 0.9; // 0.9-1.1 random factor
-    stats.put("datasetSize", (long)(1048576 * randomFactor));
-    stats.put("datasetRecordCount", (long)(5000 * randomFactor));
-    stats.put("datasetReadOperations", (long)(15000 * randomFactor));
-    stats.put("datasetWriteOperations", (long)(3000 * randomFactor));
-    stats.put("datasetAvgReadLatency", 5 * randomFactor);
-    stats.put("datasetAvgWriteLatency", 15 * randomFactor);
-    stats.put("datasetIndexSize", (long)(204800 * randomFactor));
-    stats.put("datasetQueryCount", (long)(2500 * randomFactor));
-    stats.put("datasetAvgQueryLatency", 8 * randomFactor);
-
-    return stats;
-  }
-
-  /**
-   * Collect dataset statistics from the Management Service
-   */
-  public Future<Map<String, Object>> collectDatasetStatisticsAsync() {
-    Map<String, Object> stats = new HashMap<>();
-    try {
-      // Query all statistics from all capabilities that support dataset statistics
-      if (managementRegistry != null) {
-        managementRegistry.getCapabilities().forEach(capability -> {
-          try {
-            managementRegistry.withCapability(capability.getName())
-                .queryAllStatistics()
-                .build()
-                .execute()
-                .forEach(contextualStats -> {
-                  contextualStats.getStatistics().forEach((key, value) -> {
-                    if (key.toLowerCase().contains("dataset") || key.toLowerCase().contains("storage") ||
-                        key.toLowerCase().contains("operation") || key.toLowerCase().contains("size")) {
-                      stats.put(key, value.getLatestSampleValue().orElse(null));
-                    }
-                  });
-                });
-          } catch (Exception e) {
-            LOGGER.warn("Failed to collect statistics from capability {}: {}", capability.getName(), e.getMessage());
-          }
-        });
-      }
-    } catch (Exception e) {
-      LOGGER.error("Error collecting dataset statistics", e);
-    }
-
-    if (stats.isEmpty()) {
-      // Fallback to basic dataset stats if no dataset stats available
-      stats.put("datasetStorageUsage", 0L);
-      stats.put("datasetOperations", 0L);
-      stats.put("datasetSize", 0L);
-      stats.put("datasetReadOperations", 0L);
-      stats.put("datasetWriteOperations", 0L);
-    }
-
-    LOGGER.info("Collected dataset statistics: {}", stats);
+    LOGGER.debug("Collected {} statistics from management registry", stats.size());
     return CompletableFuture.completedFuture(stats);
   }
 
   /**
-   * Collect server statistics such as CPU, memory, connections, etc.
+   * Collect JVM resource statistics (CPU, memory, etc.)
+   * These are system-level metrics from MXBeans
    */
-  private Map<String, Object> collectServerStatistics() {
+  private Map<String, Object> collectJVMResourceStatistics() {
     Map<String, Object> stats = new HashMap<>();
     try {
-      // Collect JVM and system metrics
       Runtime runtime = Runtime.getRuntime();
       OperatingSystemMXBean osMXBean = ManagementFactory.getOperatingSystemMXBean();
       MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
@@ -313,30 +234,23 @@ public class StatsCommonEntity implements CommonServerEntity<EntityMessage, Enti
       long freeMemory = runtime.freeMemory();
       long usedMemory = allocatedMemory - freeMemory;
 
-      stats.put("maxMemory", maxMemory);
-      stats.put("allocatedMemory", allocatedMemory);
-      stats.put("freeMemory", freeMemory);
-      stats.put("usedMemory", usedMemory);
-      stats.put("memoryUtilization", (double) usedMemory / maxMemory);
+      stats.put("jvm_maxMemory", maxMemory);
+      stats.put("jvm_allocatedMemory", allocatedMemory);
+      stats.put("jvm_freeMemory", freeMemory);
+      stats.put("jvm_usedMemory", usedMemory);
+      stats.put("jvm_memoryUtilization", (double) usedMemory / maxMemory);
 
       // CPU statistics
-      stats.put("availableProcessors", runtime.availableProcessors());
-      stats.put("systemLoadAverage", osMXBean.getSystemLoadAverage());
+      stats.put("jvm_availableProcessors", runtime.availableProcessors());
+      stats.put("jvm_systemLoadAverage", osMXBean.getSystemLoadAverage());
 
       // Heap memory details
-      stats.put("heapMemoryUsed", memoryMXBean.getHeapMemoryUsage().getUsed());
-      stats.put("heapMemoryMax", memoryMXBean.getHeapMemoryUsage().getMax());
-      stats.put("nonHeapMemoryUsed", memoryMXBean.getNonHeapMemoryUsage().getUsed());
-
-      // In a real implementation, you would also collect:
-      // - Connection counts
-      // - Thread counts
-      // - GC statistics
-      // - Network I/O
-      // - Disk I/O
+      stats.put("jvm_heapMemoryUsed", memoryMXBean.getHeapMemoryUsage().getUsed());
+      stats.put("jvm_heapMemoryMax", memoryMXBean.getHeapMemoryUsage().getMax());
+      stats.put("jvm_nonHeapMemoryUsed", memoryMXBean.getNonHeapMemoryUsage().getUsed());
 
     } catch (Exception e) {
-      LOGGER.warn("Error collecting server statistics", e);
+      LOGGER.warn("Error collecting JVM resource statistics", e);
     }
     return stats;
   }
