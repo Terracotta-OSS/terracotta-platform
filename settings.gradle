@@ -90,6 +90,10 @@ include ':common:test-utilities',
     ':management:entities:nms-agent:client',
     ':management:entities:nms-agent:server',
 
+    // stats entities
+    ':stats-entity:server',
+    ':stats-entity:testing:integration-tests',
+
     // dynamic-config CLI
     ':dynamic-config:cli:api',
     ':dynamic-config:cli:jcommander',

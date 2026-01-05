@@ -1,0 +1,19 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.deploy'
+  id 'org.terracotta.build.convention.voltron-server'
+}
+
+dependencies {
+  service project(':management:server:api')
+  service project(':dynamic-config:api')
+  service "org.terracotta:statistics:$terracottaStatisticVersion"
+  implementation project(':management:entities:nms:common')
+  implementation project(':voltron-proxy:server')
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-management-entities-stats-server'
+  name = 'Stats Entity'
+}

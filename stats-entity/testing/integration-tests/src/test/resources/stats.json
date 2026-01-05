@@ -1,0 +1,35 @@
+{
+  "serverStats": {
+    "maxMemory": 1073741824,
+    "allocatedMemory": 536870912,
+    "freeMemory": 268435456,
+    "usedMemory": 268435456,
+    "memoryUtilization": 0.25,
+    "availableProcessors": 8,
+    "systemLoadAverage": 1.5,
+    "heapMemoryUsed": 268435456,
+    "heapMemoryMax": 1073741824,
+    "nonHeapMemoryUsed": 67108864
+  },
+  "cacheStats": {
+    "cacheHitCount": 1000,
+    "cacheMissCount": 250,
+    "cacheHitRatio": 0.8,
+    "cacheSize": 10240,
+    "cacheEvictionCount": 50,
+    "cacheExpirationCount": 25,
+    "cacheAverageGetTime": 1.2,
+    "cacheAveragePutTime": 2.5
+  },
+  "datasetStats": {
+    "datasetSize": 1048576,
+    "datasetRecordCount": 5000,
+    "datasetReadOperations": 15000,
+    "datasetWriteOperations": 3000,
+    "datasetAvgReadLatency": 5.0,
+    "datasetAvgWriteLatency": 15.0,
+    "datasetIndexSize": 204800,
+    "datasetQueryCount": 2500,
+    "datasetAvgQueryLatency": 8.0
+  }
+}
