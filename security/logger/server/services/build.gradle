@@ -1,0 +1,16 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.deploy'
+  id 'org.terracotta.build.convention.voltron-server'
+}
+
+dependencies {
+  service project(':dynamic-config:server:api')
+  service project(':security:logger:server:api')
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-security-logger-server-services'
+  name = 'Security Logger Server Plugin'
+}

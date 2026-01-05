@@ -26,15 +26,23 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
+import org.terracotta.angela.client.filesystem.RemoteFile;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.angela.common.tcconfig.TerracottaServer;
 
 @ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -311,5 +319,11 @@ public class SetCommand1x1IT extends DynamicConfigIT {
             configTool("get", "-s", "localhost:" + getNodePort(), "-c", "security-log-dir", "-t", "index"),
             containsOutput("stripe.1.node.1.security-log-dir=abc/def")
     );
+
+    TerracottaServer active = getNode(1, 1);
+    List<RemoteFile> logFiles = angela.tsa().browse(active, Paths.get("abc", "def").toString()).list();
+    assertThat(logFiles, hasSize(greaterThanOrEqualTo(1)));
+    assertThat(logFiles.get(0).getName(), startsWith("terracotta-security-log-"));
+    assertThat(logFiles.get(0).getName(), endsWith(".log"));
   }
 }

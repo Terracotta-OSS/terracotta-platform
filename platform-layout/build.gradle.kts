@@ -86,6 +86,7 @@ dependencies {
   serverPluginApis(project(":diagnostic:server:api"))
   serverPluginApis(project(":dynamic-config:server:api"))
   serverPluginApis(project(":management:server:api"))
+  serverPluginApis(project(":security:logger:server:api"))
 
   // voltron resources
   serverPluginLibs
@@ -100,6 +101,7 @@ dependencies {
           .with(project(":dynamic-config:server:services"))
           .with(project(":lease:server")) // also contains an entity
           .with(project(":management:server:services"))
+          .with(project(":security:logger:server:services"))
           .with(project(":platform-base"))
 
   // voltron entities
