@@ -9,7 +9,7 @@ dependencies {
   api project(':voltron-proxy:common')
 
   testImplementation project(':voltron-proxy:client')
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
 }
 
 deploy {

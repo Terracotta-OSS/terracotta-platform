@@ -6,5 +6,5 @@ plugins {
 dependencies {
   implementation project(':management:entities:nms:client')
   implementation project(':management:testing:entity')
-  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }

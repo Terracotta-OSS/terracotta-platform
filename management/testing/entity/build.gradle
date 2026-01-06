@@ -23,5 +23,5 @@ dependencies {
   testImplementation project(':management:entities:nms-agent:server')
   testImplementation project(':management:server:services')
   testImplementation (project(':resources:offheap'))
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
 }

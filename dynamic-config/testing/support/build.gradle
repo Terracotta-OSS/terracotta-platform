@@ -17,7 +17,7 @@ dependencies {
     exclude group: 'org.slf4j'
   }
   implementation project(':dynamic-config:json')
-  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }
 
 deploy {

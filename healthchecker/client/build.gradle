@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
   implementation project(':healthchecker:common')
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }
 
 deploy {

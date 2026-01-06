@@ -7,5 +7,5 @@ dependencies {
   testImplementation project(':lease:client')
   testImplementation project(':lease:server')
   testImplementation project(':dynamic-config:api')
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
 }

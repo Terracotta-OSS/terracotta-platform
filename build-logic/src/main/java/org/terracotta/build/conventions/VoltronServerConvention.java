@@ -26,9 +26,9 @@ public class VoltronServerConvention implements ConventionPlugin<Project, Voltro
     DependencyFactory dependencyFactory = project.getDependencyFactory();
     
     project.getConfigurations().named(VoltronPlugin.VOLTRON_CONFIGURATION_NAME, config -> {
-      String terracottaApisVersion = project.property("terracottaApisVersion").toString();
+      String terracottaCoreVersion = project.property("terracottaCoreVersion").toString();
       config.getDependencies().addAll(asList(
-              dependencyFactory.create("org.terracotta", "server-api", terracottaApisVersion)
+              dependencyFactory.create("org.terracotta", "server-api", terracottaCoreVersion)
       ));
     });
 

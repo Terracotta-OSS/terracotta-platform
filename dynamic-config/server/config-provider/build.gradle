@@ -13,9 +13,9 @@ dependencies {
   implementation "com.beust:jcommander:$jcommanderVersion"
 
   testImplementation project(':common:test-utilities')
-  testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  testCompileOnly "org.terracotta:client-api:$terracottaCoreVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }
 
 deploy {

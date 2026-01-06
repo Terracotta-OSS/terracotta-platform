@@ -14,8 +14,8 @@ dependencies {
   testImplementation project(':management:entities:nms:client')
   testImplementation project(':management:entities:nms-agent:client')
   testImplementation project(':management:testing:entity')
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
-  testCompileOnly "org.terracotta:client-api:$terracottaApisVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
+  testCompileOnly "org.terracotta:client-api:$terracottaCoreVersion"
   testImplementation project(':dynamic-config:testing:galvan')
   testImplementation project(":lease:client")
 

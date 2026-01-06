@@ -9,7 +9,7 @@ dependencies {
   implementation project(':dynamic-config:json')
   implementation project(':dynamic-config:cli:api')
   implementation project(':dynamic-config:cli:jcommander')
-  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
   testImplementation ("org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion") {
     exclude group: 'org.slf4j'

@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-  api ("org.terracotta.internal:galvan-support:$terracottaRuntimeVersion") {
+  api ("org.terracotta.internal:galvan-support:$terracottaCoreVersion") {
     exclude group: 'org.slf4j'
   }
 
