@@ -11,7 +11,9 @@ dependencies {
   implementation project(':dynamic-config:cli:jcommander')
   implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
   implementation "ch.qos.logback:logback-classic:$logbackVersion"
-  testImplementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
+  testImplementation ("org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion") {
+    exclude group: 'org.slf4j'
+  }
 }
 
 tool {

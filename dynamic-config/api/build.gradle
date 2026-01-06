@@ -10,7 +10,9 @@ dependencies {
   api project(':diagnostic:model')
   api project(':common:nomad')
 
-  api ("org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion")
+  api ("org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion") {
+        exclude group:'org.slf4j'
+  }
 
   testImplementation project(':common:test-utilities')
 }

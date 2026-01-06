@@ -5,12 +5,17 @@ plugins {
 }
 
 dependencies {
-  api "org.terracotta.internal:galvan-support:$terracottaRuntimeVersion"
+  api ("org.terracotta.internal:galvan-support:$terracottaRuntimeVersion") {
+    exclude group: 'org.slf4j'
+  }
 
   implementation project(':common:test-utilities')
   implementation project(':dynamic-config:cli:upgrade-tool')
   implementation project(':dynamic-config:cli:upgrade-tool-oss')
-  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  implementation ("org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion") {
+    exclude group: 'org.slf4j'
+  }
+  implementation "org.slf4j:slf4j-api:$slf4jVersion"
 }
 
 deploy {

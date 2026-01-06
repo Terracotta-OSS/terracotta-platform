@@ -9,7 +9,9 @@ dependencies {
   implementation project(':dynamic-config:cli:jcommander')
   implementation project(':dynamic-config:repository')
   implementation project(':dynamic-config:json')
-  implementation "org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion"
+  implementation ("org.terracotta:terracotta-utilities-tools:$terracottaUtilitiesToolsVersion") {
+    exclude group: 'org.slf4j'
+  }
   
   // server apis
   api "org.terracotta:server-api:$terracottaApisVersion"

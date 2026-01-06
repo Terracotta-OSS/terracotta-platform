@@ -7,7 +7,9 @@ plugins {
 
 dependencies {
   api project(':management:sequence-generator')
-  api "org.terracotta:statistics:$terracottaStatisticVersion"
+  api ("org.terracotta:statistics:$terracottaStatisticVersion") {
+    exclude group: 'org.slf4j'
+  }
 
   testImplementation project(':common:json')
 }

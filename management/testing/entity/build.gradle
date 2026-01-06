@@ -10,7 +10,9 @@ dependencies {
   service project(':resources:offheap')
   implementation project(':voltron-proxy:server')
 
-  compileOnlyApi "org.terracotta:statistics:$terracottaStatisticVersion"
+  compileOnlyApi ("org.terracotta:statistics:$terracottaStatisticVersion") {
+    exclude group: 'org.slf4j'
+  }
   compileOnly project(':voltron-proxy:client')
   compileOnly project(':management:entities:nms-agent:client')
 
@@ -20,6 +22,6 @@ dependencies {
   testImplementation project(':management:entities:nms-agent:client')
   testImplementation project(':management:entities:nms-agent:server')
   testImplementation project(':management:server:services')
-  testImplementation project(':resources:offheap')
+  testImplementation (project(':resources:offheap'))
   testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
 }

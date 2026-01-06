@@ -5,7 +5,9 @@ plugins {
 }
 
 dependencies {
-  implementation "org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion"
+  implementation ("org.terracotta:terracotta-utilities-test-tools:$terracottaUtilitiesTestToolsVersion") {
+    exclude group: 'org.slf4j'
+  }
   testImplementation "org.slf4j:slf4j-simple:$slf4jVersion"
 }
 
