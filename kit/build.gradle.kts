@@ -52,10 +52,10 @@ val serverLibsClasspath = configurations.resolvable("serverLibsClasspath") {
 
 val logbackVersion: String by properties
 val slf4jVersion: String by properties
-val terracottaRuntimeVersion: String by properties
+val terracottaCoreVersion: String by properties
 
 dependencies {
-  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaRuntimeVersion")
+  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaCoreVersion")
   platformKit(project(":platform-layout")) { 
     targetConfiguration = "kit" 
   }
@@ -90,7 +90,7 @@ val unzip = tasks.register("unzip") {
     dependsOn(copyLibs)
     doLast {
         val working = layout.buildDirectory.dir("server-libs").get()
-        val runtime = working.file("server-runtime-$terracottaRuntimeVersion.zip")
+        val runtime = working.file("server-runtime-$terracottaCoreVersion.zip")
         if (runtime.getAsFile().exists()) {
             project.sync {
                 from(zipTree(runtime))

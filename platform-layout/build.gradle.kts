@@ -72,13 +72,13 @@ val serverPluginLibs = dependencies.extensions.create<ServerPluginExtension>("se
 
 val logbackVersion: String by properties
 val slf4jVersion: String by properties
-val terracottaRuntimeVersion: String by properties
+val terracottaCoreVersion: String by properties
 
 dependencies {
   /*
    * These roundabout string invokes are necessary until Gradle 8.5 due to: https://github.com/gradle/gradle/issues/26602
    */
-  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaRuntimeVersion")
+  serverLibs.name("org.terracotta.internal:server-runtime:$terracottaCoreVersion")
 
   // voltron server API
   serverPluginApis(project(":common:json"))

@@ -14,7 +14,9 @@ sourceSets {
 dependencies {
   service project(':dynamic-config:server:api')
   service project(':management:server:api')
-  service "org.terracotta:statistics:$terracottaStatisticVersion"
+  service ("org.terracotta:statistics:$terracottaStatisticVersion") {
+    exclude group: 'org.slf4j'
+  }
   
   xmlApi "javax.xml.bind:jaxb-api:[2.2,3]"
   xmlApi "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"

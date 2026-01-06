@@ -13,9 +13,11 @@ dependencies {
   api project(':dynamic-config:cli:upgrade-tool')
   api "org.hamcrest:hamcrest-core:$hamcrestVersion"
   api "org.hamcrest:hamcrest-library:$hamcrestVersion"
-  api "org.terracotta:angela:$terracottaAngelaVersion"
+  api ("org.terracotta:angela:$terracottaAngelaVersion") {
+    exclude group: 'org.slf4j'
+  }
   implementation project(':dynamic-config:json')
-  implementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  implementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }
 
 deploy {

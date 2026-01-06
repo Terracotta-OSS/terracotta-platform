@@ -23,7 +23,7 @@ dependencies {
   xmlApi "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 
   testImplementation project(':common:test-utilities')
-  testImplementation "org.terracotta:passthrough-server:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
     
   xmlXjcEpisodes "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
 }

@@ -1,7 +1,7 @@
 <!--
 
     Copyright Terracotta, Inc.
-    Copyright IBM Corp. 2024, 2025
+    Copyright IBM Corp. 2024, 2026
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 -->
 <configuration>
-  <property file="logbackVars.properties" />
+  <property resource="logbackVars.properties" />
   <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender"/>
 
   <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">

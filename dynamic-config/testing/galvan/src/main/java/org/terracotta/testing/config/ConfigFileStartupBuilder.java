@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,24 @@ import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigCo
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigFileStartupBuilder extends DefaultStartupCommandBuilder {
   private String[] builtCommand;
   private int stripeId;
   private String clusterName = ConfigConstants.DEFAULT_CLUSTER_NAME;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileStartupBuilder.class);
 
   public ConfigFileStartupBuilder() {
   }
@@ -89,37 +98,48 @@ public class ConfigFileStartupBuilder extends DefaultStartupCommandBuilder {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   protected Path convertToConfigFile(Path tcConfig, boolean properties) {
     Path generatedConfigFileDir = getServerWorkingDir().getParent().resolve("generated-configs");
+    try (FileChannel configFile = FileChannel.open(generatedConfigFileDir.getParent().resolve("config.lock"), StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+      while (true) {
+        try (FileLock lock = configFile.lock()) {  // filesystem exclusive lock
+          if (!Files.exists(generatedConfigFileDir)) {
+            // this builder is called for each server, but the CLI will generate the config directories for all.
+            List<String> command = new ArrayList<>();
+            command.add("convert");
 
-    if (Files.exists(generatedConfigFileDir)) {
-      // this builder is called for each server, but the CLI will generate the config directories for all.
-      return generatedConfigFileDir;
+            command.add("-c");
+            command.add(tcConfig.toString());
+
+            for (int i = 0; i < 1; i++) {
+              command.add("-s");
+              command.add("stripe[" + i + "]");
+            }
+            if (properties) {
+              command.add("-t");
+              command.add("properties");
+            }
+
+            command.add("-d");
+            command.add(generatedConfigFileDir.toString());
+
+            command.add("-f"); //Do not fail for relative paths
+
+            command.add("-n");
+            command.add(getClusterName());
+
+            executeCommand(command);
+            lock.release();
+          }
+          return generatedConfigFileDir;
+        } catch (OverlappingFileLockException over) {
+          TimeUnit.SECONDS.sleep(1);
+          LOGGER.info("another thread building config directories for {}, waiting 1 second.", tcConfig);
+        }
+      }
+    } catch (IOException io) {
+      throw new UncheckedIOException(io);
+    } catch (InterruptedException i) {
+      throw new RuntimeException(i);
     }
-
-    List<String> command = new ArrayList<>();
-    command.add("convert");
-
-    command.add("-c");
-    command.add(tcConfig.toString());
-
-    for (int i = 0; i < 1; i++) {
-      command.add("-s");
-      command.add("stripe[" + i + "]");
-    }
-    if (properties) {
-      command.add("-t");
-      command.add("properties");
-    }
-
-    command.add("-d");
-    command.add(generatedConfigFileDir.toString());
-
-    command.add("-f"); //Do not fail for relative paths
-
-    command.add("-n");
-    command.add(getClusterName());
-
-    executeCommand(command);
-    return generatedConfigFileDir;
   }
 
   protected static void executeCommand(List<String> command) {

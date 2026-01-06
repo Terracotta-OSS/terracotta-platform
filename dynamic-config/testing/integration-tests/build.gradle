@@ -19,7 +19,7 @@ dependencies {
   testImplementation project(':dynamic-config:testing:support')
   testImplementation project(':voter')
 
-  testImplementation "org.terracotta.internal:client-runtime:$terracottaRuntimeVersion"
+  testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
 }
 
 sourceSets {

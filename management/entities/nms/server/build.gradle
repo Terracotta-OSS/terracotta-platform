@@ -7,7 +7,9 @@ plugins {
 dependencies {
   service project(':management:server:api')
   service project(':dynamic-config:api')
-  service "org.terracotta:statistics:$terracottaStatisticVersion"
+  service ("org.terracotta:statistics:$terracottaStatisticVersion") {
+    exclude group: 'org.slf4j'
+  }
   implementation project(':management:entities:nms:common')
   implementation project(':voltron-proxy:server')
 }
