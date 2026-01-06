@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,9 @@ public class NonSubstitutingTCConfigurationParser {
     factory.setNamespaceAware(true);
     factory.setIgnoringComments(true);
     factory.setIgnoringElementContentWhitespace(true);
-    factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
+    synchronized (XSD_SCHEMA_FACTORY) {
+      factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
+    }
 
     final DocumentBuilder domBuilder;
     try {
@@ -182,7 +184,9 @@ public class NonSubstitutingTCConfigurationParser {
     factory.setNamespaceAware(true);
     factory.setIgnoringComments(true);
     factory.setIgnoringElementContentWhitespace(true);
-    factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
+    synchronized (XSD_SCHEMA_FACTORY) {
+      factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
+    }
 
     final DocumentBuilder domBuilder;
     try {
