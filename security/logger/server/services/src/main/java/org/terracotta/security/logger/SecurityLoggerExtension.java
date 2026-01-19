@@ -90,8 +90,7 @@ public class SecurityLoggerExtension implements DynamicConfigExtension {
     // add support for "security-log-dir" setting in DC config
     configChangeHandlerManager.set(Setting.SECURITY_LOG_DIR, new SecurityLoggerChangeHandler(parameterSubstitutor, pathResolver));
 
-    // muted by default
-    SecurityLogger securityLogger = SecurityLogger.NOOP;
+    SecurityLogger securityLogger;
 
     // Check if JSON_LOGGING is activated
     if ("true".equals(System.getenv(JSON_LOGGING_ENV_KEY)) && "true".equals(System.getenv(JSON_LOGGING_SECURITY_ENV_KEY))) {
