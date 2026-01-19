@@ -86,6 +86,26 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setRelaySource() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "relay-source=" + "193.123.5.4:" + 7878), is(successful()));
+
+    configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-source", "-t", "index");
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-source", "-t", "index"),
+      containsOutput("relay-source=193.123.5.4:" + 7878));
+  }
+
+  @Test
+  public void setRelayDestination() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-destination=" + "localhost:" + 8787), is(successful()));
+
+    configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-destination", "-t", "index");
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-destination", "-t", "index"),
+      containsOutput("stripe.1.node.1.relay-destination=localhost:" + 8787));
+  }
+
+  @Test
   public void setTwoProperties() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"), is(successful()));
 

@@ -45,6 +45,20 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void testNode_getRelaySource() {
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-source"),
+      not(containsOutput("relay-source=")));
+  }
+
+  @Test
+  public void testNode_getRelayDestination() {
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-destination"),
+      not(containsOutput("relay-destination=")));
+  }
+
+  @Test
   public void testNode_getOneOffheap() {
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),

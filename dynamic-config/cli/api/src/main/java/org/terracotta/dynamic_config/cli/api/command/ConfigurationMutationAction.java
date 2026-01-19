@@ -25,9 +25,11 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
+import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -36,12 +38,14 @@ import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.inet.HostPort;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeSet;
 
 import static java.lang.System.lineSeparator;
@@ -52,6 +56,7 @@ import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
@@ -87,6 +92,47 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   public void setForce(boolean force) {
     this.force = force;
+  }
+
+  /*@Override
+  public void validate() {
+    super.validate();
+
+    // If cluster is activated then do following checks
+    // If normal cluster, don't allow set/unset of RELAY_SOURCE
+        // You can check if cluster is in PASSIVE_RELAY or not.
+
+    //IN replica cluster, you allow it and can't be more than one change
+  }*/
+
+  @Override
+  protected void validate() {
+    super.validate();
+
+    Map<Endpoint, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
+    boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
+
+    if (allOnlineNodesActivated) {
+      Cluster cluster = getUpcomingCluster(node);
+      Cluster updatedCluster = cluster.clone();
+
+      MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
+
+      boolean isPassiveRelayCluster = onlineNodes.values().stream()
+        .anyMatch(state -> state == LogicalServerState.PASSIVE_RELAY);
+
+      long relaySourceChanges = changes.getChanges().stream()
+        .filter(change -> change.getSetting() == Setting.RELAY_SOURCE)
+        .count();
+
+      if (!isPassiveRelayCluster && relaySourceChanges > 0) {
+        throw new IllegalArgumentException("Setting or unsetting RELAY_SOURCE is not allowed in a normal activated cluster.");
+      }
+
+      if (isPassiveRelayCluster && relaySourceChanges > 1) {
+        throw new IllegalArgumentException("Only one RELAY_SOURCE change is allowed in a PASSIVE_RELAY cluster.");
+      }
+    }
   }
 
   @Override
@@ -172,8 +218,27 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
       output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
-      if (!changes.getChanges().isEmpty()) {
-        runConfigurationChange(updatedCluster, onlineNodes, changes);
+
+      // Separate RELAY_SOURCE changes from others
+      List<SettingNomadChange> relaySourceChanges = new ArrayList<>();
+      List<SettingNomadChange> otherChanges = new ArrayList<>();
+
+      for (SettingNomadChange change : changes.getChanges()) {
+        if (change.getSetting() == Setting.RELAY_SOURCE) {
+          relaySourceChanges.add(change);
+        } else {
+          otherChanges.add(change);
+        }
+      }
+
+      // Apply RELAY_SOURCE changes through diagnostic
+      if (!relaySourceChanges.isEmpty()) {
+        runConfigurationChangeThroughDiagnostic(onlineNodes, new MultiSettingNomadChange(relaySourceChanges));
+      }
+
+      // Apply all other changes normally
+      if (!otherChanges.isEmpty()) {
+        runConfigurationChange(updatedCluster, onlineNodes, new MultiSettingNomadChange(otherChanges));
       }
 
       // do we need to restart to apply the changes ?
@@ -320,7 +385,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         others,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
     LOGGER.info("Restarting active nodes: {}...", toString(actives));
@@ -328,7 +393,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         actives,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
     concat(actives.stream(), others.stream())

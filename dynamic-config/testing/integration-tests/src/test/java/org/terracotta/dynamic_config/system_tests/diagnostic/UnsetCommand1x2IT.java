@@ -101,6 +101,44 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void unset_relay_source() {
+    assertThat(
+      configTool("set", "-s", "localhost:" + getNodePort(), "-c", "relay-source="+"193.123.5.4:" + 7878),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      containsOutput("relay-source="+"193.123.5.4\\:" + 7878));
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "relay-source"),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      not(containsOutput("relay-source=")));
+  }
+
+  @Test
+  public void unset_relay_destination() {
+    assertThat(
+      configTool("set", "-s", "localhost:" + getNodePort(), "-c", "relay-destination="+"193.123.5.4:" + 7878),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      containsOutput("relay-destination="+"193.123.5.4\\:" + 7878));
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "relay-destination"),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      not(containsOutput("relay-destination=")));
+  }
+
+  @Test
   public void unset_cluster_name() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=foo"),
