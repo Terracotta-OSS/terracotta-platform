@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,6 +402,7 @@ public class DynamicConfigIT {
     List<String> globalOpts = new ArrayList<>(0);
     List<String> commandOpts = new ArrayList<>(0);
     boolean useDeprecatedCommands = false;
+    boolean optionArg = false;  // the next token is an argument for an option
 
     // parse the current command into parts
     for (String opt : cli) {
@@ -409,11 +410,14 @@ public class DynamicConfigIT {
       if (opt.startsWith("-")) {
         if (command == null) {
           globalOpts.add(opt);
+          optionArg = true;
         } else {
           commandOpts.add(opt);
         }
-      } else if (command == null) {
+      } else if (!optionArg && command == null) {
         command = opt;
+      } else {
+        optionArg = false;
       }
     }
 
