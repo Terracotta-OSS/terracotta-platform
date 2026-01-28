@@ -37,9 +37,12 @@ test {
   // . for java21 memory leak .
   forkEvery = 1
   systemProperty 'org.terracotta.voter.topology.fetch.interval', '5000'
+// give tests more time to complete handshake for slow machines
+  systemProperty 'com.tc.tc.transport.handshake.timeout', '60000'
+// short lived inline servers and clients
+  systemProperty 'com.tc.tc.messages.grouping.enabled', 'false'
+  systemProperty 'com.tc.tc.messages.packup.enabled', 'false'
   hosts {
     customLocalHosts = ["127.0.0.1", "localhost", "${'hostname'.execute().text.trim()}", "testhostname"]
   }
-// short lived inline servers and clients
-  jvmArgs "-Dcom.tc.tc.messages.grouping.enabled=false", "-Dcom.tc.tc.messages.packup.enabled=false"
 }

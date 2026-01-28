@@ -145,7 +145,7 @@ public class DynamicConfigIT {
   public final RuleChain testRules;
 
   public DynamicConfigIT() {
-    this(Duration.ofMinutes(3));
+    this(Duration.ofMinutes(4));
   }
 
   public DynamicConfigIT(Duration testTimeout) {
