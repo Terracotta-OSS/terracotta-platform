@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,11 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
@@ -77,6 +82,11 @@ public class Node implements Cloneable, PropertyHolder {
   private Map<String, String> tcProperties;
   private Map<String, String> loggerOverrides;
   private Map<String, RawPath> dataDirs;
+  private String relaySourceHostname;
+  private Integer relaySourcePort;
+  private String relayDestinationHostname;
+  private Integer relayDestinationPort;
+  private Integer relayDestinationGroupPort;
 
   @Override
   public Scope getScope() {
@@ -154,6 +164,26 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Map<String, String>> getTcProperties() {
     return OptionalConfig.of(TC_PROPERTIES, tcProperties);
+  }
+
+  public OptionalConfig<String> getRelaySourceHostname() {
+    return OptionalConfig.of(RELAY_SOURCE_HOSTNAME, relaySourceHostname);
+  }
+
+  public OptionalConfig<Integer> getRelaySourcePort() {
+    return OptionalConfig.of(RELAY_SOURCE_PORT, relaySourcePort);
+  }
+
+  public OptionalConfig<String> getRelayDestinationHostname() {
+    return OptionalConfig.of(RELAY_DESTINATION_HOSTNAME, relayDestinationHostname);
+  }
+
+  public OptionalConfig<Integer> getRelayDestinationPort() {
+    return OptionalConfig.of(RELAY_DESTINATION_PORT, relayDestinationPort);
+  }
+
+  public OptionalConfig<Integer> getRelayDestinationGroupPort() {
+    return OptionalConfig.of(RELAY_DESTINATION_GROUP_PORT, relayDestinationGroupPort);
   }
 
   public Node setUID(UID uid) {
@@ -331,6 +361,31 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node setDataDirs(Map<String, RawPath> dataDirs) {
     this.dataDirs = dataDirs == null ? null : new ConcurrentHashMap<>(dataDirs);
+    return this;
+  }
+
+  public Node setRelaySourceHostname(String hostname) {
+    this.relaySourceHostname = hostname;
+    return this;
+  }
+
+  public Node setRelaySourcePort(Integer port) {
+    this.relaySourcePort = port;
+    return this;
+  }
+
+  public Node setRelayDestinationHostname(String hostname) {
+    this.relayDestinationHostname = hostname;
+    return this;
+  }
+
+  public Node setRelayDestinationPort(Integer port) {
+    this.relayDestinationPort = port;
+    return this;
+  }
+
+  public Node setRelayDestinationGroupPort(Integer groupPort) {
+    this.relayDestinationGroupPort = groupPort;
     return this;
   }
 
@@ -537,6 +592,11 @@ public class Node implements Cloneable, PropertyHolder {
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
     clone.uid = this.uid;
+    clone.relaySourceHostname = this.relaySourceHostname;
+    clone.relaySourcePort = this.relaySourcePort;
+    clone.relayDestinationHostname = this.relayDestinationHostname;
+    clone.relayDestinationPort = this.relayDestinationPort;
+    clone.relayDestinationGroupPort = this.relayDestinationGroupPort;
     return clone;
   }
 
@@ -562,14 +622,21 @@ public class Node implements Cloneable, PropertyHolder {
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
         Objects.equals(securityLogDir, node.securityLogDir) &&
-        Objects.equals(dataDirs, node.dataDirs);
+        Objects.equals(dataDirs, node.dataDirs) &&
+        Objects.equals(relaySourceHostname, node.relaySourceHostname) &&
+        Objects.equals(relaySourcePort, node.relaySourcePort) &&
+        Objects.equals(relayDestinationHostname, node.relayDestinationHostname) &&
+        Objects.equals(relayDestinationPort, node.relayDestinationPort) &&
+        Objects.equals(relayDestinationGroupPort, node.relayDestinationGroupPort);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid);
+        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid,
+        relaySourceHostname, relaySourcePort,
+        relayDestinationHostname, relayDestinationPort, relayDestinationGroupPort);
   }
 
   @Override
