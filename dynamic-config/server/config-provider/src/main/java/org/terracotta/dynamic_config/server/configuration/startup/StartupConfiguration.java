@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,11 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -121,6 +123,63 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   @Override
   public boolean isPartialConfiguration() {
     return unConfigured || repairMode;
+  }
+
+  @Override
+  public boolean isRelaySource() {
+    if (isPartialConfiguration()) {
+      return false;
+    }
+    String hostname = nodeContextSupplier.get().getNode().getRelaySourceHostname().orDefault();
+    Integer port = nodeContextSupplier.get().getNode().getRelaySourcePort().orDefault();
+    if (hostname != null && port != null) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isRelayDestination() {
+    return false;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeer() {
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    InetSocketAddress peer = null;
+    if (isRelaySource()) {
+      peer = HostPort.create(
+          nodeContextSupplier.get().getNode().getRelaySourceHostname().get(),
+          nodeContextSupplier.get().getNode().getRelaySourcePort().get())
+        .createInetSocketAddress();
+    }
+    if (isRelayDestination()) {
+      peer = HostPort.create(
+          nodeContextSupplier.get().getNode().getRelayDestinationHostname().get(),
+          nodeContextSupplier.get().getNode().getRelayDestinationPort().get())
+        .createInetSocketAddress();
+    }
+    return peer;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeerGroupPort() {
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    if (isRelaySource()) {
+      return null;
+    }
+    InetSocketAddress peerGroupPort = null;
+    if (isRelayDestination()) {
+      peerGroupPort = HostPort.create(
+          nodeContextSupplier.get().getNode().getRelayDestinationHostname().get(),
+          nodeContextSupplier.get().getNode().getRelayDestinationGroupPort().get())
+        .createInetSocketAddress();
+    }
+    return peerGroupPort;
   }
 
   @Override
