@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
@@ -98,5 +101,19 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
       assertThat(getUpcomingCluster("localhost", port).getStripeCount(), is(equalTo(2)));
       assertThat(getUpcomingCluster("localhost", port).getStripes().get(1).getName(), is(equalTo("stripe2")));
     });
+  }
+
+  @Test
+  public void test_attach_invalid_relay() {
+    startNode(1, 1);
+    startNode(2, 1);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1),
+      "-c", "stripe.1.node.1.relay-source-hostname=localhost", "-c", "stripe.1.node.1.relay-source-port=9410"), is(successful()));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1),
+      "-c", "stripe.1.node.1.relay-destination-hostname=localhost", "-c", "stripe.1.node.1.relay-destination-port=9410", "-c", "stripe.1.node.1.relay-destination-group-port=9430"), is(successful()));
+
+    assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
+      allOf(not(successful()), containsOutput("A cluster cannot have both relay source nodes and relay destination nodes")));
   }
 }

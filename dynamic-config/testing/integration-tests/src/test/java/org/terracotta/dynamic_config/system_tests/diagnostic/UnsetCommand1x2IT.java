@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -794,5 +794,103 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             not(containsOutput("node-1-1:logger-overrides=")),
             not(containsOutput("node-1-2:logger-overrides="))
         ));
+  }
+
+  @Test
+  public void unset_relay_source() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-source-hostname=" + "127.0.0.1",
+      "-c", "stripe.1.node.1.relay-source-port=" + "9410"), is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node.1.relay-source-hostname=127.0.0.1"),
+        containsOutput("stripe.1.node.1.relay-source-port=9410")
+      ));
+
+    // unset incomplete properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-port"),
+      containsOutput("Relay source properties: {relay-source-hostname=127.0.0.1, relay-source-port=null} " +
+        "of node with name: node-1-1 aren't well-formed. All relay source properties must be modified together"));
+
+    // unset at cluster level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "relay-source-port"),
+      containsOutput("Invalid input: 'relay-source-port'. Reason: Setting 'relay-source-port' cannot be unset at cluster level"));
+
+    // unset at stripe level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.relay-source-port"),
+      containsOutput("Invalid input: 'stripe.1.relay-source-port'. Reason: Setting 'relay-source-port' cannot be unset at stripe level"));
+
+    // unset all relay source properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-hostname",
+        "-c", "stripe.1.node.1.relay-source-port"),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        not(containsOutput("stripe.1.node.1.relay-source-hostname=")),
+        not(containsOutput("stripe.1.node.1.relay-source-port="))
+      ));
+  }
+
+  @Test
+  public void unset_relay_destination() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-destination-hostname=" + "127.0.0.1",
+      "-c", "stripe.1.node.1.relay-destination-port=" + "9410",
+      "-c", "stripe.1.node.1.relay-destination-group-port=" + "9430"), is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node.1.relay-destination-hostname=127.0.0.1"),
+        containsOutput("stripe.1.node.1.relay-destination-port=9410"),
+        containsOutput("stripe.1.node.1.relay-destination-group-port=9430")
+      ));
+
+    // unset incomplete properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination-port"),
+      containsOutput("Relay destination properties: {relay-destination-group-port=9430, relay-destination-hostname=127.0.0.1, relay-destination-port=null} of " +
+        "node with name: node-1-1 aren't well-formed. All relay destination properties must be modified together"));
+
+    // unset at cluster level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "relay-destination-port"),
+      containsOutput("Invalid input: 'relay-destination-port'. Reason: Setting 'relay-destination-port' cannot be unset at cluster level"));
+
+    // unset at stripe level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.relay-destination-port"),
+      containsOutput("Invalid input: 'stripe.1.relay-destination-port'. Reason: Setting 'relay-destination-port' cannot be unset at stripe level"));
+
+    // unset all relay destination properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination-hostname",
+        "-c", "stripe.1.node.1.relay-destination-port",
+        "-c", "stripe.1.node.1.relay-destination-group-port"),
+      is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        not(containsOutput("stripe.1.node.1.relay-destination-hostname=")),
+        not(containsOutput("stripe.1.node.1.relay-destination-port=")),
+        not(containsOutput("stripe.1.node.1.relay-destination-group-port="))
+      ));
   }
 }

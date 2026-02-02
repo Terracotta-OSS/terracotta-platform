@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,6 +254,37 @@ public class NodeStartupIT extends DynamicConfigIT {
     );
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+  }
+
+  @Test
+  public void testSuccessfulStartupRelaySource() {
+    startNode(1, 1, "--relay-source-hostname", "localhost", "--relay-source-port", "1234", "-r", "config");
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartupRelayDestination() {
+    startNode(1, 1, "--relay-destination-hostname", "localhost", "--relay-destination-port", "1234", "--relay-destination-group-port", "5678", "-r", "config");
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testFailedStartupRelay() {
+    // missing relay source property
+    startNode(1, 1, "--relay-source-hostname", "localhost", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "All relay source properties must be modified together");
+
+    // missing relay destination property
+    startNode(1, 1, "--relay-destination-hostname", "localhost", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "All relay destination properties must be modified together");
+
+    // both relay source and destination
+    startNode(1, 1, "--relay-source-hostname", "localhost", "--relay-source-port", "1234",
+      "--relay-destination-hostname", "localhost", "--relay-destination-port", "1234", "--relay-destination-group-port", "5678", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "A node cannot be both relay source and relay destination");
   }
 
   private void startSingleNode(String... args) {
