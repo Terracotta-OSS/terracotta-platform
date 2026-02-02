@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -26,8 +27,10 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,11 +44,16 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_SOURCE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_SOURCE_PORT;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
@@ -96,6 +104,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
+    validateRelaySetting();
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -190,6 +199,68 @@ public class ClusterValidator {
       throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses +
           " don't have public addresses " + "defined, but other nodes in the cluster do." +
           " Mutative operations on public addresses must be done simultaneously on every node in the cluster");
+    }
+  }
+
+  private void validateRelaySetting() {
+    String relaySource = "source";
+    String relayDestination = "destination";
+    Map<String, List<String>> roleGroups = cluster.getNodes().stream()
+      .collect(Collectors.groupingBy((node) -> checkAndGetRelayRole(node, relaySource, relayDestination),
+        Collectors.mapping(Node::getName, Collectors.toList())));
+
+    List<String> sourceNodes = roleGroups.getOrDefault(relaySource, Collections.emptyList());
+    List<String> destinationNodes = roleGroups.getOrDefault(relayDestination, Collections.emptyList());
+
+    // Validate Mutual Exclusivity across Cluster
+    if (!sourceNodes.isEmpty() && !destinationNodes.isEmpty()) {
+      throw new MalformedClusterException("Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: " + sourceNodes + ". " + "Nodes with relay destination properties: " + destinationNodes + ". " +
+        "A cluster cannot have both relay source nodes and relay destination nodes.");
+    }
+  }
+
+  private String checkAndGetRelayRole(Node node, String relaySource, String relayDestination) {
+    Map<String, Tuple2<Boolean, Object>> relaySourceProps = new LinkedHashMap<>();
+    relaySourceProps.put(RELAY_SOURCE_HOSTNAME, tuple2(node.getRelaySourceHostname().isConfigured(), node.getRelaySourceHostname().orDefault()));
+    relaySourceProps.put(RELAY_SOURCE_PORT, tuple2(node.getRelaySourcePort().isConfigured(), node.getRelaySourcePort().orDefault()));
+
+    Map<String, Tuple2<Boolean, Object>> relayDestinationProps = new LinkedHashMap<>();
+    relayDestinationProps.put(RELAY_DESTINATION_HOSTNAME, tuple2(node.getRelayDestinationHostname().isConfigured(), node.getRelayDestinationHostname().orDefault()));
+    relayDestinationProps.put(RELAY_DESTINATION_PORT, tuple2(node.getRelayDestinationPort().isConfigured(), node.getRelayDestinationPort().orDefault()));
+    relayDestinationProps.put(RELAY_DESTINATION_GROUP_PORT, tuple2(node.getRelayDestinationGroupPort().isConfigured(), node.getRelayDestinationGroupPort().orDefault()));
+
+    long sourceCount = relaySourceProps.entrySet().stream().filter(e -> e.getValue().getT1()).count();
+    long destinationCount = relayDestinationProps.entrySet().stream().filter(e -> e.getValue().getT1()).count();
+
+    // Validate Mutual Exclusivity within node
+    if (sourceCount > 0 && destinationCount > 0) {
+      List<String> configured = Stream.concat(relaySourceProps.entrySet().stream(), relayDestinationProps.entrySet().stream())
+        .filter(entry -> entry.getValue().getT1())
+        .map(Map.Entry::getKey)
+        .collect(toList());
+      throw new MalformedClusterException("Node with name: " + node.getName() +
+        " has both relay source and relay destination properties configured: " + configured + ". " +
+        "A node cannot be both relay source and relay destination");
+    }
+
+    if (sourceCount > 0) {
+      validateRelayAllOrNo(sourceCount, node.getName(), relaySource, relaySourceProps);
+      return relaySource;
+    } else if (destinationCount > 0) {
+      validateRelayAllOrNo(destinationCount, node.getName(), relayDestination, relayDestinationProps);
+      return relayDestination;
+    }
+    return "NONE";
+  }
+
+  private void validateRelayAllOrNo(long relayCount, String nodeName, String relay, Map<String, Tuple2<Boolean, Object>> props) {
+    boolean isConsistent = relayCount == 0 || relayCount == props.size();
+    if (!isConsistent) {
+      Map<String, Object> inconsistent = props.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue().getT2())));
+      throw new MalformedClusterException("Relay " + relay + " properties: " + inconsistent
+        + " of node with name: " + nodeName + " aren't well-formed. All relay " + relay + " properties must be modified together");
     }
   }
 
