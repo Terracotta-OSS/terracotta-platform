@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,11 @@ import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
@@ -275,5 +280,31 @@ public class SetSettingTest {
     assertThat(node.getLoggerOverrides().orDefault().size(), is(equalTo(2)));
     assertThat(node.getLoggerOverrides().orDefault().get("com.foo"), is("INFO"));
     assertThat(node.getLoggerOverrides().orDefault().get("com.bar"), is("WARN"));
+  }
+
+  @Test
+  public void test_setProperty_RELAY() {
+    Node node = Testing.newTestNode("node1", "localhost");
+    assertFalse(node.getRelaySourceHostname().isConfigured());
+    assertFalse(node.getRelaySourcePort().isConfigured());
+
+    assertFalse(node.getRelayDestinationHostname().isConfigured());
+    assertFalse(node.getRelayDestinationPort().isConfigured());
+    assertFalse(node.getRelayDestinationGroupPort().isConfigured());
+
+    RELAY_SOURCE_HOSTNAME.setProperty(node, "localhost");
+    RELAY_SOURCE_PORT.setProperty(node, "9410");
+
+    RELAY_DESTINATION_HOSTNAME.setProperty(node, "localhost");
+    RELAY_DESTINATION_PORT.setProperty(node, "9410");
+    RELAY_DESTINATION_PORT.setProperty(node, "9410");
+    RELAY_DESTINATION_GROUP_PORT.setProperty(node, "9430");
+
+    assertTrue(node.getRelaySourceHostname().isConfigured());
+    assertTrue(node.getRelaySourcePort().isConfigured());
+
+    assertTrue(node.getRelayDestinationHostname().isConfigured());
+    assertTrue(node.getRelayDestinationPort().isConfigured());
+    assertTrue(node.getRelayDestinationGroupPort().isConfigured());
   }
 }

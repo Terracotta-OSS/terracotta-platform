@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -436,6 +436,131 @@ public class ClusterValidatorTest {
     new ClusterValidator(newTestCluster("foo@my.company.com", newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1")))).validate(ClusterState.ACTIVATED);
     new ClusterValidator(newTestCluster("m-cluster", newTestStripe("foo@my.company.com").addNodes(newTestNode("my-node", "localhost1")))).validate(ClusterState.ACTIVATED);
     new ClusterValidator(newTestCluster("m-cluster", newTestStripe("my-stripe").addNodes(newTestNode("foo@my.company.com", "localhost1")))).validate(ClusterState.ACTIVATED);
+  }
+
+  @Test
+  public void testGoodRelay() {
+    // Single node with relay source properties
+    Node node1 = newTestNode("node1", "localhost1", Testing.N_UIDS[1])
+      .setRelaySourceHostname("relay-host")
+      .setRelaySourcePort(9410);
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1))).validate(ClusterState.ACTIVATED);
+
+    // Single node with relay destination properties
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setRelayDestinationHostname("dest-host")
+      .setRelayDestinationPort(9410)
+      .setRelayDestinationGroupPort(9430);
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2))).validate(ClusterState.ACTIVATED);
+
+    Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3])
+      .setRelaySourceHostname("relay-host")
+      .setRelaySourcePort(9410);
+
+    // Multiple nodes with relay source properties in same stripe
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node3))).validate(ClusterState.ACTIVATED);
+    // Multiple nodes with relay source properties in different stripe
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNode(node3))).validate(ClusterState.ACTIVATED);
+
+    Node node4 = newTestNode("node5", "localhost4", Testing.N_UIDS[4])
+      .setRelayDestinationHostname("dest-host")
+      .setRelayDestinationPort(9410)
+      .setRelayDestinationGroupPort(9430);
+
+    // Multiple nodes with relay destination properties in different stripes
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2, node4))).validate(ClusterState.ACTIVATED);
+    // Multiple nodes with relay destination properties in different stripe
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNode(node4))).validate(ClusterState.ACTIVATED);
+
+    // Mixed nodes with and without relay
+    Node node5 = newTestNode("node8", "localhost5", Testing.N_UIDS[5]);
+    Node node6 = newTestNode("node9", "localhost6", Testing.N_UIDS[6])
+      .setRelaySourceHostname("relay-host")
+      .setRelaySourcePort(9411);
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node5, node6))).validate(ClusterState.ACTIVATED);
+
+    // No relay properties configured
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node5, node6))).validate(ClusterState.ACTIVATED);
+  }
+
+  @Test
+  public void testBadRelay_incompleteConfiguration() {
+    // Incomplete relay source - missing hostname
+    Node node1 = newTestNode("node1", "localhost1").setRelaySourcePort(9410);
+    assertClusterValidationFailsContainsMessage(
+      "Relay source properties: {relay-source-hostname=null, relay-source-port=9410} of node with name: node1 aren't well-formed. " +
+        "All relay source properties must be modified together",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
+
+    // Incomplete relay source - missing port
+    Node node2 = newTestNode("node2", "localhost2").setRelaySourceHostname("relay-host");
+    assertClusterValidationFailsContainsMessage(
+      "Relay source properties: {relay-source-hostname=relay-host, relay-source-port=null} of node with name: node2 aren't well-formed. ",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2)));
+
+    // Incomplete relay destination - missing hostname
+    Node node3 = newTestNode("node3", "localhost3").setRelayDestinationPort(9410).setRelayDestinationGroupPort(9430);
+    assertClusterValidationFailsContainsMessage(
+      "Relay destination properties: {relay-destination-group-port=9430, relay-destination-hostname=null, relay-destination-port=9410} of node with name: node3 aren't well-formed. " +
+        "All relay destination properties must be modified together",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node3)));
+
+    // Incomplete relay destination - missing multiple properties
+    Node node6 = newTestNode("node6", "localhost4").setRelayDestinationHostname("dest-host");
+    assertClusterValidationFailsContainsMessage(
+      "Relay destination properties: {relay-destination-group-port=null, relay-destination-hostname=dest-host, relay-destination-port=null} of node with name: node6 aren't well-formed.",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node6)));
+  }
+
+  @Test
+  public void testBadRelay_mutualExclusivityWithinNode() {
+    // Both source and destination on same node
+    Node node1 = newTestNode("node1", "localhost1").setRelaySourceHostname("relay-host").setRelaySourcePort(9410)
+      .setRelayDestinationHostname("dest-host").setRelayDestinationPort(9410).setRelayDestinationGroupPort(9430);
+    assertClusterValidationFailsContainsMessage("Node with name: node1 has both relay source and relay destination properties configured" +
+        ": [relay-source-hostname, relay-source-port, relay-destination-hostname, relay-destination-port, relay-destination-group-port]",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
+
+    // Both source and destination on same node - partial config
+    Node node2 = newTestNode("node2", "localhost2").setRelaySourceHostname("relay-host").setRelayDestinationPort(9410);
+    assertClusterValidationFailsContainsMessage("Node with name: node2 has both relay source and relay destination properties configured" +
+        ": [relay-source-hostname, relay-destination-port]",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2)));
+  }
+
+  @Test
+  public void testBadRelay_mutualExclusivityAcrossCluster() {
+    // Source and destination across different nodes in same stripe
+    Node node1 = newTestNode("node1", "localhost1")
+      .setRelaySourceHostname("relay-host")
+      .setRelaySourcePort(9410);
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setRelayDestinationHostname("dest-host")
+      .setRelayDestinationPort(9410)
+      .setRelayDestinationGroupPort(9430);
+    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2));
+    assertClusterValidationFailsContainsMessage(
+      "Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1]. Nodes with relay destination properties: [node2].", cluster1);
+
+    // Source and destination across multiple different nodes in same stripe
+    Node node3 = newTestNode("node3", "localhost3")
+      .setRelaySourceHostname("relay-host")
+      .setRelaySourcePort(9410);
+    Cluster cluster2 = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2, node3));
+    assertClusterValidationFailsContainsMessage(
+      "Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1, node3]. Nodes with relay destination properties: [node2].", cluster2);
+
+    // Source and destination across different stripes
+    Cluster cluster3 = newTestCluster("cluster1",
+      newTestStripe("stripe1").addNode(node1),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNode(node2));
+    assertClusterValidationFailsContainsMessage(
+      "Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1]. Nodes with relay destination properties: [node2].", cluster3);
   }
 
   private String generateAddress() {
