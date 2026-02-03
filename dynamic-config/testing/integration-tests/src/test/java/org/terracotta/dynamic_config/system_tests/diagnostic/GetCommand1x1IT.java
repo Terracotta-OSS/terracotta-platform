@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,5 +93,18 @@ public class GetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-uid"), containsOutput("cluster-uid="));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "node-uid"), containsOutput("node-uid="));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe-uid"), containsOutput("stripe-uid="));
+  }
+
+  @Test
+  public void testNode_getDefaultRelaySource() {
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-source-hostname"), not(containsOutput("relay-source-hostname=")));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-source-port"), not(containsOutput("relay-source-port=")));
+  }
+
+  @Test
+  public void testNode_getDefaultRelayDestination() {
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-destination-hostname"), not(containsOutput("relay-destination-hostname=")));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-destination-port"), not(containsOutput("relay-destination-port=")));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-destination-group-port"), not(containsOutput("relay-destination-group-port=")));
   }
 }

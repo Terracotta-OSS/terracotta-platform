@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ public enum LogicalServerState {
    * Passive server is up and ready to replicate
    */
   PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
+
+  PASSIVE_RELAY("PASSIVE_RELAY", "PASSIVE-RELAY"),
+
+  PASSIVE_REPLICA("PASSIVE_REPLICA", "PASSIVE-REPLICA"),
 
   /**
    * Active server is ready to receive clients
@@ -134,6 +138,14 @@ public enum LogicalServerState {
 
   public boolean isPassive() {
     return this == PASSIVE;
+  }
+
+  public boolean isPassiveRelay() {
+    return this == PASSIVE_RELAY;
+  }
+
+  public boolean isPassiveReplica() {
+    return this == PASSIVE_REPLICA;
   }
 
   public boolean isBlocked() {

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,10 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *      Permission: when: [configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
  *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *
+ *  relay-source-hostname, relay-source-port, relay-destination-hostname, relay-destination-port, relay-destination-group-port
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import, set, unset] at levels: [node]
  * </pre>
  *
  * @author Mathieu Carbou
@@ -348,6 +352,86 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_GROUP_BIND_ADDRESS, tuple2(key, value))
+  ),
+  RELAY_SOURCE_HOSTNAME(SettingName.RELAY_SOURCE_HOSTNAME,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelaySourceHostname),
+    intoNode(Node::setRelaySourceHostname),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, UNSET, IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, HIDDEN),
+    emptyList(),
+    emptyList(),
+    (key, value) -> HOST_VALIDATOR.accept(SettingName.RELAY_SOURCE_HOSTNAME, tuple2(key, value))
+  ),
+  RELAY_SOURCE_PORT(SettingName.RELAY_SOURCE_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelaySourcePort),
+    intoNode((node, value) -> node.setRelaySourcePort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, UNSET, IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, HIDDEN),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_SOURCE_PORT, tuple2(key, value))
+  ),
+  RELAY_DESTINATION_HOSTNAME(SettingName.RELAY_DESTINATION_HOSTNAME,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayDestinationHostname),
+    intoNode(Node::setRelayDestinationHostname),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, UNSET, IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, HIDDEN),
+    emptyList(),
+    emptyList(),
+    (key, value) -> HOST_VALIDATOR.accept(SettingName.RELAY_DESTINATION_HOSTNAME, tuple2(key, value))
+  ),
+  RELAY_DESTINATION_PORT(SettingName.RELAY_DESTINATION_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayDestinationPort),
+    intoNode((node, value) -> node.setRelayDestinationPort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, UNSET, IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, HIDDEN),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_DESTINATION_PORT, tuple2(key, value))
+  ),
+  RELAY_DESTINATION_GROUP_PORT(SettingName.RELAY_DESTINATION_GROUP_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayDestinationGroupPort),
+    intoNode((node, value) -> node.setRelayDestinationGroupPort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, UNSET, IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, HIDDEN),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_DESTINATION_GROUP_PORT, tuple2(key, value))
   ),
 
   // ==== Node configuration

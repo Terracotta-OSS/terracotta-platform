@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,12 @@ public class CompatibilityTest {
           .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
-          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"))
+          .setRelaySourceHostname("localhost")
+          .setRelaySourcePort(9410)
+          .setRelayDestinationHostname("localhost")
+          .setRelayDestinationPort(9410)
+          .setRelayDestinationGroupPort(9430),
       new Node()
           .setName("node-2")
           .setHostname("localhost2")

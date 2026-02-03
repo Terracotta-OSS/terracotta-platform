@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,5 +325,32 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(logFiles, hasSize(greaterThanOrEqualTo(1)));
     assertThat(logFiles.get(0).getName(), startsWith("terracotta-security-log-"));
     assertThat(logFiles.get(0).getName(), endsWith(".log"));
+  }
+
+  @Test
+  public void setRelaySource() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-hostname=" + "localhost",
+        "-c", "stripe.1.node.1.relay-source-port=" + "9410")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-source-hostname"),
+        containsOutput("cannot be set when node is activated")
+      ));
+  }
+
+  @Test
+  public void setRelayDestination() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination-hostname=" + "localhost",
+        "-c", "stripe.1.node.1.relay-destination-port=" + "9410",
+        "-c", "stripe.1.node.1.relay-destination-group-port=" + "9430")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-destination-hostname"),
+        containsOutput("cannot be set when node is activated")
+      ));
   }
 }

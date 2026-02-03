@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,18 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
@@ -312,5 +317,67 @@ public class SetCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("set", "-connect-to", connection,
       "-setting", "node:node2:backup-dir"
       ), containsOutput("Error: Invalid input: 'node:node2:backup-dir'. Reason: Operation set requires a value"));
+  }
+
+  @Test
+  public void test_set_relay_source_destination_different_nodes_same_command() {
+    assertThat(configTool("set", "-connect-to", connection,
+        "-setting", "stripe.1.node.1.relay-source-hostname=" + "localhost",
+        "-setting", "stripe.1.node.1.relay-source-port=" + "9410",
+        "-setting", "stripe.2.node.1.relay-destination-hostname=" + "localhost",
+        "-setting", "stripe.2.node.1.relay-destination-port=" + "9410",
+        "-setting", "stripe.2.node.1.relay-destination-group-port=" + "9430")
+      , containsOutput("Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1]. Nodes with relay destination properties: [node3]"));
+  }
+
+  @Test
+  public void test_set_relay_source_destination_different_nodes_different_command() {
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+      "-setting", "node1:relay-source-hostname=" + "localhost",
+      "-setting", "node1:relay-source-port=" + "9410"), is(successful()));
+
+    assertThat(configTool("set", "-connect-to", connection,
+        "-setting", "stripe.1.node.2.relay-destination-hostname=" + "localhost",
+        "-setting", "stripe.1.node.2.relay-destination-port=" + "9410",
+        "-setting", "stripe.1.node.2.relay-destination-group-port=" + "9430")
+      , containsOutput("Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1]. Nodes with relay destination properties: [node2]"));
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-hostname",
+        "-c", "stripe.1.node.1.relay-source-port"), is(successful()));
+
+    assertThat(configTool("set", "-connect-to", connection,
+      "-setting", "stripe.1.node.2.relay-destination-hostname=" + "localhost",
+      "-setting", "stripe.1.node.2.relay-destination-port=" + "9410",
+      "-setting", "stripe.1.node.2.relay-destination-group-port=" + "9430"), is(successful()));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-hostname=" + "localhost",
+        "-c", "stripe.1.node.1.relay-source-port=" + "9410"),
+      containsOutput("Cluster has both relay source and relay destination properties configured across different nodes. " +
+        "Nodes with relay source properties: [node1]. Nodes with relay destination properties: [node2]"));
+  }
+
+  @Test
+  public void test_set_relay_source_nomad_change_sync() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-source-hostname=" + "localhost",
+      "-c", "stripe.1.node.1.relay-source-port=" + "9410"), is(successful()));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.2.node.1.relay-source-hostname=" + "localhost",
+      "-c", "stripe.2.node.1.relay-source-port=" + "9411"), is(successful()));
+
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "logger-overrides=org.terracotta.foo:TRACE"), is(successful()));
+
+    List<Matcher<? super ToolExecutionResult>> change = rangeClosed(1, 2).boxed()
+      .flatMap(stripeId -> rangeClosed(1, 2)
+        .mapToObj(nodeId -> containsOutput("stripe." + stripeId + ".node." + nodeId + ".logger-overrides=org.terracotta.foo:TRACE"))).collect(Collectors.toList());
+
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides", "-t", "index"), allOf(change));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides", "-t", "index"), allOf(change));
   }
 }

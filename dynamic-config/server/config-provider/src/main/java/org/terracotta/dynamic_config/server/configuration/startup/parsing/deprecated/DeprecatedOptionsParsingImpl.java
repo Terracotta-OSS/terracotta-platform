@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,11 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_DESTINATION_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_SOURCE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_SOURCE_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
@@ -107,6 +112,21 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR}, description = "node backup directory")
   private String backupDir;
+
+  @Parameter(names = {"--" + RELAY_SOURCE_HOSTNAME}, description = "Relay source node host name", hidden = true)
+  private String relaySourceHostname;
+
+  @Parameter(names = {"--" + RELAY_SOURCE_PORT}, description = "Relay source node port", hidden = true)
+  private String relaySourcePort;
+
+  @Parameter(names = {"--" + RELAY_DESTINATION_HOSTNAME}, description = "Relay destination node host name", hidden = true)
+  private String relayDestinationHostname;
+
+  @Parameter(names = {"--" + RELAY_DESTINATION_GROUP_PORT}, description = "Relay destination node group port", hidden = true)
+  private String relayDestinationGroupPort;
+
+  @Parameter(names = {"--" + RELAY_DESTINATION_PORT}, description = "Relay destination node port", hidden = true)
+  private String relayDestinationPort;
 
   @Parameter(names = {"-x", "--" + SECURITY_DIR}, description = "security root directory")
   private String securityDir;

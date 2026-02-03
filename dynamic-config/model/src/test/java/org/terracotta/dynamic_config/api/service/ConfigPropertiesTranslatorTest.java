@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,33 @@ public class ConfigPropertiesTranslatorTest {
         containsString("node:n4:backup-dir=dir4444"),
         containsString("node:n5:backup-dir=dir3"),
         containsString("node:n6:backup-dir=dir3333")
+    ));
+
+    // relay settings
+    r = getReader(new String[]{
+      "stripe-names=s1",
+      "s1:node-names=n1,n2",
+      "n1:relay-source-hostname=localhost",
+      "n1:relay-source-port=9410",
+      "n2:relay-source-hostname",
+      "n2:relay-destination-hostname=localhost",
+      "n2:relay-destination-port=9410",
+      "n2:relay-destination-group-port=9430"
+    });
+    props = translateToProperties(r);
+    assertThat(props.getProperty("stripe.1.node.1.relay-source-hostname"), is("localhost"));
+    assertThat(props.getProperty("stripe.1.node.1.relay-source-port"), is("9410"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-source-hostname"), is(""));
+    assertThat(props.getProperty("stripe.1.node.2.relay-destination-hostname"), is("localhost"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-destination-port"), is("9410"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-destination-group-port"), is("9430"));
+    assertThat(translateToConfigFormat(props), allOf(
+      containsString("node:n1:relay-source-hostname=localhost"),
+      containsString("node:n1:relay-source-port=9410"),
+      containsString("node:n2:relay-source-hostname="),
+      containsString("node:n2:relay-destination-hostname=localhost"),
+      containsString("node:n2:relay-destination-port=9410"),
+      containsString("node:n2:relay-destination-group-port=9430")
     ));
 
     // composite properties

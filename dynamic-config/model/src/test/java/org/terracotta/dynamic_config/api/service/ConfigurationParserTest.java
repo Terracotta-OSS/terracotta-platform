@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -346,7 +346,12 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
             "stripe.1.node.1.audit-log-dir=",
-            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main",
+            "stripe.1.node.1.relay-source-hostname=",
+            "stripe.1.node.1.relay-source-port=",
+            "stripe.1.node.1.relay-destination-hostname=",
+            "stripe.1.node.1.relay-destination-port=",
+            "stripe.1.node.1.relay-destination-group-port="
         ),
         Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")
             .setPort(9410)

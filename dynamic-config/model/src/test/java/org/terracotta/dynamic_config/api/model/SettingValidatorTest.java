@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,11 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_DESTINATION_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_SOURCE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -142,6 +147,38 @@ public class SettingValidatorTest {
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
       setting.validate(null); // unset - switch back to default value
       setting.validate("0.0.0.0");
+    });
+  }
+
+  @Test
+  public void test_RELAY_HOSTNAME() {
+    Stream.of(RELAY_SOURCE_HOSTNAME, RELAY_DESTINATION_HOSTNAME).forEach(
+      setting -> {
+        validateOptional(setting);
+        setting.validate(null);
+        setting.validate("relay-host");
+        assertThat(
+          () -> setting.validate(".."),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in " + setting + "=<address> must be a valid hostname or IP address")))));
+      }
+    );
+  }
+
+  @Test
+  public void test_RELAY_PORT() {
+    Stream.of(RELAY_SOURCE_PORT, RELAY_DESTINATION_PORT, RELAY_DESTINATION_GROUP_PORT).forEach(setting -> {
+      validateOptional(setting);
+      setting.validate(null);
+      setting.validate("9410");
+      assertThat(
+        () -> setting.validate("foo"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
+      assertThat(
+        () -> setting.validate("0"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
+      assertThat(
+        () -> setting.validate("65536"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
     });
   }
 

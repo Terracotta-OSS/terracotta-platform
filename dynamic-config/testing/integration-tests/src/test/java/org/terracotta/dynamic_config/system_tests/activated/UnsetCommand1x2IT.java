@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -438,5 +438,30 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("security-log-dir=")));
+  }
+
+  @Test
+  public void test_unset_relay_source() {
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-source-hostname",
+        "-c", "stripe.1.node.1.relay-source-port")
+      , allOf(not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-source-hostname"),
+        containsOutput("cannot be unset when node is activated")));
+  }
+
+  @Test
+  public void test_unset_relay_destination() {
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-destination-hostname",
+        "-c", "stripe.1.node.1.relay-destination-port",
+        "-c", "stripe.1.node.1.relay-destination-group-port")
+      , allOf(not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("relay-destination-hostname"),
+        containsOutput("cannot be unset when node is activated")));
   }
 }
