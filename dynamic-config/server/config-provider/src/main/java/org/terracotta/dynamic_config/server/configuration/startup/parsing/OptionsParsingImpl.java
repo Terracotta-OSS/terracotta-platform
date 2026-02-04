@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITE
 import static org.terracotta.dynamic_config.api.model.SettingName.STRIPE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDash;
+import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDashDash;
 
 @Parameters(separators = "=")
 public class OptionsParsingImpl implements OptionsParsing {
@@ -204,6 +205,7 @@ public class OptionsParsingImpl implements OptionsParsing {
           return !longestName.equals(addDash(LICENSE_FILE))
               && !longestName.equals(addDash(CONFIG_FILE))
               && !longestName.equals(addDash(NODE_HOME_DIR))
+              && !longestName.equals(addDashDash(NODE_HOME_DIR))
               && !longestName.equals(addDash(REPAIR_MODE))
               && !longestName.equals(addDash(AUTO_ACTIVATE))
               && !longestName.equals(addDash(NODE_CONFIG_DIR))
@@ -224,6 +226,7 @@ public class OptionsParsingImpl implements OptionsParsing {
       filteredOptions.remove(addDash(REPAIR_MODE));
       filteredOptions.remove(addDash(CONFIG_FILE));
       filteredOptions.remove(addDash(NODE_HOME_DIR));
+      filteredOptions.remove(addDashDash(NODE_HOME_DIR));
       filteredOptions.remove(addDash(LICENSE_FILE));
       filteredOptions.remove(addDash(NODE_HOSTNAME));
       filteredOptions.remove(addDash(NODE_PORT));
