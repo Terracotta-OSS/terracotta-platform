@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,13 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
+  public void testStartingWithSingleNodeConfigFileWithNodeNameAndNewOptions() {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
   public void testStartingWithConfigFile() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
@@ -78,6 +85,14 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Failed to read config file");
+  }
+
+  @Test
+  public void testFailedStartupConfigFile_nonExistentFile_withNewOptions() {
+    Path configurationFile = Paths.get(".").resolve("blah.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-config-dir", "config/stripe1/node-1");
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "Failed to read config file");
   }
@@ -147,6 +162,12 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testSuccessfulStartupCliParams() {
     startSingleNode("-p", String.valueOf(getNodePort()), "-r", "config");
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartupCliParamsWithNewOptions() {
+    startSingleNodeWithNewOptions("-port", String.valueOf(getNodePort()), "-config-dir", "config");
     waitForDiagnostic(1, 1);
   }
 
@@ -256,28 +277,36 @@ public class NodeStartupIT extends DynamicConfigIT {
     waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
-  private void startSingleNode(String... args) {
+  private void startSingleNodeWithDash(String dash, String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--hostname", "localhost",
-        "--log-dir", "logs",
-        "--backup-dir", "backup",
-        "--metadata-dir", "metadata",
-        "--data-dirs", "main:data-dir"
+      dash + "hostname", "localhost",
+      dash + "log-dir", "logs",
+      dash + "backup-dir", "backup",
+      dash + "metadata-dir", "metadata",
+      dash + "data-dirs", "main:data-dir"
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
-      throw new AssertionError("Do not use -n. use --name instead");
+      throw new AssertionError("Do not use -n. use " + dash + "name instead");
     }
-    if (provided.contains("-s") || provided.contains("--hostname")) {
-      defaultArgs.remove("--hostname");
+    if (provided.contains("-s") || provided.contains(dash + "hostname")) {
+      defaultArgs.remove(dash + "hostname");
       defaultArgs.remove("localhost");
     }
-    if (provided.contains("--failover-priority")) {
-      defaultArgs.remove("--failover-priority");
+    if (provided.contains(dash + "failover-priority")) {
+      defaultArgs.remove(dash + "failover-priority");
       defaultArgs.remove("availability");
     }
     defaultArgs.addAll(provided);
     startNode(1, 1, defaultArgs.toArray(new String[0]));
+  }
+
+  private void startSingleNode(String... args) {
+    startSingleNodeWithDash("--", args);
+  }
+
+  private void startSingleNodeWithNewOptions(String... args) {
+    startSingleNodeWithDash("-", args);
   }
 }

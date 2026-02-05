@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_success_for_1x1_cluster() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "--config-dir", "config/stripe1/1-1");
+    startNode(1, 1, "-auto-activate", "-config-file", configurationFile.toString(), "-config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
   }
 
