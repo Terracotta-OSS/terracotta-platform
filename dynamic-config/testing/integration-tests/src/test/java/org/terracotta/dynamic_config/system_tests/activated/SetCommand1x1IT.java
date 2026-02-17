@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,5 +325,54 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(logFiles, hasSize(greaterThanOrEqualTo(1)));
     assertThat(logFiles.get(0).getName(), startsWith("terracotta-security-log-"));
     assertThat(logFiles.get(0).getName(), endsWith(".log"));
+  }
+
+  @Test
+  public void setRelayModeProperties() {
+    waitForActive(1);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
+      "-c", "stripe.1.node.1.replica-port=" + "9410"), allOf(is(successful())));
+
+    stopNode(1, 1);
+    startNode(1, 1);
+
+    waitForPassiveRelay(1, 1);
+  }
+
+  @Test
+  public void setReplicaModeProperties() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica-mode=" + "true")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'replica-mode' cannot be set")
+      ));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-hostname=" + "localhost")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'relay-hostname' cannot be set")
+      ));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-port=" + "9410")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'relay-port' cannot be set")
+      ));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-group-port=" + "9430")
+      , allOf(
+        not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'relay-group-port' cannot be set")
+      ));
   }
 }
