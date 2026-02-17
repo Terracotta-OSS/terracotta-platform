@@ -16,6 +16,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import org.terracotta.dynamic_config.api.service.MalformedClusterException;
 import org.terracotta.inet.HostPort;
 
 import java.net.InetSocketAddress;
@@ -132,5 +133,56 @@ public enum DRRole {
 
   public InetSocketAddress getPeerGroupPort(Node node) {
     return null;
+  }
+
+  public static DRRole validateAndGetRole(Node node) {
+    // when mode is disabled - check properties are either fully set or not set at all in a node (catch partial configs)
+    for (DRRole role : values()) {
+      role.validateRequiredProperties(node);
+    }
+
+    return fromNode(node);
+  }
+
+  public void validateRequiredProperties(Node node) {
+    if (this == NONE) {
+      return;
+    }
+
+    Map<String, OptionalConfig<?>> requiredProps = getRequiredProperties(node);
+    long configuredCount = requiredProps.values().stream()
+      .filter(OptionalConfig::isConfigured)
+      .count();
+
+    if (isEnabled(node)) {
+      if (configuredCount != requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException(getLabel() + " is enabled for node with name: " + node.getName() +
+          ", " + getLabel() + " properties: " + inconsistent + " aren't well-formed");
+      }
+    } else {
+      // when mode is disabled and the user sets partial configuration for a node
+      if (configuredCount > 0 && configuredCount < requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException(getLabel() + " is disabled for node with name: " + node.getName() +
+          ", properties: " + inconsistent + " are partially configured. Either remove all properties or set all required properties.");
+      }
+    }
+  }
+
+  public static DRRole fromNode(Node node) {
+    boolean relayMode = RELAY_MODE.isEnabled(node);
+    boolean replicaMode = REPLICA_MODE.isEnabled(node);
+
+    if (relayMode && replicaMode) {
+      throw new MalformedClusterException("Node with name: " + node.getName() + " has both relay-mode and replica-mode enabled. " +
+        "A node cannot have both relay-mode and replica-mode active");
+    }
+
+    if (relayMode) return RELAY_MODE;
+    if (replicaMode) return REPLICA_MODE;
+    return NONE;
   }
 }
