@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,13 @@ import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
@@ -275,5 +282,37 @@ public class SetSettingTest {
     assertThat(node.getLoggerOverrides().orDefault().size(), is(equalTo(2)));
     assertThat(node.getLoggerOverrides().orDefault().get("com.foo"), is("INFO"));
     assertThat(node.getLoggerOverrides().orDefault().get("com.bar"), is("WARN"));
+  }
+
+  @Test
+  public void test_setProperty_DR() {
+    Node node = Testing.newTestNode("node1", "localhost");
+    assertFalse(node.getRelayMode().orDefault());
+    assertFalse(node.getReplicaHostname().isConfigured());
+    assertFalse(node.getReplicaPort().isConfigured());
+
+    assertFalse(node.getReplicaMode().orDefault());
+    assertFalse(node.getRelayHostname().isConfigured());
+    assertFalse(node.getRelayPort().isConfigured());
+    assertFalse(node.getRelayGroupPort().isConfigured());
+
+    RELAY_MODE.setProperty(node, "true");
+    REPLICA_HOSTNAME.setProperty(node, "localhost");
+    REPLICA_PORT.setProperty(node, "9410");
+
+    REPLICA_MODE.setProperty(node, "true");
+    RELAY_HOSTNAME.setProperty(node, "localhost");
+    RELAY_PORT.setProperty(node, "9410");
+    RELAY_PORT.setProperty(node, "9410");
+    RELAY_GROUP_PORT.setProperty(node, "9430");
+
+    assertTrue(node.getRelayMode().orDefault());
+    assertTrue(node.getReplicaHostname().isConfigured());
+    assertTrue(node.getReplicaPort().isConfigured());
+
+    assertTrue(node.getReplicaMode().orDefault());
+    assertTrue(node.getRelayHostname().isConfigured());
+    assertTrue(node.getRelayPort().isConfigured());
+    assertTrue(node.getRelayGroupPort().isConfigured());
   }
 }

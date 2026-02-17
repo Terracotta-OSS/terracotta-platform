@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,5 +166,44 @@ public class NodeTest {
     assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
     assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getPublicEndpoint().get())));
     assertThat(node.determineEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
+  }
+
+  @Test
+  public void test_relay_mode_properties() {
+    assertThat(newTestNode("node1", "localhost").getRelayMode().orDefault(), is(false));
+    assertThat(newTestNode("node1", "localhost").getReplicaHostname().isConfigured(), is(false));
+    assertThat(newTestNode("node1", "localhost").getReplicaPort().isConfigured(), is(false));
+
+    Node node = newTestNode("node1", "localhost").setRelayMode(true).setReplicaHostname("relay-host").setReplicaPort(9410);
+    assertThat(node.getRelayMode().get(), is(equalTo(true)));
+    assertThat(node.getReplicaHostname().get(), is(equalTo("relay-host")));
+    assertThat(node.getReplicaPort().get(), is(equalTo(9410)));
+
+    Node clone = node.clone();
+    assertThat(clone, is(equalTo(node)));
+    assertThat(clone.hashCode(), is(equalTo(node.hashCode())));
+  }
+
+  @Test
+  public void test_replica_mode_properties() {
+    assertThat(newTestNode("node1", "localhost").getReplicaMode().orDefault(), is(false));
+    assertThat(newTestNode("node1", "localhost").getRelayHostname().isConfigured(), is(false));
+    assertThat(newTestNode("node1", "localhost").getRelayPort().isConfigured(), is(false));
+    assertThat(newTestNode("node1", "localhost").getRelayGroupPort().isConfigured(), is(false));
+
+    Node node = newTestNode("node1", "localhost")
+      .setReplicaMode(true)
+      .setRelayHostname("dest-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+
+    assertThat(node.getReplicaMode().get(), is(equalTo(true)));
+    assertThat(node.getRelayHostname().get(), is(equalTo("dest-host")));
+    assertThat(node.getRelayPort().get(), is(equalTo(9410)));
+    assertThat(node.getRelayGroupPort().get(), is(equalTo(9430)));
+
+    Node clone = node.clone();
+    assertThat(clone, is(equalTo(node)));
+    assertThat(clone.hashCode(), is(equalTo(node.hashCode())));
   }
 }
