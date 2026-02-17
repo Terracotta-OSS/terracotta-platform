@@ -67,6 +67,8 @@ public class SetCommand2x3IT extends DynamicConfigIT {
   public void testSetMultipleRelayModeWithAutoRestart() {
     waitForActive(1);
     waitForActive(2);
+    waitForPassives(1);
+    waitForPassives(2);
 
     int basePort = 9410;
 

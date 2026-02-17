@@ -211,7 +211,7 @@ public class ClusterValidator {
 
       List<String> nonReplicaNodes = roleGroups.entrySet().stream()
         .filter(entry -> entry.getKey() != DRRole.REPLICA_MODE)
-        .map(Map.Entry::getValue).flatMap(List::stream).toList();
+        .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
 
       // no other nodes allowed with replica node
       if (!nonReplicaNodes.isEmpty()) {
