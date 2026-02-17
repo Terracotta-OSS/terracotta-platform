@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.service.DynamicConfigService;
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.server.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
@@ -35,6 +32,9 @@ import org.terracotta.dynamic_config.api.server.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.api.server.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.api.server.PathResolver;
 import org.terracotta.dynamic_config.api.server.SelectingConfigChangeHandler;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
@@ -56,6 +56,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRI
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.server.ConfigChangeHandler.accept;
 
@@ -91,6 +94,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // public hostname/port
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
+
+    // relay-mode properties
+    addToManager(configChangeHandlerManager, accept(), RELAY_MODE);
+    addToManager(configChangeHandlerManager, accept(), REPLICA_HOSTNAME);
+    addToManager(configChangeHandlerManager, accept(), REPLICA_PORT);
 
     // cluster name
     addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
