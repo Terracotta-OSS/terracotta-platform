@@ -129,4 +129,28 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
   }
+
+  @Test
+  public void test_attach_relay_nodes() {
+    // activate a 1x1 cluster
+    startNode(1, 1);
+    activateCluster();
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
+
+    // start a second node with relay-mode
+    startNode(1, 2, getNewOptions(getNode(1, 2), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
+
+    // attach
+    assertThat(
+      configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
+      is(successful()));
+    waitForPassiveRelay(1, 2);
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+  }
 }
