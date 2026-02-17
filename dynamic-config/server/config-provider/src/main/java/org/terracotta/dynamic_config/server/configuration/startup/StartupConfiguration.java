@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
+import org.terracotta.dynamic_config.api.model.DRRole;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -38,11 +39,13 @@ import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -121,6 +124,30 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   @Override
   public boolean isPartialConfiguration() {
     return unConfigured || repairMode;
+  }
+
+  @Override
+  public boolean isRelaySource() {
+    return getDRNode().map(DRRole.RELAY_MODE::isEnabled).orElse(false);
+  }
+
+  @Override
+  public boolean isRelayDestination() {
+    return getDRNode().map(DRRole.REPLICA_MODE::isEnabled).orElse(false);
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeer() {
+    return getDRNode()
+      .map(node -> DRRole.fromNode(node).getPeer(node))
+      .orElse(null);
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeerGroupPort() {
+    return getDRNode()
+      .map(node -> DRRole.fromNode(node).getPeerGroupPort(node))
+      .orElse(null);
   }
 
   @Override
@@ -279,5 +306,12 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   private ServerConfiguration toServerConfiguration(Node node) {
     return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
+  }
+
+  private Optional<Node> getDRNode() {
+    if (isPartialConfiguration()) {
+      return Optional.empty();
+    }
+    return Optional.of(nodeContextSupplier.get().getNode());
   }
 }
