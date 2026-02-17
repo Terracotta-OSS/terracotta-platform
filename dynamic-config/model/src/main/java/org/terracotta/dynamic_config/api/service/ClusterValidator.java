@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.DRRole;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -26,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -96,6 +98,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
+    validateDRSetting();
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -190,6 +193,31 @@ public class ClusterValidator {
       throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses +
           " don't have public addresses " + "defined, but other nodes in the cluster do." +
           " Mutative operations on public addresses must be done simultaneously on every node in the cluster");
+    }
+  }
+
+  private void validateDRSetting() {
+    Map<DRRole, List<String>> roleGroups = cluster.getNodes().stream()
+      .collect(Collectors.groupingBy(DRRole::validateAndGetRole,
+        Collectors.mapping(Node::getName, Collectors.toList())));
+
+    List<String> replicaNodes = roleGroups.getOrDefault(DRRole.REPLICA_MODE, Collections.emptyList());
+
+    if (!replicaNodes.isEmpty()) {
+      // allowed single replica node
+      if (replicaNodes.size() > 1) {
+        throw new MalformedClusterException("Only a single node can have replica-mode enabled. Nodes with replica-mode: " + replicaNodes);
+      }
+
+      List<String> nonReplicaNodes = roleGroups.entrySet().stream()
+        .filter(entry -> entry.getKey() != DRRole.REPLICA_MODE)
+        .map(Map.Entry::getValue).flatMap(List::stream).toList();
+
+      // no other nodes allowed with replica node
+      if (!nonReplicaNodes.isEmpty()) {
+        throw new MalformedClusterException("A replica-mode node with name: " + replicaNodes.get(0) + " cannot coexist with other nodes. Other nodes with names: "
+          + nonReplicaNodes + " are present in the cluster.");
+      }
     }
   }
 
