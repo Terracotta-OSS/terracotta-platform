@@ -23,7 +23,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
-import org.terracotta.dynamic_config.api.model.DRRole;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -49,6 +49,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -128,26 +130,22 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public boolean isRelaySource() {
-    return getDRNode().map(DRRole.RELAY_MODE::isEnabled).orElse(false);
+    return getNodeIfConfigured().map(DisasterRecoveryMode.RELAY::isEnabled).orElse(false);
   }
 
   @Override
   public boolean isRelayDestination() {
-    return getDRNode().map(DRRole.REPLICA_MODE::isEnabled).orElse(false);
+    return getNodeIfConfigured().map(DisasterRecoveryMode.REPLICA::isEnabled).orElse(false);
   }
 
   @Override
   public InetSocketAddress getRelayPeer() {
-    return getDRNode()
-      .map(node -> DRRole.fromNode(node).getPeer(node))
-      .orElse(null);
+    return getRelayAddress(DisasterRecoveryMode::getPeer, role -> role == DisasterRecoveryMode.RELAY || role == DisasterRecoveryMode.REPLICA);
   }
 
   @Override
   public InetSocketAddress getRelayPeerGroupPort() {
-    return getDRNode()
-      .map(node -> DRRole.fromNode(node).getPeerGroupPort(node))
-      .orElse(null);
+    return getRelayAddress(DisasterRecoveryMode::getPeerGroupPort, role -> role == DisasterRecoveryMode.REPLICA);
   }
 
   @Override
@@ -308,7 +306,20 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
   }
 
-  private Optional<Node> getDRNode() {
+  private InetSocketAddress getRelayAddress(BiFunction<DisasterRecoveryMode, Node, Optional<InetSocketAddress>> addressExtractor,
+                                            Function<DisasterRecoveryMode, Boolean> requiresValidation) {
+    return getNodeIfConfigured().flatMap(node -> {
+        DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(node);
+        Optional<InetSocketAddress> address = addressExtractor.apply(mode, node);
+        if (requiresValidation.apply(mode) && address.isEmpty()) {
+          throw new AssertionError("Peer address must be configured for: " + mode);
+        }
+        return address;
+      })
+      .orElse(null);
+  }
+
+  private Optional<Node> getNodeIfConfigured() {
     if (isPartialConfiguration()) {
       return Optional.empty();
     }

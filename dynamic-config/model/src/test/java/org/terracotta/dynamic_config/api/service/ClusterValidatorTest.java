@@ -562,13 +562,13 @@ public class ClusterValidatorTest {
       .setReplicaHostname("replica-host")
       .setReplicaPort(9410);
     assertClusterValidationFailsContainsMessage(
-      "A replica-mode node with name: node1 cannot coexist with other nodes. Other nodes with names: [node2] are present in the cluster",
+      "A replica-mode node with name: node1 cannot coexist with other nodes with names: [node2]",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2)));
 
     // Replica-mode node with normal node
     Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3]);
     assertClusterValidationFailsContainsMessage(
-      "A replica-mode node with name: node1 cannot coexist with other nodes. Other nodes with names: [node2, node3] are present in the cluster",
+      "A replica-mode node with name: node1 cannot coexist with other nodes with names: [node2, node3]",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2, node3)));
   }
 

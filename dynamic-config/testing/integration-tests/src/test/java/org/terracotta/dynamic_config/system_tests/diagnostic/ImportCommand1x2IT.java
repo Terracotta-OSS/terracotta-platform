@@ -61,7 +61,7 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid2.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("A replica-mode node with name: node-1-2 cannot coexist with other nodes. Other nodes with names: [node-1-1] are present in the cluster")));
+        containsOutput("A replica-mode node with name: node-1-2 cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test

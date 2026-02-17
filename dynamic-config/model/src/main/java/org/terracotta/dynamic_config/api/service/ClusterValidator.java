@@ -18,8 +18,9 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
-import org.terracotta.dynamic_config.api.model.DRRole;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -197,11 +199,11 @@ public class ClusterValidator {
   }
 
   private void validateDRSetting() {
-    Map<DRRole, List<String>> roleGroups = cluster.getNodes().stream()
-      .collect(Collectors.groupingBy(DRRole::validateAndGetRole,
+    Map<DisasterRecoveryMode, List<String>> roleGroups = cluster.getNodes().stream()
+      .collect(Collectors.groupingBy(this::checkAndGetDRMode,
         Collectors.mapping(Node::getName, Collectors.toList())));
 
-    List<String> replicaNodes = roleGroups.getOrDefault(DRRole.REPLICA_MODE, Collections.emptyList());
+    List<String> replicaNodes = roleGroups.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList());
 
     if (!replicaNodes.isEmpty()) {
       // allowed single replica node
@@ -210,13 +212,52 @@ public class ClusterValidator {
       }
 
       List<String> nonReplicaNodes = roleGroups.entrySet().stream()
-        .filter(entry -> entry.getKey() != DRRole.REPLICA_MODE)
+        .filter(entry -> entry.getKey() != DisasterRecoveryMode.REPLICA)
         .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
 
       // no other nodes allowed with replica node
       if (!nonReplicaNodes.isEmpty()) {
-        throw new MalformedClusterException("A replica-mode node with name: " + replicaNodes.get(0) + " cannot coexist with other nodes. Other nodes with names: "
-          + nonReplicaNodes + " are present in the cluster.");
+        throw new MalformedClusterException("A replica-mode node with name: " + replicaNodes.get(0) + " cannot coexist with other nodes with names: " + nonReplicaNodes);
+      }
+    }
+  }
+
+  private DisasterRecoveryMode checkAndGetDRMode(Node node) {
+    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node);
+    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node);
+    if (relayMode && replicaMode) {
+      throw new MalformedClusterException("Node with name: " + node.getName() + " has both relay-mode and replica-mode enabled. " +
+        "A node cannot have both relay-mode and replica-mode active");
+    }
+    validateRequiredDRProperties(node, DisasterRecoveryMode.RELAY);
+    validateRequiredDRProperties(node, DisasterRecoveryMode.REPLICA);
+    return DisasterRecoveryMode.fromNode(node);
+  }
+
+  private void validateRequiredDRProperties(Node node, DisasterRecoveryMode mode) {
+    if (mode == DisasterRecoveryMode.NONE) {
+      return;
+    }
+
+    Map<String, OptionalConfig<?>> requiredProps = mode.getRequiredProperties(node);
+    long configuredCount = requiredProps.values().stream()
+      .filter(OptionalConfig::isConfigured)
+      .count();
+
+    if (mode.isEnabled(node)) {
+      if (configuredCount != requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException(mode.getLabel() + " is enabled for node with name: " + node.getName() +
+          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed");
+      }
+    } else {
+      // when mode is disabled and the user sets partial configuration for a node
+      if (configuredCount > 0 && configuredCount < requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException(mode.getLabel() + " is disabled for node with name: " + node.getName() +
+          ", properties: " + inconsistent + " are partially configured. Either remove all properties or set all required properties.");
       }
     }
   }
