@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,18 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
@@ -312,5 +317,27 @@ public class SetCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("set", "-connect-to", connection,
       "-setting", "node:node2:backup-dir"
       ), containsOutput("Error: Invalid input: 'node:node2:backup-dir'. Reason: Operation set requires a value"));
+  }
+
+  @Test
+  public void test_set_multiple_relay_mode_nomad_change_sync() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
+      "-c", "stripe.1.node.1.replica-port=" + "9410"), is(successful()));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.2.node.1.relay-mode=" + "true",
+      "-c", "stripe.2.node.1.replica-hostname=" + "localhost",
+      "-c", "stripe.2.node.1.replica-port=" + "9411"), is(successful()));
+
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "logger-overrides=org.terracotta.foo:TRACE"), is(successful()));
+
+    List<Matcher<? super ToolExecutionResult>> change = rangeClosed(1, 2).boxed()
+      .flatMap(stripeId -> rangeClosed(1, 2)
+        .mapToObj(nodeId -> containsOutput("stripe." + stripeId + ".node." + nodeId + ".logger-overrides=org.terracotta.foo:TRACE"))).collect(Collectors.toList());
+
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides", "-t", "index"), allOf(change));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides", "-t", "index"), allOf(change));
   }
 }
