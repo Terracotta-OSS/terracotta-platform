@@ -277,6 +277,42 @@ public class NodeStartupIT extends DynamicConfigIT {
     waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
+  @Test
+  public void testSuccessfulStartupRelayMode() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartupReplicaMode() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testFailedStartupRelayReplica() {
+    // missing relay-mode property
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "relay-mode is enabled for node with name: node-1-1, relay-mode properties: {replica-hostname=localhost, replica-port=null} aren't well-formed");
+
+    // missing replica-mode property
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "replica-mode is enabled for node with name: node-1-1, replica-mode properties: {relay-hostname=localhost, relay-port=null, relay-group-port=9430} aren't well-formed");
+
+    // both relay-mode and replica-mode
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410",
+      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Node with name: node-1-1 has both relay-mode and replica-mode enabled. A node cannot have both relay-mode and replica-mode active");
+
+    // partial config with mode disabled
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "false", "-replica-hostname", "localhost"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "relay-mode is disabled for node with name: node-1-1, properties: {replica-hostname=localhost, replica-port=null} are partially configured");
+  }
+
   private void startSingleNodeWithDash(String dash, String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
