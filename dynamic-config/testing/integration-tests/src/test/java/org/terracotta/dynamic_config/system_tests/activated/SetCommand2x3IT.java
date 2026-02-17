@@ -21,6 +21,8 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.isEqual;
@@ -59,5 +61,33 @@ public class SetCommand2x3IT extends DynamicConfigIT {
         assertFalse(usingTopologyService(s, n, TopologyService::mustBeRestarted));
       }
     }
+  }
+
+  @Test
+  public void testSetMultipleRelayModeWithAutoRestart() {
+    waitForActive(1);
+    waitForActive(2);
+
+    int basePort = 9410;
+
+    List<String> args = new ArrayList<>(List.of("set", "-auto-restart", "-connect-to", "localhost:" + getNodePort(1, 1)));
+
+    for (int stripeId = 1; stripeId <= 2; stripeId++) {
+      for (int nodeId = 2; nodeId <= 3; nodeId++) {
+        String prefix = "stripe." + stripeId + ".node." + nodeId;
+        args.addAll(List.of("-setting", prefix + ".relay-mode=true"));
+        args.addAll(List.of("-setting", prefix + ".replica-hostname=localhost"));
+        args.addAll(List.of("-setting", prefix + ".replica-port=" + (basePort++)));
+      }
+    }
+
+    String[] cli = args.toArray(String[]::new);
+
+    assertThat(configTool(cli), is(successful()));
+
+    waitForPassiveRelay(1, 2);
+    waitForPassiveRelay(1, 3);
+    waitForPassiveRelay(2, 2);
+    waitForPassiveRelay(2, 3);
   }
 }
