@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +155,21 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *      Permission: when: [configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
  *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *
+ *  relay-mode
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated, configuring] allow: [set, unset] at levels: [node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  replica-hostname, replica-port
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated, configuring] allow: [set] at levels: [node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  replica-mode, relay-hostname, relay-port, relay-group-port
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
  * </pre>
  *
  * @author Mathieu Carbou
@@ -348,6 +363,117 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_GROUP_BIND_ADDRESS, tuple2(key, value))
+  ),
+  RELAY_MODE(SettingName.RELAY_MODE,
+    of(V1, V2),
+    false,
+    always(false),
+    NODE,
+    fromNode(Node::getRelayMode),
+    intoNode((node, value) -> node.setRelayMode(value == null ? null : Boolean.valueOf(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART, PRESENCE),
+    asList("true", "false")
+  ),
+  REPLICA_HOSTNAME(SettingName.REPLICA_HOSTNAME,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getReplicaHostname),
+    intoNode(Node::setReplicaHostname),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART),
+    emptyList(),
+    emptyList(),
+    (key, value) -> HOST_VALIDATOR.accept(SettingName.REPLICA_HOSTNAME, tuple2(key, value))
+  ),
+  REPLICA_PORT(SettingName.REPLICA_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getReplicaPort),
+    intoNode((node, value) -> node.setReplicaPort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    of(NODE_RESTART),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.REPLICA_PORT, tuple2(key, value))
+  ),
+  REPLICA_MODE(SettingName.REPLICA_MODE,
+    of(V1, V2),
+    false,
+    always(false),
+    NODE,
+    fromNode(Node::getReplicaMode),
+    intoNode((node, value) -> node.setReplicaMode(value == null ? null : Boolean.valueOf(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    of(PRESENCE),
+    asList("true", "false")
+  ),
+  RELAY_HOSTNAME(SettingName.RELAY_HOSTNAME,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayHostname),
+    intoNode(Node::setRelayHostname),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    EnumSet.noneOf(Requirement.class),
+    emptyList(),
+    emptyList(),
+    (key, value) -> HOST_VALIDATOR.accept(SettingName.RELAY_HOSTNAME, tuple2(key, value))
+  ),
+  RELAY_PORT(SettingName.RELAY_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayPort),
+    intoNode((node, value) -> node.setRelayPort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    EnumSet.noneOf(Requirement.class),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_PORT, tuple2(key, value))
+  ),
+  RELAY_GROUP_PORT(SettingName.RELAY_GROUP_PORT,
+    of(V1, V2),
+    false,
+    always(null),
+    NODE,
+    fromNode(Node::getRelayGroupPort),
+    intoNode((node, value) -> node.setRelayGroupPort(value == null ? null : Integer.parseInt(value))),
+    asList(
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+    ),
+    EnumSet.noneOf(Requirement.class),
+    emptyList(),
+    emptyList(),
+    (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_GROUP_PORT, tuple2(key, value))
   ),
 
   // ==== Node configuration
