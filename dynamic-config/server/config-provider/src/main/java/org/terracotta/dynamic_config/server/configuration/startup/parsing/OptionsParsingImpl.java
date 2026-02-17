@@ -116,25 +116,25 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + NODE_BACKUP_DIR}, description = "Node backup directory. Default: <unset>")
   private String backupDir;
 
-  @Parameter(names = {"-" + RELAY_MODE}, description = "Relay mode setting (true|false). Default: false")
+  @Parameter(names = {"-" + RELAY_MODE}, description = "Relay mode setting (true|false). Default: false", hidden = true)
   private String relayMode;
 
-  @Parameter(names = {"-" + REPLICA_HOSTNAME}, description = "Replica node host name. Default: <unset>")
+  @Parameter(names = {"-" + REPLICA_HOSTNAME}, description = "Replica node host name. Default: <unset>", hidden = true)
   private String replicaHostname;
 
-  @Parameter(names = {"-" + REPLICA_PORT}, description = "Replica node port. Default: <unset>")
+  @Parameter(names = {"-" + REPLICA_PORT}, description = "Replica node port. Default: <unset>", hidden = true)
   private String replicaPort;
 
-  @Parameter(names = {"-" + REPLICA_MODE}, description = "Replica mode setting (true|false). Default: false")
+  @Parameter(names = {"-" + REPLICA_MODE}, description = "Replica mode setting (true|false). Default: false", hidden = true)
   private String replicaMode;
 
-  @Parameter(names = {"-" + RELAY_HOSTNAME}, description = "Relay node host name. Default: <unset>")
+  @Parameter(names = {"-" + RELAY_HOSTNAME}, description = "Relay node host name. Default: <unset>", hidden = true)
   private String relayHostname;
 
-  @Parameter(names = {"-" + RELAY_PORT}, description = "Relay node port. Default: <unset>")
+  @Parameter(names = {"-" + RELAY_PORT}, description = "Relay node port. Default: <unset>", hidden = true)
   private String relayPort;
 
-  @Parameter(names = {"-" + RELAY_GROUP_PORT}, description = "Relay node group port. Default: <unset>")
+  @Parameter(names = {"-" + RELAY_GROUP_PORT}, description = "Relay node group port. Default: <unset>", hidden = true)
   private String relayGroupPort;
 
   @Parameter(names = {"-" + SECURITY_DIR}, description = "Security root directory. Default: <unset>")
