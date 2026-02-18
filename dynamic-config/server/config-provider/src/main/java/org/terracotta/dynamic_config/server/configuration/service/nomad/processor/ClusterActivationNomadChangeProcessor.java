@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,16 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.server.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
+
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -41,8 +46,19 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
     if (baseConfig != null) {
       throw new NomadException("Found an existing configuration: " + baseConfig);
     }
-    if (!change.getCluster().containsNode(nodeUID)) {
-      throw new NomadException("Node: " + nodeUID + " not found in cluster: " + change.getCluster());
+
+    Cluster cluster = change.getCluster();
+    if (!cluster.containsNode(nodeUID)) {
+      throw new NomadException("Node: " + nodeUID + " not found in cluster: " + cluster);
+    }
+
+    List<String> replicaNodes = cluster.getNodes().stream()
+      .filter(node -> DisasterRecoveryMode.fromNode(node) == DisasterRecoveryMode.REPLICA)
+      .map(Node::getName).sorted().toList();
+
+    if (!replicaNodes.isEmpty()) {
+      throw new NomadException("Nodes with names: " + replicaNodes + " have replica-mode enabled. " +
+        "A cluster cannot be activated if replica-mode is enabled on any node.");
     }
   }
 

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
@@ -69,5 +71,22 @@ public class ClusterActivationNomadChangeProcessorTest {
 
     NomadException e = assertThrows(NomadException.class, () -> processor.validate(topology, change));
     assertThat(e, hasMessage(equalTo("Found an existing configuration: " + topology)));
+  }
+
+  @Test
+  public void testWithReplicaNodes() throws Exception {
+    Node node1 = Testing.newTestNode("node1", "localhost4", Testing.N_UIDS[1])
+      .setReplicaMode(true).setRelayHostname("localhost").setRelayPort(9410).setRelayGroupPort(9430);
+    Node node2 = Testing.newTestNode("node2", "localhost5", Testing.N_UIDS[2]);
+    Node node3 = Testing.newTestNode("node3", "localhost6", Testing.N_UIDS[3])
+      .setReplicaMode(true).setRelayHostname("localhost").setRelayPort(9410).setRelayGroupPort(9430);
+    Cluster cluster = Testing.newTestCluster("foo", Testing.newTestStripe("stripe1").addNodes(node1, node2),
+      Testing.newTestStripe("stripe2").setUID(Testing.S_UIDS[2]).addNode(node3));
+    NodeContext topology = new NodeContext(cluster, Testing.N_UIDS[1]);
+
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(topology.getCluster());
+
+    NomadException e = assertThrows(NomadException.class, () -> processor.validate(null, change));
+    assertThat(e, hasMessage(equalTo("Nodes with names: [node1, node3] have replica-mode enabled. A cluster cannot be activated if replica-mode is enabled on any node.")));
   }
 }
