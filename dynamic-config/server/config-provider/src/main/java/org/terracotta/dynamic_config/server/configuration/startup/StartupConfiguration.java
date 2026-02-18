@@ -45,12 +45,9 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -130,22 +127,37 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public boolean isRelaySource() {
-    return getNodeIfConfigured().map(DisasterRecoveryMode.RELAY::isEnabled).orElse(false);
+    if (isPartialConfiguration()) {
+      return false;
+    }
+    return DisasterRecoveryMode.fromNode(nodeContextSupplier.get().getNode()) == DisasterRecoveryMode.RELAY;
   }
 
   @Override
   public boolean isRelayDestination() {
-    return getNodeIfConfigured().map(DisasterRecoveryMode.REPLICA::isEnabled).orElse(false);
+    // TODO: implement for replicaMode
+    return false;
   }
 
   @Override
   public InetSocketAddress getRelayPeer() {
-    return getRelayAddress(DisasterRecoveryMode::getPeer, role -> role == DisasterRecoveryMode.RELAY || role == DisasterRecoveryMode.REPLICA);
+    // TODO: implement for replicaMode
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    Node node = nodeContextSupplier.get().getNode();
+    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(node);
+    if (mode == DisasterRecoveryMode.RELAY) {
+      return mode.getPeer(node).orElseThrow(AssertionError::new);
+    }
+    return null;
   }
 
   @Override
   public InetSocketAddress getRelayPeerGroupPort() {
-    return getRelayAddress(DisasterRecoveryMode::getPeerGroupPort, role -> role == DisasterRecoveryMode.REPLICA);
+    // TODO: implement for replicaMode
+    // for relay node this will always return null
+    return null;
   }
 
   @Override
@@ -304,25 +316,5 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   private ServerConfiguration toServerConfiguration(Node node) {
     return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
-  }
-
-  private InetSocketAddress getRelayAddress(BiFunction<DisasterRecoveryMode, Node, Optional<InetSocketAddress>> addressExtractor,
-                                            Function<DisasterRecoveryMode, Boolean> requiresValidation) {
-    return getNodeIfConfigured().flatMap(node -> {
-        DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(node);
-        Optional<InetSocketAddress> address = addressExtractor.apply(mode, node);
-        if (requiresValidation.apply(mode) && address.isEmpty()) {
-          throw new AssertionError("Peer address must be configured for: " + mode);
-        }
-        return address;
-      })
-      .orElse(null);
-  }
-
-  private Optional<Node> getNodeIfConfigured() {
-    if (isPartialConfiguration()) {
-      return Optional.empty();
-    }
-    return Optional.of(nodeContextSupplier.get().getNode());
   }
 }
