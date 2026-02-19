@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,5 +316,92 @@ public class CommandLineProcessorChainTest {
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testReplicaModeWithCliParams() {
+    Node replicaNode = getReplicaNode();
+    Cluster replicaCluster = Testing.newTestCluster((String) null, new Stripe().addNodes(replicaNode));
+    NodeContext replicaNodeContext = new NodeContext(replicaCluster, replicaNode.getUID());
+
+    when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(replicaCluster);
+
+    mainCommandLineProcessor.process();
+
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
+    verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).startReplicaMode(replicaNodeContext, null);
+    verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testReplicaModeWithConfigFileUsingHostPort() {
+    Node replicaNode = getReplicaNode();
+    Cluster replicaCluster = Testing.newTestCluster((String) null, new Stripe().addNodes(replicaNode));
+    NodeContext replicaNodeContext = new NodeContext(replicaCluster, replicaNode.getUID());
+
+    when(options.getConfigSource()).thenReturn(CONFIG_FILE);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
+    when(clusterCreator.create(any(ConfigSource.class))).thenReturn(replicaCluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(eq(HOST_NAME), eq(NODE_PORT), any(ConfigSource.class), eq(replicaCluster))).thenReturn(replicaNode);
+
+    mainCommandLineProcessor.process();
+
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(eq(HOST_NAME), eq(NODE_PORT), any(ConfigSource.class), eq(replicaCluster));
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
+    verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).startReplicaMode(replicaNodeContext, null);
+    verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testReplicaModeWithConfigDir() {
+    Node replicaNode = getReplicaNode();
+    Cluster replicaCluster = Testing.newTestCluster((String) null, new Stripe().addNodes(replicaNode));
+    NodeContext replicaNodeContext = new NodeContext(replicaCluster, replicaNode.getUID());
+
+    when(options.getConfigSource()).thenReturn(CONFIG_FILE);
+    when(options.getConfigDir()).thenReturn(NODE_REPOSITORY_DIR);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
+    when(clusterCreator.create(any(ConfigSource.class))).thenReturn(replicaCluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(eq(HOST_NAME), eq(NODE_PORT), any(ConfigSource.class), eq(replicaCluster))).thenReturn(replicaNode);
+
+    mainCommandLineProcessor.process();
+
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(eq(HOST_NAME), eq(NODE_PORT), any(ConfigSource.class), eq(replicaCluster));
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
+    verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).startReplicaMode(replicaNodeContext, NODE_REPOSITORY_DIR);
+    verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testAutoActivationWithConfigFileUsingNodeName_replicaModeEnabled() {
+    when(options.allowsAutoActivation()).thenReturn(true);
+    when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
+    when(options.getConfigSource()).thenReturn(CONFIG_FILE);
+    when(options.getNodeName()).thenReturn(NODE_NAME);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+
+    Node replicaNode = getReplicaNode();
+    Cluster replicaCluster = Testing.newTestCluster(CLUSTER_NAME, new Stripe().addNodes(replicaNode));
+    when(clusterCreator.create(any(ConfigSource.class))).thenReturn(replicaCluster);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(eq(NODE_NAME), any(ConfigSource.class), eq(replicaCluster))).thenReturn(replicaNode);
+
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, mainCommandLineProcessor::process);
+    assertThat(e.getMessage(), containsString("Nodes with names: [" + NODE_NAME + "] have the replica setting enabled"));
+    assertThat(e.getMessage(), containsString("The '-auto-activate' parameter cannot be used when replica setting is enabled on any node."));
+  }
+
+  private static Node getReplicaNode() {
+    return Testing.newTestNode(NODE_NAME, HOST_NAME, Integer.parseInt(NODE_PORT))
+      .setReplica(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(19411)
+      .setRelayGroupPort(19412);
   }
 }

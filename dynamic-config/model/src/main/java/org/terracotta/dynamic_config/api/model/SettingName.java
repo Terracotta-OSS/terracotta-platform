@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,4 +58,11 @@ public class SettingName {
   public static final String AUTO_ACTIVATE = "auto-activate";
   public static final String LOCK_CONTEXT = "lock-context";
   public static final String HELP = "help";
+  public static final String RELAY = "relay";
+  public static final String REPLICA_HOSTNAME = "replica-hostname";
+  public static final String REPLICA_PORT = "replica-port";
+  public static final String REPLICA = "replica";
+  public static final String RELAY_HOSTNAME = "relay-hostname";
+  public static final String RELAY_PORT = "relay-port";
+  public static final String RELAY_GROUP_PORT = "relay-group-port";
 }

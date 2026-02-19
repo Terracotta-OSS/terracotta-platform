@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -33,11 +31,15 @@ import org.terracotta.inet.HostPort;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 
 public class ActivateAction extends RemoteAction {
@@ -46,8 +48,6 @@ public class ActivateAction extends RemoteAction {
   private ConfigSource configSource;
   private String clusterName;
   private Path licenseFile;
-  private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
   private boolean restrictedActivation;
   private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
@@ -65,14 +65,6 @@ public class ActivateAction extends RemoteAction {
 
   public void setLicenseFile(Path licenseFile) {
     this.licenseFile = licenseFile;
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   public void setRestrictedActivation(boolean restrictedActivation) {
@@ -156,6 +148,9 @@ public class ActivateAction extends RemoteAction {
         nodes.stream().map(this::getEndpoint).collect(toList()) : // if restrictive activation, we only activate the node supplied
         cluster.determineEndpoints(nodes); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
+
+    validateReplicaPerStripe(runtimePeers);
+
     // verify the activated state of the nodes
     if (areAllNodesActivated(runtimePeers)) {
       throw new IllegalStateException("Nodes are already activated: " + toString(runtimePeers));
@@ -163,7 +158,7 @@ public class ActivateAction extends RemoteAction {
     if (!restrictedActivation) {
       NameGenerator.assignFriendlyNames(cluster);
     }
-    activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
+    activateNodes(runtimePeers, cluster, licenseFile);
     output.info("Command successful!");
   }
 
@@ -190,5 +185,49 @@ public class ActivateAction extends RemoteAction {
 
   public void setShape(List<Map.Entry<Collection<HostPort>, String>> shape) {
     this.shape = shape;
+  }
+
+  /**
+   * Validates that at least one replica per stripe is running if any replicas are present in {@code runtimePeers}.
+   */
+  private void validateReplicaPerStripe(Collection<Endpoint> runtimePeers) {
+    Set<HostPort> runningReplicas = runtimePeers.stream()
+      .map(Endpoint::getHostPort)
+      .filter(this::isReplica)
+      .collect(Collectors.toSet());
+
+    if (runningReplicas.isEmpty()) {
+      return;
+    }
+
+    Map<Stripe, List<Node>> replicasByStripe = new LinkedHashMap<>();
+    for (Stripe stripe : cluster.getStripes()) {
+      List<Node> replicas = stripe.getNodes().stream()
+        // can't use node UID as they are different for unactivated runtimeReplica and nodes in configuration
+        .filter(node -> node.getEndpoints().stream().map(Endpoint::getHostPort).anyMatch(runningReplicas::contains))
+        .collect(toList());
+      replicasByStripe.put(stripe, replicas);
+    }
+
+    boolean isReplicaMissing = replicasByStripe.entrySet().stream().anyMatch(e -> e.getValue().isEmpty());
+
+    if (isReplicaMissing) {
+      throw new IllegalArgumentException(buildReplicaValidationErrorMessage(replicasByStripe));
+    }
+  }
+
+  private String buildReplicaValidationErrorMessage(Map<Stripe, List<Node>> replicasByStripe) {
+    String replicaDistribution = replicasByStripe.entrySet().stream()
+      .map(e -> String.format("  Stripe %s: %s",
+        e.getKey().toShapeString(),
+        e.getValue().isEmpty() ? "No replica nodes found" : "Replicas(" + e.getValue().stream().map(Node::toShapeString).collect(Collectors.joining(", ")) + ")"))
+      .collect(Collectors.joining(lineSeparator()));
+
+    return String.format("Cluster activation failed, each stripe must have at least one replica node." + lineSeparator() +
+        "Provided cluster topology:" + lineSeparator() +
+        "  %s" + lineSeparator() +
+        "Replica distribution:" + lineSeparator() +
+        "%s",
+      cluster.toShapeString(), replicaDistribution);
   }
 }

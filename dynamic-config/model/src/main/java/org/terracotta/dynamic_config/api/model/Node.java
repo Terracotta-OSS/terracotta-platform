@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,13 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
@@ -77,6 +84,13 @@ public class Node implements Cloneable, PropertyHolder {
   private Map<String, String> tcProperties;
   private Map<String, String> loggerOverrides;
   private Map<String, RawPath> dataDirs;
+  private Boolean relay;
+  private String replicaHostname;
+  private Integer replicaPort;
+  private Boolean replica;
+  private String relayHostname;
+  private Integer relayPort;
+  private Integer relayGroupPort;
 
   @Override
   public Scope getScope() {
@@ -154,6 +168,34 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Map<String, String>> getTcProperties() {
     return OptionalConfig.of(TC_PROPERTIES, tcProperties);
+  }
+
+  public OptionalConfig<Boolean> getRelay() {
+    return OptionalConfig.of(RELAY, relay);
+  }
+
+  public OptionalConfig<String> getReplicaHostname() {
+    return OptionalConfig.of(REPLICA_HOSTNAME, replicaHostname);
+  }
+
+  public OptionalConfig<Integer> getReplicaPort() {
+    return OptionalConfig.of(REPLICA_PORT, replicaPort);
+  }
+
+  public OptionalConfig<Boolean> getReplica() {
+    return OptionalConfig.of(REPLICA, replica);
+  }
+
+  public OptionalConfig<String> getRelayHostname() {
+    return OptionalConfig.of(RELAY_HOSTNAME, relayHostname);
+  }
+
+  public OptionalConfig<Integer> getRelayPort() {
+    return OptionalConfig.of(RELAY_PORT, relayPort);
+  }
+
+  public OptionalConfig<Integer> getRelayGroupPort() {
+    return OptionalConfig.of(RELAY_GROUP_PORT, relayGroupPort);
   }
 
   public Node setUID(UID uid) {
@@ -334,6 +376,41 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
+  public Node setRelay(Boolean relay) {
+    this.relay = relay;
+    return this;
+  }
+
+  public Node setReplicaHostname(String hostname) {
+    this.replicaHostname = hostname;
+    return this;
+  }
+
+  public Node setReplicaPort(Integer port) {
+    this.replicaPort = port;
+    return this;
+  }
+
+  public Node setReplica(Boolean replica) {
+    this.replica = replica;
+    return this;
+  }
+
+  public Node setRelayHostname(String hostname) {
+    this.relayHostname = hostname;
+    return this;
+  }
+
+  public Node setRelayPort(Integer port) {
+    this.relayPort = port;
+    return this;
+  }
+
+  public Node setRelayGroupPort(Integer groupPort) {
+    this.relayGroupPort = groupPort;
+    return this;
+  }
+
   public Node removeDataDir(String key) {
     if (this.dataDirs == null) {
       // this code is handling the removal of any default value set
@@ -401,6 +478,27 @@ public class Node implements Cloneable, PropertyHolder {
       throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
     return Optional.of(HostPort.create(publicHostname, publicPort));
+  }
+
+  public Optional<HostPort> getReplicaHostPort() {
+    if (replicaHostname == null || replicaPort == null) {
+      return Optional.empty();
+    }
+    return Optional.of(HostPort.create(replicaHostname, replicaPort));
+  }
+
+  public Optional<HostPort> getRelayHostPort() {
+    if (relayHostname == null || relayPort == null) {
+      return Optional.empty();
+    }
+    return Optional.of(HostPort.create(relayHostname, relayPort));
+  }
+
+  public Optional<HostPort> getRelayHostGroupPort() {
+    if (relayHostname == null || relayGroupPort == null) {
+      return Optional.empty();
+    }
+    return Optional.of(HostPort.create(relayHostname, relayGroupPort));
   }
 
   public List<Endpoint> findEndpoints(String host, int port) {
@@ -537,6 +635,13 @@ public class Node implements Cloneable, PropertyHolder {
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
     clone.uid = this.uid;
+    clone.relay = this.relay;
+    clone.replicaHostname = this.replicaHostname;
+    clone.replicaPort = this.replicaPort;
+    clone.replica = this.replica;
+    clone.relayHostname = this.relayHostname;
+    clone.relayPort = this.relayPort;
+    clone.relayGroupPort = this.relayGroupPort;
     return clone;
   }
 
@@ -562,14 +667,23 @@ public class Node implements Cloneable, PropertyHolder {
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
         Objects.equals(securityLogDir, node.securityLogDir) &&
-        Objects.equals(dataDirs, node.dataDirs);
+        Objects.equals(dataDirs, node.dataDirs) &&
+        Objects.equals(relay, node.relay) &&
+        Objects.equals(replicaHostname, node.replicaHostname) &&
+        Objects.equals(replicaPort, node.replicaPort) &&
+        Objects.equals(replica, node.replica) &&
+        Objects.equals(relayHostname, node.relayHostname) &&
+        Objects.equals(relayPort, node.relayPort) &&
+        Objects.equals(relayGroupPort, node.relayGroupPort);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid);
+        securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid,
+      relay, replicaHostname, replicaPort,
+      replica, relayHostname, relayPort, relayGroupPort);
   }
 
   @Override

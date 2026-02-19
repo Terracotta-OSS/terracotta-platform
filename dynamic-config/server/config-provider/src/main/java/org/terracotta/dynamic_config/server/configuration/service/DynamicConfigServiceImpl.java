@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -261,6 +262,14 @@ public final class DynamicConfigServiceImpl implements TopologyService, DynamicC
     // a node is activated when nomad is enabled and a last committed config is available
     return nomadServerManager.getNomadMode() == NomadMode.RW
         && nomadServerManager.getConfiguration().isPresent();
+  }
+
+  @Override
+  public boolean isReplica() {
+    // The runtimeNodeContext is reliable since we restrict any SET, UNSET, or IMPORT operations on a replica node.
+    // We also prevent any DC change for the replica setting (in both CONFIGURING and ACTIVATED state) on a node and only allow it to be specified either through the CLI for a single node or in the config file at startup
+    // which also means a config file with replica=true cannot be imported on a node, making the replica setting immutable
+    return DisasterRecoveryMode.isReplica(getRuntimeNodeContext().getNode());
   }
 
   @Override

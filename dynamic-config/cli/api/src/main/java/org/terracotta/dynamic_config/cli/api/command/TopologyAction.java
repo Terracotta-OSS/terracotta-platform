@@ -100,7 +100,7 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
+      ensureNodesAreEitherActiveOrPassive(filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()));
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
     }
   }
@@ -150,7 +150,7 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {
-        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+        runTopologyChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()), nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }

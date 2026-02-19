@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -26,8 +29,10 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +73,7 @@ public class ClusterValidator {
   private static final String[] FORBIDDEN_NAMES_NO_EXT = new String[]{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
   // special chars in DC
   private static final char[] FORBIDDEN_DC_CHARS = new char[]{' ', ',', ':', '=', '%', '{', '}'};
+  private static final EnumSet<Operation> UNSUPPORTED_REPLICA_OPERATIONS = EnumSet.of(Operation.SET, Operation.UNSET, Operation.IMPORT);
 
   static {
     // sorting because using binary search after
@@ -89,6 +95,14 @@ public class ClusterValidator {
   }
 
   public void validate(ClusterState clusterState, Version version) throws MalformedClusterException {
+    validate(clusterState, version, null);
+  }
+
+  public void validate(ClusterState clusterState, Operation operation) throws MalformedClusterException {
+    validate(clusterState, Version.CURRENT, operation);
+  }
+
+  public void validate(ClusterState clusterState, Version version, Operation operation) throws MalformedClusterException {
     validateNodeNames();
     validateNames(clusterState);
     validateAddresses();
@@ -96,6 +110,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
+    validateDRSetting(clusterState, operation);
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -190,6 +205,79 @@ public class ClusterValidator {
       throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses +
           " don't have public addresses " + "defined, but other nodes in the cluster do." +
           " Mutative operations on public addresses must be done simultaneously on every node in the cluster");
+    }
+  }
+
+  private void validateDRSetting(ClusterState clusterState, Operation operation) {
+    Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
+      .collect(Collectors.groupingBy(this::checkAndGetDRMode,
+        Collectors.mapping(Node::getName, Collectors.toList())));
+
+    List<String> replicaNodes = nodesByMode.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList()).stream().sorted().toList();
+
+    if (!replicaNodes.isEmpty()) {
+      // allowed single replica node
+      if (replicaNodes.size() > 1) {
+        throw new MalformedClusterException("Only a single node can have the replica setting enabled. Nodes with replica: " + replicaNodes);
+      }
+
+      List<String> nonReplicaNodes = nodesByMode.entrySet().stream()
+        .filter(entry -> entry.getKey() != DisasterRecoveryMode.REPLICA)
+        .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
+
+      // no other nodes allowed with replica node
+      if (!nonReplicaNodes.isEmpty()) {
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
+      }
+
+      if (UNSUPPORTED_REPLICA_OPERATIONS.contains(operation)) {
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. "
+          + operation.name() + " operation is not supported on replica node");
+      }
+
+      if (clusterState == ClusterState.ACTIVATED) {
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. " +
+          "A cluster cannot be in activated state if replica setting is enabled on any node");
+      }
+    }
+  }
+
+  private DisasterRecoveryMode checkAndGetDRMode(Node node) {
+    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node);
+    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node);
+    if (relayMode && replicaMode) {
+      throw new MalformedClusterException("Node with name: " + node.getName() + " has both relay and replica settings enabled");
+    }
+    validateRequiredDRProperties(node, DisasterRecoveryMode.RELAY);
+    validateRequiredDRProperties(node, DisasterRecoveryMode.REPLICA);
+    return DisasterRecoveryMode.fromNode(node);
+  }
+
+  private void validateRequiredDRProperties(Node node, DisasterRecoveryMode mode) {
+    if (mode == DisasterRecoveryMode.NONE) {
+      return;
+    }
+
+    Map<String, OptionalConfig<?>> requiredProps = mode.getRequiredProperties(node);
+    long configuredCount = requiredProps.values().stream()
+      .filter(OptionalConfig::isConfigured)
+      .count();
+
+    if (mode.isEnabled(node)) {
+      if (configuredCount != requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException("The " + mode.getLabel() + " setting is enabled for node with name: " + node.getName() +
+          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed");
+      }
+    } else {
+      // when mode is disabled and the user sets partial configuration for a node
+      if (configuredCount > 0 && configuredCount < requiredProps.size()) {
+        Map<String, Object> inconsistent = new LinkedHashMap<>();
+        requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
+        throw new MalformedClusterException("The " + mode.getLabel() + " setting is disabled for node with name: " + node.getName() +
+          ", properties: " + inconsistent + " are partially configured. Either remove all properties or set all required properties.");
+      }
     }
   }
 

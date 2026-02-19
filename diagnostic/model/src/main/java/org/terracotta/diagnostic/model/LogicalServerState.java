@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,21 @@ public enum LogicalServerState {
    * Passive server is up and ready to replicate
    */
   PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
+
+  /**
+   * Server configured as a relay, ready to send data to a replica server
+   */
+  RELAY("RELAY", "PASSIVE-RELAY"),
+
+  /**
+   * Server configured as a replica in the suspended state, requesting to receive data from a relay server
+   */
+  REPLICA_SUSPENDED("REPLICA_SUSPENDED", "PASSIVE-REPLICA-START"),
+
+  /**
+   * Server configured as a replica in the final state, ready to receive data from a relay server
+   */
+  REPLICA("REPLICA", "PASSIVE-REPLICA"),
 
   /**
    * Active server is ready to receive clients
@@ -138,5 +153,17 @@ public enum LogicalServerState {
 
   public boolean isBlocked() {
     return this == START_SUSPENDED || this == ACTIVE_SUSPENDED || this == PASSIVE_SUSPENDED;
+  }
+
+  public boolean isRelay() {
+    return this == RELAY;
+  }
+
+  public boolean isReplicaSuspended() {
+    return this == REPLICA_SUSPENDED;
+  }
+
+  public boolean isReplica() {
+    return this == REPLICA;
   }
 }

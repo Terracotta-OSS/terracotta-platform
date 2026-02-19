@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.terracotta.dynamic_config.server.configuration.startup;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -55,10 +56,14 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
     if (options.getLicenseFile() != null) {
       requireNonNull(cluster.getName(), "Cluster name is required with license file");
     }
-    if (options.allowsAutoActivation()) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getUID()), options.getLicenseFile(), options.getConfigDir());
+
+    NodeContext nodeContext = new NodeContext(cluster, node.getUID());
+    if (DisasterRecoveryMode.isReplica(node)) {
+      configurationGeneratorVisitor.startReplicaMode(nodeContext, options.getConfigDir());
+    } else if (options.allowsAutoActivation()) {
+      configurationGeneratorVisitor.startActivated(nodeContext, options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getUID()), options.getConfigDir());
+      configurationGeneratorVisitor.startUnconfigured(nodeContext, options.getConfigDir());
     }
   }
 }

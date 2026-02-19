@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+
+import java.util.Random;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -438,5 +440,39 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("security-log-dir=")));
+  }
+
+  @Test
+  public void test_unset_relay_on_passive() {
+    waitForActive(1);
+    waitForNPassives(1, 1);
+    Random random = new Random();
+    int relayId = random.nextInt(2) + 1;
+    String relay = getNodeName(1, relayId);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", relay + ":relay=" + "true",
+      "-c", relay + ":replica-hostname=" + "localhost",
+      "-c", relay + ":replica-port=" + "9410"), is(successful()));
+
+    stopNode(1, relayId);
+    startNode(1, relayId);
+
+    waitUntilServerLogs(getNode(1, relayId), "No configuration change left to sync");
+    waitForPassiveRelay(1, relayId);
+
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", relay + ":relay"), is(successful()));
+
+    // becomes passive after unset, no restart required as relay nodes are restarted automatically
+    waitForPassive(1, relayId);
+  }
+
+  @Test
+  public void test_unset_replica() {
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica")
+      , allOf(not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'replica' cannot be unset")));
   }
 }

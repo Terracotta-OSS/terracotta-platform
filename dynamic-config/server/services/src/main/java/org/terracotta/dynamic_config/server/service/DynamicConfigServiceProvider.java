@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRI
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.server.ConfigChangeHandler.accept;
 
@@ -91,6 +94,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // public hostname/port
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
+
+    // relay properties
+    addToManager(configChangeHandlerManager, accept(), RELAY);
+    addToManager(configChangeHandlerManager, accept(), REPLICA_HOSTNAME);
+    addToManager(configChangeHandlerManager, accept(), REPLICA_PORT);
 
     // cluster name
     addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);

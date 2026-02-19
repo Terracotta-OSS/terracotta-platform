@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -55,9 +53,6 @@ import static org.terracotta.dynamic_config.cli.api.converter.OperationType.STRI
 public class AttachAction extends TopologyAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AttachAction.class);
-
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   // list of new nodes to add with their backup topology
   protected final Map<Endpoint, NodeContext> sources = new LinkedHashMap<>();
@@ -97,14 +92,6 @@ public class AttachAction extends TopologyAction {
         .forEach(node -> sources.put(
             node.determineEndpoint(context.t1),
             new NodeContext(context.t2.getCluster(), node.getUID())));
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   @Override
@@ -309,6 +296,8 @@ public class AttachAction extends TopologyAction {
     tryFinally(() -> activate(nomadChange), () -> {
       if (isUnlockRequired()) {
         unlock(nomadChange);
+      } else {
+        restartRelayNodesIfPresent(destinationOnlineNodes);
       }
     });
   }
@@ -317,10 +306,10 @@ public class AttachAction extends TopologyAction {
     Cluster result = nomadChange.getCluster();
     switch (operationType) {
       case NODE:
-        activateNodes(sources.keySet(), result, null, restartDelay, restartWaitTime);
+        activateNodes(sources.keySet(), result, null);
         break;
       case STRIPE:
-        activateStripe(sources.keySet(), result, destination, restartDelay, restartWaitTime);
+        activateStripe(sources.keySet(), result, destination);
         break;
       default:
         throw new UnsupportedOperationException(operationType.name());

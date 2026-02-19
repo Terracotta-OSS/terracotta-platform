@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,4 +160,22 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     withTopologyService(1, 3, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
+  @Test
+  public void test_attach_relay_nodes_with_passive() {
+    // start a third node with relay
+    startNode(1, 3, getNewOptions(getNode(1, 3), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
+
+    // attach
+    assertThat(
+      configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
+      is(successful()));
+    waitForPassiveRelay(1, 3);
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(3)));
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
+  }
 }
