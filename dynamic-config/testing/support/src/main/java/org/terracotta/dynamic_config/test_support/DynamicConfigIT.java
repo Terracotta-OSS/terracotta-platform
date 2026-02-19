@@ -650,6 +650,10 @@ public class DynamicConfigIT {
     angela.waitForPassive(stripeId, nodeId);
   }
 
+  protected final void waitForPassiveRelay(int stripeId, int nodeId) {
+    angela.waitForPassiveRelay(stripeId, nodeId);
+  }
+
   protected final void waitForDiagnostic(int stripeId, int nodeId) {
     angela.waitForDiagnostic(stripeId, nodeId);
   }
