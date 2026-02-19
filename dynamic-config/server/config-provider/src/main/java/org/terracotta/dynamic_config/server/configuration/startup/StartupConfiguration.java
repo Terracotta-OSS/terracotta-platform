@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -38,6 +39,7 @@ import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -121,6 +123,41 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   @Override
   public boolean isPartialConfiguration() {
     return unConfigured || repairMode;
+  }
+
+  @Override
+  public boolean isRelaySource() {
+    if (isPartialConfiguration()) {
+      return false;
+    }
+    return DisasterRecoveryMode.fromNode(nodeContextSupplier.get().getNode()) == DisasterRecoveryMode.RELAY;
+  }
+
+  @Override
+  public boolean isRelayDestination() {
+    // TODO: implement for replicaMode
+    return false;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeer() {
+    // TODO: implement for replicaMode
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    Node node = nodeContextSupplier.get().getNode();
+    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(node);
+    if (mode == DisasterRecoveryMode.RELAY) {
+      return mode.getPeer(node).orElseThrow(AssertionError::new);
+    }
+    return null;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeerGroupPort() {
+    // TODO: implement for replicaMode
+    // for relay node this will always return null
+    return null;
   }
 
   @Override
