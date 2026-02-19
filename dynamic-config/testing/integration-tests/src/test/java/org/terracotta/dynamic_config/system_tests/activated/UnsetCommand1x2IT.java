@@ -444,4 +444,14 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
   public void test_unset_relay_mode() {
     // TODO: add after relay nodes can pick up the config changes
   }
+
+  @Test
+  public void test_unset_replica_mode() {
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica-mode")
+      , allOf(not(successful()),
+        containsOutput("Invalid input"),
+        containsOutput("'replica-mode' cannot be unset")));
+  }
 }
