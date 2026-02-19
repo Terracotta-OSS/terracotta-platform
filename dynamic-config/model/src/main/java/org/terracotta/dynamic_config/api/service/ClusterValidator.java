@@ -100,7 +100,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
-    validateDRSetting();
+    validateDRSetting(clusterState);
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -198,12 +198,12 @@ public class ClusterValidator {
     }
   }
 
-  private void validateDRSetting() {
-    Map<DisasterRecoveryMode, List<String>> roleGroups = cluster.getNodes().stream()
+  private void validateDRSetting(ClusterState clusterState) {
+    Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
       .collect(Collectors.groupingBy(this::checkAndGetDRMode,
         Collectors.mapping(Node::getName, Collectors.toList())));
 
-    List<String> replicaNodes = roleGroups.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList());
+    List<String> replicaNodes = nodesByMode.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList()).stream().sorted().toList();
 
     if (!replicaNodes.isEmpty()) {
       // allowed single replica node
@@ -211,13 +211,18 @@ public class ClusterValidator {
         throw new MalformedClusterException("Only a single node can have replica-mode enabled. Nodes with replica-mode: " + replicaNodes);
       }
 
-      List<String> nonReplicaNodes = roleGroups.entrySet().stream()
+      List<String> nonReplicaNodes = nodesByMode.entrySet().stream()
         .filter(entry -> entry.getKey() != DisasterRecoveryMode.REPLICA)
         .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
 
       // no other nodes allowed with replica node
       if (!nonReplicaNodes.isEmpty()) {
-        throw new MalformedClusterException("A replica-mode node with name: " + replicaNodes.get(0) + " cannot coexist with other nodes with names: " + nonReplicaNodes);
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has replica-mode enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
+      }
+
+      if (clusterState == ClusterState.ACTIVATED) {
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has replica-mode enabled. " +
+          "A cluster cannot be in activated state if replica-mode is enabled on any node.");
       }
     }
   }
