@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,6 +368,36 @@ public class ConfigurationParserTest {
         "cluster-uid=<GENERATED>",
         "stripe.1.stripe-uid=<GENERATED>",
         "stripe.1.node.1.node-uid=<GENERATED>"
+    );
+  }
+
+  @Test
+  public void test_parsing_relay_replica_1x1() {
+    assertConfigEquals(
+      config(
+        "stripe.1.stripe-name=<GENERATED>",
+        "stripe.1.node.1.name=node1",
+        "stripe.1.node.1.hostname=localhost",
+        "cluster-name=foo",
+        "stripe.1.node.1.relay-mode=true",
+        "stripe.1.node.1.replica-hostname=localhost",
+        "stripe.1.node.1.replica-port=1234",
+        "stripe.1.node.1.replica-mode=true",
+        "stripe.1.node.1.relay-hostname=localhost",
+        "stripe.1.node.1.relay-port=4567",
+        "stripe.1.node.1.relay-group-port=5678"
+      ),
+      Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")
+        .setRelayMode(true)
+        .setReplicaHostname("localhost")
+        .setReplicaPort(1234)
+        .setReplicaMode(true)
+        .setRelayHostname("localhost")
+        .setRelayPort(4567)
+        .setRelayGroupPort(5678))).setFailoverPriority(null),
+      "cluster-uid=<GENERATED>",
+      "stripe.1.stripe-uid=<GENERATED>",
+      "stripe.1.node.1.node-uid=<GENERATED>"
     );
   }
 
