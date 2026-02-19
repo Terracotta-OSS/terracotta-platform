@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
@@ -44,6 +45,11 @@ public class LogicalServerStateTest {
   @Test
   public void parseTest_passive() {
     assertThat(LogicalServerState.parse("PASSIVE-STANDBY"), equalTo(PASSIVE));
+  }
+
+  @Test
+  public void parseTest_passive_relay() {
+    assertThat(LogicalServerState.parse("PASSIVE-RELAY"), equalTo(PASSIVE_RELAY));
   }
 
   @Test
