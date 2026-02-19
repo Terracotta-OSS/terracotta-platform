@@ -55,6 +55,9 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_LOG_DIR;
@@ -108,6 +111,15 @@ public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-" + NODE_BACKUP_DIR}, description = "Node backup directory. Default: <unset>")
   private String backupDir;
+
+  @Parameter(names = {"-" + RELAY_MODE}, description = "Relay mode setting (true|false). Default: false")
+  private String relayMode;
+
+  @Parameter(names = {"-" + REPLICA_HOSTNAME}, description = "Replica node host name. Default: <unset>")
+  private String replicaHostname;
+
+  @Parameter(names = {"-" + REPLICA_PORT}, description = "Replica node port. Default: <unset>")
+  private String replicaPort;
 
   @Parameter(names = {"-" + SECURITY_DIR}, description = "Security root directory. Default: <unset>")
   private String securityDir;
