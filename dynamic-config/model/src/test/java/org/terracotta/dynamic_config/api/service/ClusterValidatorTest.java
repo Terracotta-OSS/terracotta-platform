@@ -562,13 +562,13 @@ public class ClusterValidatorTest {
       .setReplicaHostname("replica-host")
       .setReplicaPort(9410);
     assertClusterValidationFailsContainsMessage(
-      "A replica-mode node with name: node1 cannot coexist with other nodes with names: [node2]",
+      "Node with name: node1 has replica-mode enabled and cannot coexist with other nodes with names: [node2]",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2)));
 
     // Replica-mode node with normal node
     Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3]);
     assertClusterValidationFailsContainsMessage(
-      "A replica-mode node with name: node1 cannot coexist with other nodes with names: [node2, node3]",
+      "Node with name: node1 has replica-mode enabled and cannot coexist with other nodes with names: [node2, node3]",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2, node3)));
   }
 
@@ -621,6 +621,19 @@ public class ClusterValidatorTest {
     assertClusterValidationFailsContainsMessage(
       "relay-mode is disabled for node with name: node1, " +
         "properties: {replica-hostname=replica-host, replica-port=null} are partially configured",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
+  }
+
+  @Test
+  public void testBadDR_replicaModeEnabledDuringActivation() {
+    // node with replica-mode enabled should fail if cluster is in activated state
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplicaMode(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    assertClusterValidationFailsContainsMessage(
+      "Node with name: node1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node.",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
   }
 

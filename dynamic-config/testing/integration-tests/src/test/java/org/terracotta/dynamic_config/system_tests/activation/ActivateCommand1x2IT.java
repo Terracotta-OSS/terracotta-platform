@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,5 +244,21 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
 
     assertThat(getRuntimeCluster(1, 1), is(equalTo(getRuntimeCluster(1, 2))));
+  }
+
+  @Test
+  public void testFailedActivationWithReplicaNode() {
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+
+    assertThat(
+      configTool("activate", "-cluster-name", "my-cluster", "-connect-to", getNodeHostPort(1, 1) + ""),
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node")));
+
+    String config = copyConfigProperty("/config-property-files/1x1-replica.properties").toString();
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config),
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node")));
   }
 }
