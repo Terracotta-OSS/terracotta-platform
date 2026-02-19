@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
@@ -106,5 +107,81 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getStripe().getName()), startsWith("stripe-"));
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.stripe-name=foo"), is(successful()));
     assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getStripe().getName()), is(equalTo("foo")));
+  }
+
+  @Test
+  public void setRelayMode() {
+    // not allowed at cluster level
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "relay-mode=" + "localhost"),
+      allOf(
+        not(successful()),
+        containsOutput("Setting 'relay-mode' cannot be set at cluster level")));
+
+    // not allowed at stripe level
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.relay-mode=" + "localhost"),
+      allOf(
+        not(successful()),
+        containsOutput("Setting 'relay-mode' cannot be set at stripe level")));
+
+    // test empty value
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-mode=" + "  "),
+      is(containsOutput("Invalid input: 'stripe.1.node.1.relay-mode='. Reason: Setting 'relay-mode' requires a value")));
+
+    // all relay properties
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
+      "-c", "stripe.1.node.1.replica-port=" + "9410"), is(successful()));
+
+    assertThat(
+      configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-mode", "-c", "replica-hostname", "-c", "replica-port", "-t", "index"),
+      allOf(
+        containsOutput("relay-mode=true"),
+        containsOutput("replica-hostname=localhost"),
+        containsOutput("replica-port=" + 9410)));
+
+    // all relay properties without index
+    String nodeName = getNodeName(1, 1);
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+      "-setting", nodeName + ":relay-mode=" + "true",
+      "-setting", nodeName + ":replica-hostname=" + "localhost1",
+      "-setting", nodeName + ":replica-port=" + "9411"), is(successful()));
+
+    assertThat(
+      configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "relay-mode", "-setting", "replica-hostname", "-setting", "replica-port"),
+      allOf(
+        containsOutput(nodeName + ":relay-mode=true"),
+        containsOutput(nodeName + ":replica-hostname=localhost1"),
+        containsOutput(nodeName + ":replica-port=" + 9411)));
+  }
+
+  @Test
+  public void setReplicaMode() {
+    // set not allowed
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica-mode=" + "true"),
+      allOf(
+        not(successful()),
+        containsOutput("Reason: Setting 'replica-mode' cannot be set")));
+  }
+
+  @Test
+  public void setIncompleteRelayProperties() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.relay-mode=" + "true"),
+      allOf(
+        not(successful()),
+        containsOutput("relay-mode is enabled for node with name: node-1-1, relay-mode properties: {replica-hostname=null, replica-port=null} aren't well-formed")));
+
+    // since relay-mode is set to false, setting partial config will throw (all or none allowed)
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-hostname=" + "localhost"),
+      allOf(
+        is(not(successful())),
+        containsOutput("relay-mode is disabled for node with name: node-1-1, " +
+          "properties: {replica-hostname=localhost, replica-port=null} are partially configured. " +
+          "Either remove all properties or set all required properties")));
   }
 }
