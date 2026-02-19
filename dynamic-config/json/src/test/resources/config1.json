@@ -14,6 +14,8 @@
           "metadataDir": "%H/terracotta/metadata",
           "name": "testServer0",
           "port": 23633,
+          "relayMode": false,
+          "replicaMode": false,
           "tcProperties": {
             "terracotta.management.assert": "true"
           },
