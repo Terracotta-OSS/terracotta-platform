@@ -24,6 +24,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 
@@ -48,10 +51,36 @@ public enum DisasterRecoveryMode {
     }
   },
 
+  REPLICA(SettingName.REPLICA_MODE) {
+    @Override
+    public boolean isEnabled(Node node) {
+      return node.getReplicaMode().orDefault();
+    }
+
+    @Override
+    public Map<String, OptionalConfig<?>> getRequiredProperties(Node node) {
+      Map<String, OptionalConfig<?>> props = new LinkedHashMap<>();
+      props.put(RELAY_HOSTNAME, node.getRelayHostname());
+      props.put(RELAY_PORT, node.getRelayPort());
+      props.put(RELAY_GROUP_PORT, node.getRelayGroupPort());
+      return props;
+    }
+
+    @Override
+    public Optional<InetSocketAddress> getPeer(Node node) {
+      return node.getRelayHostPort().map(HostPort::createInetSocketAddress);
+    }
+
+    @Override
+    public Optional<InetSocketAddress> getPeerGroupPort(Node node) {
+      return node.getRelayHostGroupPort().map(HostPort::createInetSocketAddress);
+    }
+  },
+
   NONE("none") {
     @Override
     public boolean isEnabled(Node node) {
-      return !RELAY.isEnabled(node);
+      return !RELAY.isEnabled(node) && !REPLICA.isEnabled(node);
     }
 
     @Override
@@ -84,8 +113,15 @@ public enum DisasterRecoveryMode {
 
   public static DisasterRecoveryMode fromNode(Node node) {
     boolean relayMode = RELAY.isEnabled(node);
+    boolean replicaMode = REPLICA.isEnabled(node);
+
+    if (relayMode && replicaMode) {
+      throw new AssertionError("Node with name: " + node.getName() + " has both relay-mode and replica-mode enabled. " +
+        "A node cannot have both relay-mode and replica-mode active");
+    }
 
     if (relayMode) return RELAY;
+    if (replicaMode) return REPLICA;
     return NONE;
   }
 }
