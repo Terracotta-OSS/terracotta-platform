@@ -50,6 +50,7 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.SettingName;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
 import org.terracotta.dynamic_config.cli.api.output.LoggingOutputService;
@@ -75,6 +76,7 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -106,6 +108,7 @@ import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
+import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -638,6 +641,10 @@ public class DynamicConfigIT {
     angela.waitUntil(callable, matcher);
   }
 
+  public final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, Duration duration) {
+    assertThat(callable, within(duration).matches(matcher));
+  }
+
   protected final int waitForActive(int stripeId) {
     return angela.waitForActive(stripeId);
   }
@@ -648,6 +655,18 @@ public class DynamicConfigIT {
 
   protected final void waitForPassive(int stripeId, int nodeId) {
     angela.waitForPassive(stripeId, nodeId);
+  }
+
+  protected final void waitForPassiveRelay(int stripeId, int nodeId) {
+    angela.waitForPassiveRelay(stripeId, nodeId);
+  }
+
+  protected final void waitForPassiveReplicaStart(int stripeId, int nodeId) {
+    angela.waitForPassiveReplicaStart(stripeId, nodeId);
+  }
+
+  protected final void waitForPassiveReplica(int stripeId, int nodeId) {
+    angela.waitForPassiveReplica(stripeId, nodeId);
   }
 
   protected final void waitForDiagnostic(int stripeId, int nodeId) {
@@ -885,5 +904,112 @@ public class DynamicConfigIT {
     public void close() {
       delegate.close();
     }
+  }
+
+  /**
+   * Generates new command-line options for starting a Terracotta server
+   */
+  protected String[] getNewOptions(TerracottaServer server, String... args) {
+    return getOptions(server, "-", args);
+  }
+
+  protected String[] getOldOptions(TerracottaServer server, String... args) {
+    return getOptions(server, "--", args);
+  }
+
+  /**
+   * Generates command-line options for starting a Terracotta server
+   *
+   * @param server     the TerracottaServer configuration
+   * @param dashPrefix the dashPrefix
+   * @param args       additional command-line arguments to append
+   * @return array of command-line options
+   */
+  protected String[] getOptions(TerracottaServer server, String dashPrefix, String... args) {
+    // similar to Angela's Distribution107InlineController.addOptions
+    Path workingDir = Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
+
+    List<String> options = new ArrayList<>();
+
+    if (server.getConfigFile() != null) {
+      options.add(addDashPrefix(SettingName.CONFIG_FILE, dashPrefix));
+      options.add(server.getConfigFile());
+    } else {
+      // Add server name only if config file option wasn't provided
+      options.add(addDashPrefix(SettingName.NODE_NAME, dashPrefix));
+      options.add(server.getServerSymbolicName().getSymbolicName());
+    }
+
+    // Add hostname
+    options.add(addDashPrefix(SettingName.NODE_HOSTNAME, dashPrefix));
+    options.add(server.getHostName());
+
+    addOptionIfNotZero(options, SettingName.NODE_PORT, server.getTsaPort(), dashPrefix);
+    addOptionIfNotZero(options, SettingName.NODE_GROUP_PORT, server.getTsaGroupPort(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.NODE_BIND_ADDRESS, server.getBindAddress(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.NODE_GROUP_BIND_ADDRESS, server.getGroupBindAddress(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.NODE_CONFIG_DIR, server.getConfigRepo(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.NODE_METADATA_DIR, server.getMetaData(), dashPrefix);
+
+    if (!server.getDataDir().isEmpty()) {
+      options.add(addDashPrefix(SettingName.DATA_DIRS, dashPrefix));
+      options.add(String.join(",", server.getDataDir()));
+    }
+
+    if (!server.getOffheap().isEmpty()) {
+      options.add(addDashPrefix(SettingName.OFFHEAP_RESOURCES, dashPrefix));
+      options.add(String.join(",", server.getOffheap()));
+    }
+
+    addOptionIfNotNull(options, SettingName.NODE_LOG_DIR, server.getLogs(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.FAILOVER_PRIORITY, server.getFailoverPriority(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.CLIENT_LEASE_DURATION, server.getClientLeaseDuration(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.CLIENT_RECONNECT_WINDOW, server.getClientReconnectWindow(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.NODE_BACKUP_DIR, server.getBackupDir(), dashPrefix);
+
+    addOptionIfNotNull(options, SettingName.SECURITY_AUDIT_LOG_DIR, server.getAuditLogDir(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.SECURITY_AUTHC, server.getAuthc(), dashPrefix);
+
+    if (server.getSecurityDir() != null) {
+      options.add(addDashPrefix(SettingName.SECURITY_DIR, dashPrefix));
+      Path securityRootDirectoryPath = workingDir.resolve("security-root-directory-" + server.getServerSymbolicName().getSymbolicName());
+      server.getSecurityDir().createSecurityRootDirectory(securityRootDirectoryPath);
+      options.add(securityRootDirectoryPath.toString());
+    }
+
+    if (server.isSslTls()) {
+      options.add(addDashPrefix(SettingName.SECURITY_SSL_TLS, dashPrefix));
+      options.add("true");
+    }
+
+    if (server.isWhitelist()) {
+      options.add(addDashPrefix(SettingName.SECURITY_WHITELIST, dashPrefix));
+      options.add("true");
+    }
+
+    addOptionIfNotNull(options, SettingName.TC_PROPERTIES, server.getProperties(), dashPrefix);
+    addOptionIfNotNull(options, SettingName.CLUSTER_NAME, server.getClusterName(), dashPrefix);
+
+    Collections.addAll(options, args);
+    LOGGER.debug("Server startup options: {}", options);
+    return options.toArray(String[]::new);
+  }
+
+  private static void addOptionIfNotNull(List<String> options, String setting, String value, String dashPrefix) {
+    if (value != null) {
+      options.add(addDashPrefix(setting, dashPrefix));
+      options.add(value);
+    }
+  }
+
+  private static void addOptionIfNotZero(List<String> options, String setting, int value, String dashPrefix) {
+    if (value != 0) {
+      options.add(addDashPrefix(setting, dashPrefix));
+      options.add(String.valueOf(value));
+    }
+  }
+
+  public static String addDashPrefix(String param, String dashPrefix) {
+    return dashPrefix + param;
   }
 }
