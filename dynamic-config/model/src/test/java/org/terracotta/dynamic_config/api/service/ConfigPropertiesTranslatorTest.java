@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,36 @@ public class ConfigPropertiesTranslatorTest {
         containsString("node:n4:backup-dir=dir4444"),
         containsString("node:n5:backup-dir=dir3"),
         containsString("node:n6:backup-dir=dir3333")
+    ));
+
+    // relay settings
+    r = getReader(new String[]{
+      "stripe-names=s1",
+      "s1:node-names=n1,n2",
+      "n1:relay-mode=true",
+      "n1:replica-hostname=localhost",
+      "n1:replica-port=9410",
+      "n1:replica-mode=true",
+      "n2:relay-hostname=localhost",
+      "n2:relay-port=9410",
+      "n2:relay-group-port=9430"
+    });
+    props = translateToProperties(r);
+    assertThat(props.getProperty("stripe.1.node.1.relay-mode"), is("true"));
+    assertThat(props.getProperty("stripe.1.node.1.replica-hostname"), is("localhost"));
+    assertThat(props.getProperty("stripe.1.node.1.replica-port"), is("9410"));
+    assertThat(props.getProperty("stripe.1.node.1.replica-mode"), is("true"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-hostname"), is("localhost"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-port"), is("9410"));
+    assertThat(props.getProperty("stripe.1.node.2.relay-group-port"), is("9430"));
+    assertThat(translateToConfigFormat(props), allOf(
+      containsString("node:n1:relay-mode=true"),
+      containsString("node:n1:replica-hostname=localhost"),
+      containsString("node:n1:replica-port=9410"),
+      containsString("node:n1:replica-mode=true"),
+      containsString("node:n2:relay-hostname=localhost"),
+      containsString("node:n2:relay-port=9410"),
+      containsString("node:n2:relay-group-port=9430")
     ));
 
     // composite properties
