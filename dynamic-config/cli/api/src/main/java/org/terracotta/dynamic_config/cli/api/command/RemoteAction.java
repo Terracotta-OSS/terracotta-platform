@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -92,6 +93,9 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.RELAY;
+import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA;
+import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
@@ -103,6 +107,9 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 public abstract class RemoteAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RemoteAction.class);
+
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Inject
   public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
@@ -121,6 +128,14 @@ public abstract class RemoteAction implements Runnable {
 
   protected String toPrettyJson(Object o) {
     return jsonFactory.pretty().create().toString(o);
+  }
+
+  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
+    this.restartWaitTime = restartWaitTime;
+  }
+
+  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
+    this.restartDelay = restartDelay;
   }
 
   protected final void licenseValidation(HostPort expectedOnlineNode, Cluster cluster) {
@@ -149,37 +164,34 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  private void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void restartNodes(Collection<Endpoint> newNodes) {
     output.info("Restarting nodes: " + toString(newNodes));
     restartNodes(
         newNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         // these are the list of states that we allow to consider a server has restarted
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING,
+          RELAY, REPLICA_SUSPENDED, REPLICA));
     output.info("All nodes came back up");
   }
 
-  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile,
-                                     Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile) {
     activateNomadSystem(newNodes, cluster, read(licenseFile));
 
     runClusterActivation(newNodes, cluster);
 
-    restartNodes(newNodes, restartDelay, restartWaitTime);
+    restartNodes(newNodes);
   }
 
-  protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination,
-                                      Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination) {
     activateNomadSystem(newNodes, cluster, getLicenseContentFrom(destination).orElse(null));
 
     runClusterActivation(newNodes, cluster);
 
     syncNomadChangesTo(newNodes, getChangeHistory(destination), cluster);
 
-    restartNodes(newNodes, restartDelay, restartWaitTime);
+    restartNodes(newNodes);
   }
 
   private Optional<String> getLicenseContentFrom(Endpoint expectedOnlineNode) {
@@ -332,7 +344,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
     LOGGER.trace("lock({})", lockContext);
-    runConfigurationChange(destinationCluster, onlineNodes, new LockConfigNomadChange(lockContext));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new LockConfigNomadChange(lockContext));
     // user must see the lock token
     LOGGER.trace("Config locked.");
     LOGGER.trace("Token: " + lockContext.getToken());
@@ -355,11 +367,12 @@ public abstract class RemoteAction implements Runnable {
 
   private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
     output.info("Trying to unlock the config...");
-    runConfigurationChange(destinationCluster, onlineNodes, new UnlockConfigNomadChange(force));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new UnlockConfigNomadChange(force));
     output.info("Config unlocked.");
     if (nomadManager instanceof LockAwareNomadManager) {
       this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
     }
+    restartRelayNodesIfPresent(onlineNodes);
   }
 
   @SuppressFBWarnings("BC_VACUOUS_INSTANCEOF")
@@ -530,35 +543,36 @@ public abstract class RemoteAction implements Runnable {
     return Tuple2.tuple2(nodeContext.getNode().determineEndpoint(expectedOnlineNode), nodeContext);
   }
 
-  protected final void restartNodes(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodes({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodes(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodes({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodes(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  protected final void restartNodesIfActives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodesIfActives({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodesIfActives(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfActives({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodesIfActives(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  protected final void restartNodesIfPassives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodesIfPassives({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodesIfPassives(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfPassives({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodesIfPassives(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  private void followRestart(RestartProgress progress, Collection<Endpoint> endpoints, Duration maximumWaitTime) {
+  protected final void followRestart(RestartProgress progress, Collection<Endpoint> endpoints) {
     try {
+      Duration maximumWaitTime = Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS));
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((endpoint, state) -> output.info("Node: {} has restarted in state: {}", endpoint, state));
       Map<Endpoint, LogicalServerState> restarted = progress.await(maximumWaitTime);
@@ -599,6 +613,22 @@ public abstract class RemoteAction implements Runnable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Stop has been interrupted", e);
+    }
+  }
+
+  /**
+   * Restarts relay nodes after a successful topology change operation.
+   * Relay nodes need to be restarted to sync with recent config
+   */
+  protected final void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
+    LinkedHashMap<Endpoint, LogicalServerState> relayNodes = filter(nodes, ((endpoint, state) -> state.isRelay()));
+    if (!relayNodes.isEmpty()) {
+      output.info("Restarting relay nodes: {}", relayNodes.keySet());
+      try {
+        restartNodes(relayNodes.keySet());
+      } catch (RuntimeException e) {
+        output.warn("Failed to restart relay nodes {} automatically: {}. Please restart manually.", relayNodes.keySet(), e.getMessage());
+      }
     }
   }
 
@@ -662,6 +692,7 @@ public abstract class RemoteAction implements Runnable {
    * So this method will also validate that if a restart is needed because a hostname/port change has been done,
    * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
    * in the stripes.
+   * we filter out relay nodes from the cluster, they are not contacted to apply configuration changes at runtime
    */
   protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     // current actives
@@ -678,9 +709,10 @@ public abstract class RemoteAction implements Runnable {
         .map(Map.Entry::getKey)
         .map(Endpoint::getNodeName)
         .collect(Collectors.toCollection(TreeSet::new));
-    // expected passives
+    // expected passives without relay nodes (relay nodes are not contacted to apply configuration changes at runtime)
     Collection<String> expectedPassives = cluster.getNodes()
         .stream()
+        .filter(node -> !DisasterRecoveryMode.isRelay(node))
         .map(Node::getName)
         .collect(Collectors.toCollection(TreeSet::new));
     expectedPassives.removeAll(actives);
@@ -737,6 +769,11 @@ public abstract class RemoteAction implements Runnable {
   protected final boolean isActivated(HostPort expectedOnlineNode) {
     LOGGER.trace("isActivated({})", expectedOnlineNode);
     return withTopologyService(expectedOnlineNode, TopologyService::isActivated);
+  }
+
+  protected final boolean isReplica(HostPort expectedOnlineNode) {
+    LOGGER.trace("isReplica({})", expectedOnlineNode);
+    return withTopologyService(expectedOnlineNode, TopologyService::isReplica);
   }
 
   protected final Endpoint findAnyOnlineNode(Collection<HostPort> nodes) {

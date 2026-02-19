@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -794,5 +794,73 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             not(containsOutput("node-1-1:logger-overrides=")),
             not(containsOutput("node-1-2:logger-overrides="))
         ));
+  }
+
+  @Test
+  public void unset_relay() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay=" + "true",
+      "-c", "stripe.1.node.1.replica-hostname=" + "127.0.0.1",
+      "-c", "stripe.1.node.1.replica-port=" + "9410"), is(successful()));
+
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node.1.relay=true"),
+        containsOutput("stripe.1.node.1.replica-hostname=127.0.0.1"),
+        containsOutput("stripe.1.node.1.replica-port=9410")
+      ));
+
+    // unset not allowed for sub-properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-hostname"),
+      containsOutput("Setting 'replica-hostname' cannot be unset"));
+
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-port"),
+      containsOutput("Setting 'replica-port' cannot be unset"));
+
+    // unset at cluster level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "relay"),
+      containsOutput("Invalid input: 'relay'. Reason: Setting 'relay' cannot be unset at cluster level"));
+
+    // unset at stripe level
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.relay"),
+      containsOutput("Invalid input: 'stripe.1.relay'. Reason: Setting 'relay' cannot be unset at stripe level"));
+
+    // unset relay
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay"), is(successful()));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay"), containsOutput("relay=false"));
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        // doesn't output the property if explicitly unset
+        not(containsOutput("stripe.1.node.1.relay=false")),
+        containsOutput("stripe.1.node.1.replica-hostname=127.0.0.1"),
+        containsOutput("stripe.1.node.1.replica-port=9410")
+      ));
+
+    // set relay=false
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay=false"), is(successful()));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay"), containsOutput("relay=false"));
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node.1.relay=false"),
+        containsOutput("stripe.1.node.1.replica-hostname=127.0.0.1"),
+        containsOutput("stripe.1.node.1.replica-port=9410")
+      ));
+  }
+
+  @Test
+  public void unset_replica() {
+    // unset not allowed
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica"), containsOutput("Setting 'replica' cannot be unset"));
   }
 }
