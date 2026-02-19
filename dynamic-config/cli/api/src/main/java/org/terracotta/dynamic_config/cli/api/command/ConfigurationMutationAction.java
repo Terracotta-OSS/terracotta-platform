@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
@@ -320,7 +321,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         others,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
     LOGGER.info("Restarting active nodes: {}...", toString(actives));
@@ -328,7 +329,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         actives,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
     concat(actives.stream(), others.stream())
