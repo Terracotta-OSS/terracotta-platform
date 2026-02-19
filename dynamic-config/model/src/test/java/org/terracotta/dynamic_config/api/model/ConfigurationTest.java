@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,12 +68,19 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_MODE;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -513,6 +520,31 @@ public class ConfigurationTest {
         rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
         rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
+
+      // get allowed for all scopes
+      // empty value not allowed
+      // set allowed for scope node
+      Stream.of(
+        tuple2(RELAY_MODE, "true"),
+        tuple2(REPLICA_HOSTNAME, "foo"),
+        tuple2(REPLICA_PORT, "9410"),
+        tuple2(REPLICA_MODE, "true"),
+        tuple2(RELAY_HOSTNAME, "foo"),
+        tuple2(RELAY_PORT, "9410"),
+        tuple2(RELAY_GROUP_PORT, "9430")
+      ).forEach(tuple -> {
+        allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at cluster level");
+
+        allowInput("stripe.1" + ns + tuple.t1, tuple.t1, STRIPE, 1, null, null, null);
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at stripe level");
+
+        allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
+      });
     });
   }
 
@@ -787,6 +819,93 @@ public class ConfigurationTest {
         allow(state, op, setting.t1 + "=");
         reject(state, op, "stripe.1." + setting.t1 + "=" + setting.t2);
         reject(state, op, "stripe.1.node.1." + setting.t1 + "=" + setting.t2);
+      }));
+    });
+
+    // relay-mode: GET at any levels, SET/UNSET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
+    Stream.of("relay-mode").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+        reject(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        allow(state, op, "stripe.1.node.1." + setting);
+      }));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        reject(state, op, setting + "=true");
+        reject(state, op, "stripe.1." + setting + "=true");
+        allow(state, op, "stripe.1.node.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=true");
+        reject(state, op, "stripe.1." + setting + "=true");
+        allow(state, op, "stripe.1.node.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+    });
+
+    // replica-hostname, replica-port: GET at any levels, SET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
+    Stream.of("replica-hostname", "replica-port").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        if (setting.contains("port")) {
+          reject(state, op, "stripe.1.node.1." + setting + "=123456");
+        }
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        if (setting.contains("port")) {
+          reject(state, op, "stripe.1.node.1." + setting + "=123456");
+        }
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+    });
+
+    // replica-mode: GET at any levels, IMPORT at NODE level, NO SET/UNSET
+    Stream.of("replica-mode").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=true"))));
+
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=true");
+        reject(state, op, "stripe.1." + setting + "=true");
+        allow(state, op, "stripe.1.node.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+    });
+
+    // relay-hostname, relay-port, relay-group-port: GET at any levels, IMPORT at NODE level, NO SET/UNSET
+    Stream.of("relay-hostname", "relay-port", "relay-group-port").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=1234"))));
+
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        if (setting.contains("port")) {
+          reject(state, op, "stripe.1.node.1." + setting + "=123456");
+        }
+        reject(state, op, "stripe.1.node.1." + setting + "=");
       }));
     });
   }
