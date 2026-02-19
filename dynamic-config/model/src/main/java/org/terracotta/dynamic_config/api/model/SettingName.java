@@ -61,4 +61,8 @@ public class SettingName {
   public static final String RELAY_MODE = "relay-mode";
   public static final String REPLICA_HOSTNAME = "replica-hostname";
   public static final String REPLICA_PORT = "replica-port";
+  public static final String REPLICA_MODE = "replica-mode";
+  public static final String RELAY_HOSTNAME = "relay-hostname";
+  public static final String RELAY_PORT = "relay-port";
+  public static final String RELAY_GROUP_PORT = "relay-group-port";
 }
