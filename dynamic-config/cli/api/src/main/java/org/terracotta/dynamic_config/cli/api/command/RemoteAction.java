@@ -93,6 +93,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNEC
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_REPLICA;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
@@ -159,7 +160,7 @@ public abstract class RemoteAction implements Runnable {
         // these are the list of states that we allow to consider a server has restarted
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
-      EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING, PASSIVE_RELAY));
+      EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING, PASSIVE_RELAY, PASSIVE_REPLICA));
     output.info("All nodes came back up");
   }
 
