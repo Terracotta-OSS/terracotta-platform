@@ -124,4 +124,12 @@ public enum DisasterRecoveryMode {
     if (replicaMode) return REPLICA;
     return NONE;
   }
+
+  public static boolean isReplica(Node node) {
+    return fromNode(node) == REPLICA;
+  }
+
+  public static boolean isRelay(Node node) {
+    return fromNode(node) == RELAY;
+  }
 }
