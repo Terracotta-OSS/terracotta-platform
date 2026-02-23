@@ -40,6 +40,8 @@ public enum LogicalServerState {
 
   PASSIVE_RELAY("PASSIVE_RELAY", "PASSIVE-RELAY"),
 
+  PASSIVE_REPLICA("PASSIVE_REPLICA", "PASSIVE-REPLICA"),
+
   /**
    * Active server is ready to receive clients
    */
@@ -140,5 +142,13 @@ public enum LogicalServerState {
 
   public boolean isBlocked() {
     return this == START_SUSPENDED || this == ACTIVE_SUSPENDED || this == PASSIVE_SUSPENDED;
+  }
+
+  public boolean isPassiveRelay() {
+    return this == PASSIVE_RELAY;
+  }
+
+  public boolean isPassiveReplica() {
+    return this == PASSIVE_REPLICA;
   }
 }
