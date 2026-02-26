@@ -284,6 +284,35 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
+  public void testSuccessfulStartRelayModeWithConfigFile() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartupReplicaMode() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveRelay(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartReplicaModeWithConfigFile() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForPassiveRelay(1, 1);
+  }
+
+  @Test
+  public void testFailedStartReplicaModeWithConfigFile() {
+    // checks if the cluster validator logic is executed
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica-invalid1.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "replica-mode is enabled for node with name: node-1-1, replica-mode properties: {relay-hostname=localhost, relay-port=null, relay-group-port=null} aren't well-formed");
+  }
+
+  @Test
   public void testFailedStartupRelayReplica() {
     // missing relay-mode property
     startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost"));
