@@ -108,6 +108,7 @@ import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
+import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -638,6 +639,10 @@ public class DynamicConfigIT {
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
     angela.waitUntil(callable, matcher);
+  }
+
+  public final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, Duration duration) {
+    assertThat(callable, within(duration).matches(matcher));
   }
 
   protected final int waitForActive(int stripeId) {

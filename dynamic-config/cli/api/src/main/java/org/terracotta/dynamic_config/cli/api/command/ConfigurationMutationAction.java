@@ -25,6 +25,8 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
@@ -33,16 +35,20 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.api.restart.RestartProgress;
 import org.terracotta.inet.HostPort;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
@@ -119,6 +125,10 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           .filter(o -> o.getScope() == NODE)
           .map(PropertyHolder::getName)
           .filter(originalCluster::containsNode)
+          .filter(nodeName -> {
+            Node node = originalCluster.getNodeByName(nodeName).orElseThrow(AssertionError::new);
+            return !DisasterRecoveryMode.isRelay(node);
+          })
           .forEach(name -> {
             targetedNodes.add(name);
             if (c.getSetting().requires(NODE_RESTART)) {
@@ -160,6 +170,27 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.debug("New configuration change(s) can be sent");
 
     if (allOnlineNodesActivated) {
+      Set<Endpoint> onlineRelayNodes = new HashSet<>();
+      // filter out relay nodes from onlineNodes in-place
+      onlineNodes.entrySet().removeIf(entry -> {
+        if (entry.getValue().isPassiveRelay()) {
+          onlineRelayNodes.add(entry.getKey());
+          return true;
+        }
+        return false;
+      });
+
+      // filter out relay nodes from originalCluster in-place
+      Set<Node> allConfiguredRelayNodes = new HashSet<>();
+      RestartProgress relayRestartProgress = null;
+      // getNodes() returns a new list
+      originalCluster.getNodes().forEach(node -> {
+        if (DisasterRecoveryMode.isRelay(node)) {
+          originalCluster.removeNode(node.getUID());
+          allConfiguredRelayNodes.add(node);
+        }
+      });
+
       // cluster is active, we need to run a nomad change and eventually a restart
 
       // validate that all the online nodes are either actives or passives
@@ -177,6 +208,23 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         runConfigurationChange(updatedCluster, onlineNodes, changes);
       }
 
+      if (!allConfiguredRelayNodes.isEmpty()) {
+        Set<UID> reachableRelayNodeUIDs = onlineRelayNodes.stream().map(Endpoint::getNodeUID).collect(Collectors.toSet());
+        Set<String> unreachableRelayNodes = allConfiguredRelayNodes.stream()
+          .filter(node -> !reachableRelayNodeUIDs.contains(node.getUID())).map(Node::getName).collect(Collectors.toSet());
+        if (!unreachableRelayNodes.isEmpty()) {
+          output.info("Relay nodes: {} are unreachable. Please restart them manually to apply the configuration changes.", toString(unreachableRelayNodes));
+        }
+      }
+
+      if (!onlineRelayNodes.isEmpty()) {
+        output.info("Performing automatic restart of relay nodes: {}. " +
+          "If the restart fails, please verify the nodes status or restart manually.", toString(onlineRelayNodes));
+        relayRestartProgress = restartService.restartNodesIfPassives(
+          onlineRelayNodes,
+          Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
+      }
       // do we need to restart to apply the changes ?
       if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         output.out("Restart required for cluster");
@@ -239,6 +287,12 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         }
       }
 
+      if (!onlineRelayNodes.isEmpty()) {
+        followRestart(relayRestartProgress,
+          onlineRelayNodes,
+          Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS))
+        );
+      }
     } else {
       // cluster is not active, we just need to replace the topology
       output.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
