@@ -379,6 +379,24 @@ public class CommandLineProcessorChainTest {
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
+  @Test
+  public void testAutoActivationWithConfigFileUsingNodeName_replicaModeEnabled() {
+    when(options.allowsAutoActivation()).thenReturn(true);
+    when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
+    when(options.getConfigSource()).thenReturn(CONFIG_FILE);
+    when(options.getNodeName()).thenReturn(NODE_NAME);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+
+    Node replicaNode = getReplicaNode();
+    Cluster replicaCluster = Testing.newTestCluster(CLUSTER_NAME, new Stripe().addNodes(replicaNode));
+    when(clusterCreator.create(any(ConfigSource.class))).thenReturn(replicaCluster);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(eq(NODE_NAME), any(ConfigSource.class), eq(replicaCluster))).thenReturn(replicaNode);
+
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, mainCommandLineProcessor::process);
+    assertThat(e.getMessage(), containsString("Nodes with names: [" + NODE_NAME + "] have replica-mode enabled"));
+    assertThat(e.getMessage(), containsString("The '-auto-activate' parameter cannot be used when replica-mode is enabled on any node."));
+  }
+
   private static Node getReplicaNode() {
     return Testing.newTestNode(NODE_NAME, HOST_NAME, Integer.parseInt(NODE_PORT))
       .setReplicaMode(true)

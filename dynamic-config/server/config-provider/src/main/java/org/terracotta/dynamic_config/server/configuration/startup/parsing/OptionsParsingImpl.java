@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.SettingName;
 import org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -276,6 +278,9 @@ public class OptionsParsingImpl implements OptionsParsing {
       }
     } else {
       // when using CLI parameters
+      if (Objects.equals(replicaMode, "true") && allowsAutoActivation) {
+        throw new IllegalArgumentException(String.format("The '%s' parameter cannot be used when '%s' parameter is set to true.", addDash(SettingName.AUTO_ACTIVATE), addDash(REPLICA_MODE)));
+      }
       if (licenseFile != null) {
         if (clusterName == null) {
           throw new IllegalArgumentException("'" + addDash(LICENSE_FILE) + "' parameter must be used with '" + addDash(CLUSTER_NAME) + "' parameter");
