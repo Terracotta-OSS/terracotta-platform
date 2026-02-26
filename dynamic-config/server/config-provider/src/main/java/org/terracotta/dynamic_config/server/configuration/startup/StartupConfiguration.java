@@ -132,33 +132,34 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     if (isPartialConfiguration()) {
       return false;
     }
-    return DisasterRecoveryMode.fromNode(nodeContextSupplier.get().getNode()) == DisasterRecoveryMode.RELAY;
+    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
   }
 
   @Override
   public boolean isRelayDestination() {
-    // TODO: implement for replicaMode
-    return false;
+    return replicaMode;
   }
 
   @Override
   public InetSocketAddress getRelayPeer() {
-    // TODO: implement for replicaMode
+    Node node = nodeContextSupplier.get().getNode();
+    if (replicaMode) {
+      return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
+    }
     if (isPartialConfiguration()) {
       return null;
     }
-    Node node = nodeContextSupplier.get().getNode();
-    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(node);
-    if (mode == DisasterRecoveryMode.RELAY) {
-      return mode.getPeer(node).orElseThrow(AssertionError::new);
+    if (DisasterRecoveryMode.isRelay(node)) {
+      return DisasterRecoveryMode.RELAY.getPeer(node).orElseThrow(AssertionError::new);
     }
     return null;
   }
 
   @Override
   public InetSocketAddress getRelayPeerGroupPort() {
-    // TODO: implement for replicaMode
-    // for relay node this will always return null
+    if (replicaMode) {
+      return DisasterRecoveryMode.REPLICA.getPeerGroupPort(nodeContextSupplier.get().getNode()).orElseThrow(AssertionError::new);
+    }
     return null;
   }
 
