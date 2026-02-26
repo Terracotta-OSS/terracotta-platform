@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.Random;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
@@ -441,8 +443,26 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_unset_relay_mode() {
-    // TODO: add after relay nodes can pick up the config changes
+  public void test_unset_relay_mode_on_passive() {
+    waitForActive(1);
+    waitForNPassives(1, 1);
+    Random random = new Random();
+    int relayId = random.nextInt(2) + 1;
+    String relay = getNodeName(1, relayId);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", relay + ":relay-mode=" + "true",
+      "-c", relay + ":replica-hostname=" + "localhost",
+      "-c", relay + ":replica-port=" + "9410"), is(successful()));
+
+    stopNode(1, relayId);
+    startNode(1, relayId);
+
+    waitForPassiveRelay(1, relayId);
+
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", relay + ":relay-mode"), is(successful()));
+
+    // becomes passive after unset, no restart required as relay nodes are restarted automatically
+    waitForPassive(1, relayId);
   }
 
   @Test
