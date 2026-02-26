@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ public class ConfigurationGeneratorVisitor {
   private NodeContext nodeContext;
   private boolean repairMode;
   private boolean unConfiguredMode;
+  private boolean replicaMode;
 
   public ConfigurationGeneratorVisitor(IParameterSubstitutor parameterSubstitutor,
                                        NomadServerManager nomadServerManager,
@@ -94,18 +95,18 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
 
-    if (unConfiguredMode || repairMode) {
+    if (unConfiguredMode || repairMode || replicaMode) {
       // in diagnostic / unconfigured / repair mode, make sure we make platform think that the node is alone...
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, replicaMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     } else {
       // configured mode
       return new StartupConfiguration(
           () -> nomadServerManager.getConfiguration()
               .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-          false, false, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
+        false, false, false, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     }
   }
 
@@ -119,6 +120,20 @@ public class ConfigurationGeneratorVisitor {
     this.nodeContext = nodeContext;
     this.repairMode = false;
     this.unConfiguredMode = true;
+    this.replicaMode = false;
+  }
+
+  void startReplicaMode(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
+    String nodeName = nodeContext.getNode().getName();
+    server.console("Starting node: {} with replica-mode enabled", nodeName);
+    Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
+
+    nomadServerManager.configure(nodeConfigurationDir, nodeContext);
+
+    this.nodeContext = nodeContext;
+    this.replicaMode = true;
+    this.repairMode = false;
+    this.unConfiguredMode = false;
   }
 
   void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeConfigurationDirectoryFromCLI) {
@@ -154,6 +169,7 @@ public class ConfigurationGeneratorVisitor {
     this.nodeContext = nodeContext;
     this.repairMode = false;
     this.unConfiguredMode = false;
+    this.replicaMode = false;
   }
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
@@ -184,7 +200,7 @@ public class ConfigurationGeneratorVisitor {
     this.nodeContext = topologyService.getRuntimeNodeContext();
     this.repairMode = repairMode;
     this.unConfiguredMode = false;
-
+    this.replicaMode = false;
   }
 
   Node getMatchingNodeFromConfigFileUsingHostPort(String specifiedHostName, String specifiedPort, ConfigSource configSource, Cluster cluster) {
