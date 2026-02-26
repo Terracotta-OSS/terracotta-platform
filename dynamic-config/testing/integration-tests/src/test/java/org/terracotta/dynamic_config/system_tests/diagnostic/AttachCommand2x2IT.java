@@ -134,7 +134,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
       "-c", "stripe.1.node.1.replica-port=9410"), is(successful()));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("A replica-mode node with name: node-2-1 cannot coexist with other nodes with names: [node-1-1]")));
+      allOf(not(successful()), containsOutput("Node with name: node-2-1 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test
@@ -147,7 +147,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
       "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("A replica-mode node with name: node-2-1 cannot coexist with other nodes with names: [node-1-1]")));
+      allOf(not(successful()), containsOutput("Node with name: node-2-1 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test

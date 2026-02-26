@@ -61,14 +61,23 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid2.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("A replica-mode node with name: node-1-2 cannot coexist with other nodes with names: [node-1-1]")));
+        containsOutput("Node with name: node-1-2 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test
-  public void test_replica_mode_import() throws Exception {
+  public void test_failed_import_with_replica_mode_properties_on_normal_mode() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
-    assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica-mode", "-c", "relay-hostname", "-c", "relay-port", "-c", "relay-group-port", "-t", "index"),
-      allOf(containsOutput("replica-mode=true"), containsOutput("relay-hostname=localhost"), containsOutput("relay-port=" + 1234), containsOutput("relay-group-port=" + 5678)));
+    assertThat(configTool("import", "-f", configFile.toString()),
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. IMPORT operation is not supported on replica node.")));
+  }
+
+  @Test
+  public void test_failed_import_on_replica_node() throws Exception {
+    stopNode(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "1234", "-relay-group-port", "5678"));
+    waitForPassiveRelay(1, 1);
+    Path configFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
+    assertThat(configTool("import", "-f", configFile.toString()),
+      allOf(not(successful()), containsOutput("Node: " + getNodeHostPort(1, 1) +  " has replica-mode enabled")));
   }
 }

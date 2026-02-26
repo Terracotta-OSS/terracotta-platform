@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Testing;
 
@@ -453,7 +454,7 @@ public class ClusterValidatorTest {
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
-    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2))).validate(ClusterState.ACTIVATED);
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2))).validate(ClusterState.CONFIGURING);
 
     Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3])
       .setRelayMode(true)
@@ -655,6 +656,67 @@ public class ClusterValidatorTest {
     new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2))).validate(ClusterState.ACTIVATED);
   }
 
+  @Test
+  public void testBadDR_unsupportedSetOperationOnReplicaNode() {
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplicaMode(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Stream.of(ClusterState.CONFIGURING, ClusterState.ACTIVATED).forEach(state -> assertClusterValidationFailsContainsMessage(
+      "Node with name: node1 has replica-mode enabled. SET operation is not supported on replica node.",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)), state, Operation.SET));
+  }
+
+  @Test
+  public void testBadDR_unsupportedUnsetOperationOnReplicaNode() {
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplicaMode(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Stream.of(ClusterState.CONFIGURING, ClusterState.ACTIVATED).forEach(state -> assertClusterValidationFailsContainsMessage(
+      "Node with name: node1 has replica-mode enabled. UNSET operation is not supported on replica node.",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)), state, Operation.UNSET));
+  }
+
+  @Test
+  public void testBadDR_unsupportedImportOperationOnReplicaNode() {
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplicaMode(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Stream.of(ClusterState.CONFIGURING, ClusterState.ACTIVATED).forEach(state -> assertClusterValidationFailsContainsMessage(
+      "Node with name: node1 has replica-mode enabled. IMPORT operation is not supported on replica node.",
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)), state, Operation.IMPORT));
+  }
+
+  @Test
+  public void testGoodDR_supportedOperationOnReplicaNode() {
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplicaMode(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Stream.of(ClusterState.CONFIGURING, ClusterState.ACTIVATED).forEach(state ->
+      new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1))).validate(state, Operation.GET));
+  }
+
+  @Test
+  public void testGoodDR_operationsOnNonReplicaNode() {
+    // All operations should succeed on non-replica nodes
+    Node node1 = newTestNode("node1", "localhost1")
+      .setRelayMode(true)
+      .setReplicaHostname("replica-host")
+      .setReplicaPort(9410);
+    Stream.of(ClusterState.CONFIGURING, ClusterState.ACTIVATED).forEach(state -> {
+      Stream.of(Operation.values()).forEach(operation -> {
+        new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1))).validate(state, operation);
+      });
+    });
+  }
+
   private String generateAddress() {
     return random.nextInt(256) + "." + random.nextInt(256) + "." + random.nextInt(256) + "." + random.nextInt(256);
   }
@@ -665,5 +727,9 @@ public class ClusterValidatorTest {
 
   private void assertClusterValidationFailsContainsMessage(String message, Cluster cluster) {
     assertThat(() -> new ClusterValidator(cluster).validate(ClusterState.ACTIVATED), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(containsString(message)))));
+  }
+
+  private void assertClusterValidationFailsContainsMessage(String message, Cluster cluster, ClusterState clusterState, Operation operation) {
+    assertThat(() -> new ClusterValidator(cluster).validate(clusterState, operation), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(containsString(message)))));
   }
 }

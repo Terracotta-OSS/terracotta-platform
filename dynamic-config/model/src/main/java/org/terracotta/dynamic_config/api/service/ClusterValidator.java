@@ -20,6 +20,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -72,6 +73,8 @@ public class ClusterValidator {
   private static final String[] FORBIDDEN_NAMES_NO_EXT = new String[]{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
   // special chars in DC
   private static final char[] FORBIDDEN_DC_CHARS = new char[]{' ', ',', ':', '=', '%', '{', '}'};
+  private static final Set<Operation> UNSUPPORTED_REPLICA_OPERATIONS = EnumSet.of(Operation.SET, Operation.UNSET, Operation.IMPORT);
+  private static final Set<Operation> SUPPORTED_REPLICA_OPERATIONS = EnumSet.of(Operation.GET);
 
   static {
     // sorting because using binary search after
@@ -93,6 +96,14 @@ public class ClusterValidator {
   }
 
   public void validate(ClusterState clusterState, Version version) throws MalformedClusterException {
+    validate(clusterState, version, null);
+  }
+
+  public void validate(ClusterState clusterState, Operation operation) throws MalformedClusterException {
+    validate(clusterState, Version.CURRENT, operation);
+  }
+
+  public void validate(ClusterState clusterState, Version version, Operation operation) throws MalformedClusterException {
     validateNodeNames();
     validateNames(clusterState);
     validateAddresses();
@@ -100,7 +111,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
-    validateDRSetting(clusterState);
+    validateDRSetting(clusterState, operation);
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -198,7 +209,7 @@ public class ClusterValidator {
     }
   }
 
-  private void validateDRSetting(ClusterState clusterState) {
+  private void validateDRSetting(ClusterState clusterState, Operation operation) {
     Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
       .collect(Collectors.groupingBy(this::checkAndGetDRMode,
         Collectors.mapping(Node::getName, Collectors.toList())));
@@ -220,7 +231,14 @@ public class ClusterValidator {
         throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has replica-mode enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
       }
 
-      if (clusterState == ClusterState.ACTIVATED) {
+      if (UNSUPPORTED_REPLICA_OPERATIONS.contains(operation)) {
+        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has replica-mode enabled. "
+          + operation.name() + " operation is not supported on replica node.");
+      }
+
+      // For GET operation there is no cluster validation either for CONFIGURING or ACTIVATED state,
+      // added !SUPPORTED_REPLICA_OPERATIONS.contains(operation) for testing
+      if (clusterState == ClusterState.ACTIVATED && !SUPPORTED_REPLICA_OPERATIONS.contains(operation)) {
         throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has replica-mode enabled. " +
           "A cluster cannot be in activated state if replica-mode is enabled on any node.");
       }
