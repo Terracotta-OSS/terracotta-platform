@@ -261,4 +261,21 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config),
       allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node")));
   }
+
+  @Test
+  public void testReplicaActivation_without_relay_link() {
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveRelay(1, 1);
+
+    String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
+
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+
+    waitForActive(1);
+    waitForPassives(1);
+  }
 }
