@@ -741,6 +741,11 @@ public abstract class RemoteAction implements Runnable {
     return withTopologyService(expectedOnlineNode, TopologyService::isActivated);
   }
 
+  protected final boolean isReplica(HostPort expectedOnlineNode) {
+    LOGGER.trace("isReplica({})", expectedOnlineNode);
+    return withTopologyService(expectedOnlineNode, TopologyService::isReplica);
+  }
+
   protected final Endpoint findAnyOnlineNode(Collection<HostPort> nodes) {
     LOGGER.trace("findAnyOnlineNode({})", nodes);
     final NodeContext nodeContext = withAnyOnlineDiagnosticService(nodes, (hostPort, diagnosticService) -> diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext());

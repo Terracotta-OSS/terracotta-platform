@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -255,6 +256,12 @@ public final class DynamicConfigServiceImpl implements TopologyService, DynamicC
     // a node is activated when nomad is enabled and a last committed config is available
     return nomadServerManager.getNomadMode() == NomadMode.RW
         && nomadServerManager.getConfiguration().isPresent();
+  }
+
+  @Override
+  public boolean isReplica() {
+    // The runtimeNodeContext is reliable since replica nodes do not permit SET, UNSET, or IMPORT operations.
+    return DisasterRecoveryMode.isReplica(getRuntimeNodeContext().getNode());
   }
 
   @Override
