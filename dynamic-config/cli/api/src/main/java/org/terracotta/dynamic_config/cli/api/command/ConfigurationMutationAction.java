@@ -153,7 +153,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
 
-    new ClusterValidator(updatedCluster).validate(allOnlineNodesActivated ? ACTIVATED : CONFIGURING);
+    new ClusterValidator(updatedCluster).validate(allOnlineNodesActivated ? ACTIVATED : CONFIGURING, operation);
 
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
