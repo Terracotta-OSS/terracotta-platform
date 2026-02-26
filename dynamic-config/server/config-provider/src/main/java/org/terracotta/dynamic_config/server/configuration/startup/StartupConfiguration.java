@@ -64,6 +64,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final Supplier<NodeContext> nodeContextSupplier;
   private final boolean unConfigured;
   private final boolean repairMode;
+  private final boolean replicaMode;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
@@ -71,10 +72,11 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final GroupPortMapper groupPortMapper;
 
   @SuppressWarnings("deprecation")
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, boolean replicaMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
+    this.replicaMode = replicaMode;
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
@@ -214,6 +216,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
     startupConfig.addState("unConfigured", unConfigured);
     startupConfig.addState("repairMode", repairMode);
+    startupConfig.addState("replicaMode", replicaMode);
     startupConfig.addState("partialConfig", isPartialConfiguration());
     startupConfig.addState("startupNodeContext", toMap(nodeContextSupplier.get()));
 
