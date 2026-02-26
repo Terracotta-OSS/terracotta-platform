@@ -559,7 +559,7 @@ public abstract class RemoteAction implements Runnable {
     followRestart(progress, endpoints, maximumWaitTime);
   }
 
-  private void followRestart(RestartProgress progress, Collection<Endpoint> endpoints, Duration maximumWaitTime) {
+  protected void followRestart(RestartProgress progress, Collection<Endpoint> endpoints, Duration maximumWaitTime) {
     try {
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((endpoint, state) -> output.info("Node: {} has restarted in state: {}", endpoint, state));
