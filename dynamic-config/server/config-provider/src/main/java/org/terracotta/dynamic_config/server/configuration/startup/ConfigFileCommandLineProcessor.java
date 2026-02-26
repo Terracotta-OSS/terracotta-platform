@@ -20,10 +20,13 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.SettingName;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ConfigSource;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.Server;
+
+import java.util.List;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
@@ -58,6 +61,14 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     ConfigSource configSource = ConfigSource.from(parameterSubstitutor.substitute(options.getConfigSource()));
     server.console("Starting node from config file: {}", configSource);
     Cluster cluster = clusterCreator.create(configSource);
+
+    if (options.allowsAutoActivation()) {
+      List<String> replicaNodes = cluster.getNodes().stream().filter(DisasterRecoveryMode::isReplica).map(Node::getName).toList();
+      if (!replicaNodes.isEmpty()) {
+        throw new IllegalArgumentException(String.format("Nodes with names: %s have replica-mode enabled. " +
+          "The '%s' parameter cannot be used when replica-mode is enabled on any node.", replicaNodes, ConsoleParamsUtils.addDash(SettingName.AUTO_ACTIVATE)));
+      }
+    }
 
     Node node;
     if (options.getNodeName() != null) {

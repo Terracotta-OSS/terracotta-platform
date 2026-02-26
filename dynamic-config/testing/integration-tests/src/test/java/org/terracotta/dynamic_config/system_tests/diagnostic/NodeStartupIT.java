@@ -313,23 +313,47 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupRelayReplica() {
+  public void testFailedStartupReplicaModeWithAutoActivate() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-auto-activate", "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The '-auto-activate' parameter cannot be used when '-replica-mode' parameter is set to true.");
+  }
+
+  @Test
+  public void testFailedStartReplicaModeWithConfigFileAutoActivate() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
+    startNode(1, 1, "-auto-activate", "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Nodes with names: [node-1-1] have replica-mode enabled. The '-auto-activate' parameter cannot be used when replica-mode is enabled on any node.");
+  }
+
+  @Test
+  public void testFailedStartupRelayMissingProperty() {
     // missing relay-mode property
     startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost"));
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "relay-mode is enabled for node with name: node-1-1, relay-mode properties: {replica-hostname=localhost, replica-port=null} aren't well-formed");
+  }
 
+  @Test
+  public void testFailedStartupReplicaMissingProperty() {
     // missing replica-mode property
     startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-group-port", "9430"));
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "replica-mode is enabled for node with name: node-1-1, replica-mode properties: {relay-hostname=localhost, relay-port=null, relay-group-port=9430} aren't well-formed");
+  }
 
+  @Test
+  public void testFailedStartupBothRelayReplica() {
     // both relay-mode and replica-mode
     startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410",
       "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "Node with name: node-1-1 has both relay-mode and replica-mode enabled. A node cannot have both relay-mode and replica-mode active");
+  }
 
+  @Test
+  public void testFailedStartupPartialConfigWhenRelayDisabled() {
     // partial config with mode disabled
     startNode(1, 1, getNewOptions(getNode(1, 1), "-relay-mode", "false", "-replica-hostname", "localhost"));
     waitForStopped(1, 1);
