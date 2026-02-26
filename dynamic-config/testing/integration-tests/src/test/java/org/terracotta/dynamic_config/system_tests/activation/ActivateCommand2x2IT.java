@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,5 +103,29 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
             "-stripe-shape", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
             "-stripe-shape", "foo/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
         allOf(not(successful()), containsOutput("Found duplicate stripe name: foo")));
+  }
+
+  @Test
+  public void test_replica_activation_without_relay_link() {
+    stopNode(1, 2);
+    waitForStopped(1, 2);
+    startNode(1, 2, getNewOptions(getNode(1, 2),
+      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveRelay(1, 2);
+
+    stopNode(2, 2);
+    waitForStopped(2, 2);
+    startNode(2, 2, getNewOptions(getNode(2, 2),
+      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveRelay(2, 2);
+
+    String config = copyConfigProperty("/config-property-files/multi-stripe_multi-node.properties").toString();
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(4)));
+
+    waitForActive(1);
+    waitForPassives(1);
+    waitForActive(2);
+    waitForPassives(2);
   }
 }
