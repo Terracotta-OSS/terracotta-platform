@@ -71,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -105,6 +106,9 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 public abstract class RemoteAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RemoteAction.class);
+
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Inject
   public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
@@ -334,7 +338,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
     LOGGER.trace("lock({})", lockContext);
-    runConfigurationChange(destinationCluster, onlineNodes, new LockConfigNomadChange(lockContext));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isPassiveRelay()), new LockConfigNomadChange(lockContext));
     // user must see the lock token
     LOGGER.trace("Config locked.");
     LOGGER.trace("Token: " + lockContext.getToken());
@@ -357,11 +361,12 @@ public abstract class RemoteAction implements Runnable {
 
   private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
     output.info("Trying to unlock the config...");
-    runConfigurationChange(destinationCluster, onlineNodes, new UnlockConfigNomadChange(force));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isPassiveRelay()), new UnlockConfigNomadChange(force));
     output.info("Config unlocked.");
     if (nomadManager instanceof LockAwareNomadManager) {
       this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
     }
+    restartRelayNodesIfPresent(onlineNodes);
   }
 
   @SuppressFBWarnings("BC_VACUOUS_INSTANCEOF")
@@ -601,6 +606,22 @@ public abstract class RemoteAction implements Runnable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Stop has been interrupted", e);
+    }
+  }
+
+  /**
+   * Restarts relay nodes after a successful nomad change operation.
+   * Relay nodes need to be restarted to sync with recent config
+   */
+  protected void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
+    LinkedHashMap<Endpoint, LogicalServerState> relayNodes = filter(nodes, ((endpoint, state) -> state.isPassiveRelay()));
+    if (!relayNodes.isEmpty()) {
+      output.info("Restarting relay nodes: {}", relayNodes.keySet());
+      try {
+        restartNodes(relayNodes.keySet(), restartDelay, restartWaitTime);
+      } catch (RuntimeException e) {
+        output.warn("Failed to restart relay nodes {} automatically: {}. Please restart manually.", relayNodes.keySet(), e.getMessage());
+      }
     }
   }
 

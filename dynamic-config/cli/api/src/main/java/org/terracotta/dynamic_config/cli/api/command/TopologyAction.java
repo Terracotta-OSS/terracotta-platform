@@ -47,9 +47,6 @@ import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 public abstract class TopologyAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyAction.class);
 
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-
   @Injector.Inject
   public UnlockConfigAction unlockAction = new UnlockConfigAction();
 
@@ -107,8 +104,7 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      destOnlineNodesExcludingRelays = destinationOnlineNodes.entrySet().stream().filter(entry -> !entry.getValue().isPassiveRelay())
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      destOnlineNodesExcludingRelays = filter(destinationOnlineNodes, (endpoint, state) -> !state.isPassiveRelay());
       ensureNodesAreEitherActiveOrPassive(destOnlineNodesExcludingRelays);
       ensureActivesAreAllOnline(destinationCluster, destOnlineNodesExcludingRelays);
     }
@@ -203,25 +199,6 @@ public abstract class TopologyAction extends RemoteAction {
       unlockAction.setNode(remaining.determineEndpoint(destination).getHostPort());
       unlockAction.run();
     });
-  }
-
-  /**
-   * Restarts relay nodes after a successful attach operation.
-   * Relay nodes need to be restarted to properly sync with the updated topology.
-   */
-  protected void restartRelayNodesIfPresent() {
-    Set<Endpoint> relayEndPoints = destinationOnlineNodes.entrySet().stream()
-      .filter(entry -> entry.getValue().isPassiveRelay())
-      .map(Map.Entry::getKey)
-      .collect(Collectors.toSet());
-    if (!relayEndPoints.isEmpty()) {
-      output.info("Restarting relay nodes: {}", relayEndPoints);
-      try {
-        restartNodes(relayEndPoints, restartDelay, restartWaitTime);
-      } catch (RuntimeException e) {
-        output.warn("Failed to restart relay nodes {} automatically: {}. Please restart manually.", relayEndPoints, e.getMessage());
-      }
-    }
   }
 
   protected void onNomadChangeFailure(TopologyNomadChange nomadChange, RuntimeException error) {
