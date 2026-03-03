@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
@@ -54,6 +55,7 @@ public abstract class TopologyAction extends RemoteAction {
   protected Endpoint destination;
 
   protected Map<Endpoint, LogicalServerState> destinationOnlineNodes;
+  protected Map<Endpoint, LogicalServerState> destOnlineNodesExcludingRelays;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
 
@@ -100,8 +102,10 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
-      ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
+      destOnlineNodesExcludingRelays = destinationOnlineNodes.entrySet().stream().filter(entry -> !entry.getValue().isPassiveRelay())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      ensureNodesAreEitherActiveOrPassive(destOnlineNodesExcludingRelays);
+      ensureActivesAreAllOnline(destinationCluster, destOnlineNodesExcludingRelays);
     }
   }
 
@@ -151,7 +155,7 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {
-        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+        runTopologyChange(destinationCluster, destOnlineNodesExcludingRelays, nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }

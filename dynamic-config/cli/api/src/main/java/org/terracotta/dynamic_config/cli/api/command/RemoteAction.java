@@ -151,7 +151,7 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  private void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     output.info("Restarting nodes: " + toString(newNodes));
     restartNodes(
         newNodes,

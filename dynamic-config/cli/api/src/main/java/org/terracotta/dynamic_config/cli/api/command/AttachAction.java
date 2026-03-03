@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.LockTag;
@@ -39,7 +40,9 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Collections.singleton;
@@ -309,8 +312,27 @@ public class AttachAction extends TopologyAction {
     tryFinally(() -> activate(nomadChange), () -> {
       if (isUnlockRequired()) {
         unlock(nomadChange);
+      } else {
+        restartRelayNodesIfPresent();
       }
     });
+  }
+
+  /**
+   * Restarts relay nodes after a successful attach operation.
+   * Relay nodes need to be restarted to properly sync with the updated topology.
+   */
+  private void restartRelayNodesIfPresent() {
+    Set<Endpoint> relayEndPoints = destinationOnlineNodes.entrySet().stream().filter(entry -> entry.getValue().isPassiveRelay())
+      .map(Map.Entry::getKey).collect(Collectors.toSet());
+    if (!relayEndPoints.isEmpty()) {
+      LOGGER.info("restarting relay nodes: {}", relayEndPoints);
+      try {
+        restartNodes(relayEndPoints, restartDelay, restartWaitTime);
+      } catch (RuntimeException e) {
+        LOGGER.warn("Failed to restart relay nodes {} automatically: {}. Please restart manually.", relayEndPoints, e.getMessage());
+      }
+    }
   }
 
   protected final void activate(TopologyNomadChange nomadChange) {
