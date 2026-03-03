@@ -73,8 +73,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   protected boolean autoRestart;
   protected boolean force;
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   protected ConfigurationMutationAction(Operation operation) {
     super(operation);
