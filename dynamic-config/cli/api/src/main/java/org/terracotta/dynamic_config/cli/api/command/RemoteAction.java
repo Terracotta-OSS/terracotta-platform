@@ -71,7 +71,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -610,7 +609,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   /**
-   * Restarts relay nodes after a successful nomad change operation.
+   * Restarts relay nodes after a successful topology change operation.
    * Relay nodes need to be restarted to sync with recent config
    */
   protected void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
