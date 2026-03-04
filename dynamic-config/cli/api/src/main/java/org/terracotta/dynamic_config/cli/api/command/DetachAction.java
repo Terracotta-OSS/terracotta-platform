@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,7 @@ public class DetachAction extends TopologyAction {
       if (isUnlockRequired()) {
         unlock(nomadChange);
       } else {
-        restartRelayNodesIfPresent(destinationOnlineNodes);
+        restartRelayNodesIfPresent(onlineRelayNodes);
       }
     }, () -> {
       // When the operation type is node, the nodes being detached should be stopped first manually

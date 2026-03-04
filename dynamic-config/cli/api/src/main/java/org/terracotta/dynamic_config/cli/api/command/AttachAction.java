@@ -307,7 +307,7 @@ public class AttachAction extends TopologyAction {
       if (isUnlockRequired()) {
         unlock(nomadChange);
       } else {
-        restartRelayNodesIfPresent(destinationOnlineNodes);
+        restartRelayNodesIfPresent(onlineRelayNodes);
       }
     });
   }
