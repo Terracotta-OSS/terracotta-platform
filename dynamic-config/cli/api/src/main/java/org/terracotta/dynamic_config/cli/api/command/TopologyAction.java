@@ -54,7 +54,7 @@ public abstract class TopologyAction extends RemoteAction {
   protected Endpoint destination;
 
   protected Map<Endpoint, LogicalServerState> destinationOnlineNodes;
-  protected Map<Endpoint, LogicalServerState> destOnlineNodesExcludingRelays;
+  protected Map<Endpoint, LogicalServerState> onlineRelayNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
 
@@ -101,9 +101,10 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      destOnlineNodesExcludingRelays = filter(destinationOnlineNodes, (endpoint, state) -> !state.isPassiveRelay());
-      ensureNodesAreEitherActiveOrPassive(destOnlineNodesExcludingRelays);
-      ensureActivesAreAllOnline(destinationCluster, destOnlineNodesExcludingRelays);
+      onlineRelayNodes = filter(destinationOnlineNodes, (endpoint, state) -> state.isPassiveRelay());
+      destinationOnlineNodes = filter(destinationOnlineNodes, (endpoint, state) -> !state.isPassiveRelay());
+      ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
+      ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
     }
   }
 
@@ -153,7 +154,7 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {
-        runTopologyChange(destinationCluster, destOnlineNodesExcludingRelays, nomadChange);
+        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }

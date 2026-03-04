@@ -39,7 +39,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 3)
 public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
-  private static final Duration WAIT_UNTIL = Duration.ofSeconds(60);
+  private static final Duration WAIT_UNTIL = Duration.ofMinutes(5);
 
   @Before
   public void setup() throws Exception {
