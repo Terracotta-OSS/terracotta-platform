@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockTag;
@@ -35,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
