@@ -80,7 +80,7 @@ public class DetachCommand2x3WithRelayIT extends DynamicConfigIT {
     waitUntil(() -> angela.tsa().getStopped().size(), is(2));
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(2, 2), "-s", "localhost:" + getNodePort(2, secondStripePassiveId)), is(successful()));
 
-    String expectedNomadChangeSecondStripe = "Detaching node: node-1-" + secondStripePassiveId +" from stripe";
+    String expectedNomadChangeSecondStripe = "Detaching node: node-2-" + secondStripePassiveId +" from stripe";
     assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
     assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
 

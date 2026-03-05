@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -94,14 +92,6 @@ public class AttachAction extends TopologyAction {
         .forEach(node -> sources.put(
             node.determineEndpoint(context.t1),
             new NodeContext(context.t2.getCluster(), node.getUID())));
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   @Override
@@ -307,7 +297,7 @@ public class AttachAction extends TopologyAction {
       if (isUnlockRequired()) {
         unlock(nomadChange);
       } else {
-        restartRelayNodesIfPresent(onlineRelayNodes);
+        restartRelayNodesIfPresent(destinationOnlineNodes);
       }
     });
   }
@@ -316,10 +306,10 @@ public class AttachAction extends TopologyAction {
     Cluster result = nomadChange.getCluster();
     switch (operationType) {
       case NODE:
-        activateNodes(sources.keySet(), result, null, restartDelay, restartWaitTime);
+        activateNodes(sources.keySet(), result, null);
         break;
       case STRIPE:
-        activateStripe(sources.keySet(), result, destination, restartDelay, restartWaitTime);
+        activateStripe(sources.keySet(), result, destination);
         break;
       default:
         throw new UnsupportedOperationException(operationType.name());

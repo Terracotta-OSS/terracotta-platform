@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
@@ -80,14 +79,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   public void setAutoRestart(boolean autoRestart) {
     this.autoRestart = autoRestart;
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   public void setForce(boolean force) {
@@ -286,10 +277,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       }
 
       if (!onlineRelayNodes.isEmpty()) {
-        followRestart(relayRestartProgress,
-          onlineRelayNodes,
-          Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS))
-        );
+        followRestart(relayRestartProgress, onlineRelayNodes);
       }
     } else {
       // cluster is not active, we just need to replace the topology
@@ -371,16 +359,12 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.info("Restarting non active nodes: {}...", toString(others));
     restartNodesIfPassives(
         others,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
     LOGGER.info("Restarting active nodes: {}...", toString(actives));
     restartNodesIfActives(
         actives,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
