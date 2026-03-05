@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -46,8 +44,6 @@ public class ActivateAction extends RemoteAction {
   private ConfigSource configSource;
   private String clusterName;
   private Path licenseFile;
-  private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
   private boolean restrictedActivation;
   private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
@@ -65,14 +61,6 @@ public class ActivateAction extends RemoteAction {
 
   public void setLicenseFile(Path licenseFile) {
     this.licenseFile = licenseFile;
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   public void setRestrictedActivation(boolean restrictedActivation) {
@@ -163,7 +151,7 @@ public class ActivateAction extends RemoteAction {
     if (!restrictedActivation) {
       NameGenerator.assignFriendlyNames(cluster);
     }
-    activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
+    activateNodes(runtimePeers, cluster, licenseFile);
     output.info("Command successful!");
   }
 

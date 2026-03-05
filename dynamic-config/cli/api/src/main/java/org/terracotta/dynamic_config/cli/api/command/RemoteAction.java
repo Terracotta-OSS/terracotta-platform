@@ -128,6 +128,14 @@ public abstract class RemoteAction implements Runnable {
     return jsonFactory.pretty().create().toString(o);
   }
 
+  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
+    this.restartWaitTime = restartWaitTime;
+  }
+
+  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
+    this.restartDelay = restartDelay;
+  }
+
   protected final void licenseValidation(HostPort expectedOnlineNode, Cluster cluster) {
     LOGGER.trace("licenseValidation({}, {})", expectedOnlineNode, cluster);
     doWithTopologyService(expectedOnlineNode, topologyService -> {
@@ -154,12 +162,10 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  protected void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void restartNodes(Collection<Endpoint> newNodes) {
     output.info("Restarting nodes: " + toString(newNodes));
     restartNodes(
         newNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         // these are the list of states that we allow to consider a server has restarted
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
@@ -167,24 +173,22 @@ public abstract class RemoteAction implements Runnable {
     output.info("All nodes came back up");
   }
 
-  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile,
-                                     Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile) {
     activateNomadSystem(newNodes, cluster, read(licenseFile));
 
     runClusterActivation(newNodes, cluster);
 
-    restartNodes(newNodes, restartDelay, restartWaitTime);
+    restartNodes(newNodes);
   }
 
-  protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination,
-                                      Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination) {
     activateNomadSystem(newNodes, cluster, getLicenseContentFrom(destination).orElse(null));
 
     runClusterActivation(newNodes, cluster);
 
     syncNomadChangesTo(newNodes, getChangeHistory(destination), cluster);
 
-    restartNodes(newNodes, restartDelay, restartWaitTime);
+    restartNodes(newNodes);
   }
 
   private Optional<String> getLicenseContentFrom(Endpoint expectedOnlineNode) {
@@ -536,35 +540,36 @@ public abstract class RemoteAction implements Runnable {
     return Tuple2.tuple2(nodeContext.getNode().determineEndpoint(expectedOnlineNode), nodeContext);
   }
 
-  protected final void restartNodes(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodes({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodes(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodes({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodes(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  protected final void restartNodesIfActives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodesIfActives({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodesIfActives(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfActives({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodesIfActives(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  protected final void restartNodesIfPassives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.trace("restartNodesIfPassives({}, {})", endpoints, maximumWaitTime);
+  protected final void restartNodesIfPassives(Collection<Endpoint> endpoints, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfPassives({}, {})", endpoints, Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)));
     RestartProgress progress = restartService.restartNodesIfPassives(
         endpoints,
-        restartDelay,
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
         acceptedStates);
-    followRestart(progress, endpoints, maximumWaitTime);
+    followRestart(progress, endpoints);
   }
 
-  protected void followRestart(RestartProgress progress, Collection<Endpoint> endpoints, Duration maximumWaitTime) {
+  protected void followRestart(RestartProgress progress, Collection<Endpoint> endpoints) {
     try {
+      Duration maximumWaitTime = Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS));
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((endpoint, state) -> output.info("Node: {} has restarted in state: {}", endpoint, state));
       Map<Endpoint, LogicalServerState> restarted = progress.await(maximumWaitTime);
@@ -612,12 +617,12 @@ public abstract class RemoteAction implements Runnable {
    * Restarts relay nodes after a successful topology change operation.
    * Relay nodes need to be restarted to sync with recent config
    */
-  protected void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
+  protected final void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
     LinkedHashMap<Endpoint, LogicalServerState> relayNodes = filter(nodes, ((endpoint, state) -> state.isPassiveRelay()));
     if (!relayNodes.isEmpty()) {
       output.info("Restarting relay nodes: {}", relayNodes.keySet());
       try {
-        restartNodes(relayNodes.keySet(), restartDelay, restartWaitTime);
+        restartNodes(relayNodes.keySet());
       } catch (RuntimeException e) {
         output.warn("Failed to restart relay nodes {} automatically: {}. Please restart manually.", relayNodes.keySet(), e.getMessage());
       }

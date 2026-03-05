@@ -250,7 +250,7 @@ public class DetachAction extends TopologyAction {
       if (isUnlockRequired()) {
         unlock(nomadChange);
       } else {
-        restartRelayNodesIfPresent(onlineRelayNodes);
+        restartRelayNodesIfPresent(destinationOnlineNodes);
       }
     }, () -> {
       // When the operation type is node, the nodes being detached should be stopped first manually
