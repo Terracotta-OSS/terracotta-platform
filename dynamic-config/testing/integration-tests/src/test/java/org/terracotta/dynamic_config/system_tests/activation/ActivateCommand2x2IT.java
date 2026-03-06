@@ -111,13 +111,13 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
     waitForStopped(1, 2);
     startNode(1, 2, getNewOptions(getNode(1, 2),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveRelay(1, 2);
+    waitForPassiveReplicaStart(1, 2);
 
     stopNode(2, 2);
     waitForStopped(2, 2);
     startNode(2, 2, getNewOptions(getNode(2, 2),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveRelay(2, 2);
+    waitForPassiveReplicaStart(2, 2);
 
     String config = copyConfigProperty("/config-property-files/multi-stripe_multi-node.properties").toString();
     assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));

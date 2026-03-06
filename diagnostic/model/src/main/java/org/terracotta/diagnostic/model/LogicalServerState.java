@@ -38,8 +38,19 @@ public enum LogicalServerState {
    */
   PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
 
+  /**
+   * Passive server configured as a relay, ready to send data to a replica server
+   */
   PASSIVE_RELAY("PASSIVE_RELAY", "PASSIVE-RELAY"),
 
+  /**
+   * Passive server configured as a replica in the starting state, requesting to receive data from a relay server
+   */
+  PASSIVE_REPLICA_START("PASSIVE_REPLICA_START", "PASSIVE-REPLICA-START"),
+
+  /**
+   * Passive server configured as a replica in the final state, actively receiving data from a relay server
+   */
   PASSIVE_REPLICA("PASSIVE_REPLICA", "PASSIVE-REPLICA"),
 
   /**
@@ -146,6 +157,10 @@ public enum LogicalServerState {
 
   public boolean isPassiveRelay() {
     return this == PASSIVE_RELAY;
+  }
+
+  public boolean isPassiveReplicaStart() {
+    return this == PASSIVE_REPLICA_START;
   }
 
   public boolean isPassiveReplica() {

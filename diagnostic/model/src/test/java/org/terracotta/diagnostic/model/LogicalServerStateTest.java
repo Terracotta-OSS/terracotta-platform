@@ -26,6 +26,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDE
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_REPLICA;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_REPLICA_START;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
@@ -51,6 +52,11 @@ public class LogicalServerStateTest {
   @Test
   public void parseTest_passive_relay() {
     assertThat(LogicalServerState.parse("PASSIVE-RELAY"), equalTo(PASSIVE_RELAY));
+  }
+
+  @Test
+  public void parseTest_passive_replica_start() {
+    assertThat(LogicalServerState.parse("PASSIVE-REPLICA-START"), equalTo(PASSIVE_REPLICA_START));
   }
 
   @Test

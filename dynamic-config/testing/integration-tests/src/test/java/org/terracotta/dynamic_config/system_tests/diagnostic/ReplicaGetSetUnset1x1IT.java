@@ -33,7 +33,7 @@ public class ReplicaGetSetUnset1x1IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveRelay(1, 1);
+    waitForPassiveReplicaStart(1, 1);
   }
 
   @Test
