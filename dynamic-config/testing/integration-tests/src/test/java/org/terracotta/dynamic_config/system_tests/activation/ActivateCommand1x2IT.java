@@ -268,7 +268,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveRelay(1, 1);
+    waitForPassiveReplicaStart(1, 1);
 
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
 

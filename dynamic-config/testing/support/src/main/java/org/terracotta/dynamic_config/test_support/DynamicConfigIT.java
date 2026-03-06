@@ -661,6 +661,16 @@ public class DynamicConfigIT {
     angela.waitForPassiveRelay(stripeId, nodeId);
   }
 
+  protected final void waitForPassiveReplicaStart(int stripeId, int nodeId) {
+    // TODO: change to PASSIVE-REPLICA-START state once the core changes are released
+    angela.waitForPassiveRelay(stripeId, nodeId);
+  }
+
+  protected final void waitForPassiveReplica(int stripeId, int nodeId) {
+    // TODO: change to PASSIVE-REPLICA state once the core changes are released
+    angela.waitForPassiveRelay(stripeId, nodeId);
+  }
+
   protected final void waitForDiagnostic(int stripeId, int nodeId) {
     angela.waitForDiagnostic(stripeId, nodeId);
   }
