@@ -251,15 +251,15 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(
       configTool("activate", "-cluster-name", "my-cluster", "-connect-to", getNodeHostPort(1, 1) + ""),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node")));
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")));
 
     String config = copyConfigProperty("/config-property-files/1x1-replica.properties").toString();
     assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node")));
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")));
   }
 
   @Test
@@ -267,7 +267,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForPassiveRelay(1, 1);
 
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();

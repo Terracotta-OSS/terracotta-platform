@@ -33,51 +33,51 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class ImportCommand1x2IT extends DynamicConfigIT {
 
   @Test
-  public void test_relay_mode_import() throws Exception {
+  public void test_relay_import() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay.properties");
     assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-mode", "-c", "replica-hostname", "-c", "replica-port", "-t", "index"),
-      allOf(is(successful()), containsOutput("stripe.1.node.2.relay-mode=true"), containsOutput("stripe.1.node.2.replica-hostname=localhost"), containsOutput("stripe.1.node.2.replica-port=" + 1234)));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay", "-c", "replica-hostname", "-c", "replica-port", "-t", "index"),
+      allOf(is(successful()), containsOutput("stripe.1.node.2.relay=true"), containsOutput("stripe.1.node.2.replica-hostname=localhost"), containsOutput("stripe.1.node.2.replica-port=" + 1234)));
   }
 
   @Test
-  public void test_relay_mode_invalid_missing_property() throws Exception {
+  public void test_relay_invalid_missing_property() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid1.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("relay-mode is enabled for node with name: node-1-2, relay-mode properties: {replica-hostname=localhost, replica-port=null} aren't well-formed")));
+        containsOutput("The relay setting is enabled for node with name: node-1-2, relay properties: {replica-hostname=localhost, replica-port=null} aren't well-formed")));
   }
 
   @Test
-  public void test_relay_mode_disabled_invalid_partial_config() throws Exception {
+  public void test_relay_disabled_invalid_partial_config() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid3.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("relay-mode is disabled for node with name: node-1-1, properties: {replica-hostname=null, replica-port=1234} are partially configured")));
+        containsOutput("The relay setting is disabled for node with name: node-1-1, properties: {replica-hostname=null, replica-port=1234} are partially configured")));
   }
 
   @Test
-  public void test_relay_mode_invalid_mutual_exclusion() throws Exception {
+  public void test_relay_invalid_mutual_exclusion() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid2.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("Node with name: node-1-2 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
+        containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test
-  public void test_failed_import_with_replica_mode_properties_on_normal_mode() throws Exception {
+  public void test_failed_import_with_replica_properties_on_normal_node() throws Exception {
     Path configFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has replica-mode enabled. IMPORT operation is not supported on replica node.")));
+      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. IMPORT operation is not supported on replica node")));
   }
 
   @Test
   public void test_failed_import_on_replica_node() throws Exception {
     stopNode(1, 1);
-    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "1234", "-relay-group-port", "5678"));
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "1234", "-relay-group-port", "5678"));
     waitForPassiveRelay(1, 1);
     Path configFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node: " + getNodeHostPort(1, 1) +  " has replica-mode enabled")));
+      allOf(not(successful()), containsOutput("Node: " + getNodeHostPort(1, 1) +  " has the replica setting enabled")));
   }
 }

@@ -51,8 +51,8 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
 
     assertThat(configTool("attach", "-to-cluster", "localhost:" + getNodePort(1, 1), "-stripe", "localhost:" + getNodePort(2, 1)), is(successful()));
 
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.3.relay-mode=true", "-c", "stripe.1.node.3.replica-hostname=" + "localhost", "-c", "stripe.1.node.3.replica-port=" + "9410",
-      "-c", "stripe.2.node.3.relay-mode=true", "-c", "stripe.2.node.3.replica-hostname=" + "localhost", "-c", "stripe.2.node.3.replica-port=" + "9410"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.3.relay=true", "-c", "stripe.1.node.3.replica-hostname=" + "localhost", "-c", "stripe.1.node.3.replica-port=" + "9410",
+      "-c", "stripe.2.node.3.relay=true", "-c", "stripe.2.node.3.replica-hostname=" + "localhost", "-c", "stripe.2.node.3.replica-port=" + "9410"), is(successful()));
 
     activateCluster();
     waitForActive(1);

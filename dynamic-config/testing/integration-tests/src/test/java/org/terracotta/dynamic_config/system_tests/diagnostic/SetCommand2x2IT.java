@@ -320,14 +320,14 @@ public class SetCommand2x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_set_multiple_relay_mode_nomad_change_sync() {
+  public void test_set_multiple_relay_nomad_change_sync() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.relay=" + "true",
       "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
       "-c", "stripe.1.node.1.replica-port=" + "9410"), is(successful()));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-      "-c", "stripe.2.node.1.relay-mode=" + "true",
+      "-c", "stripe.2.node.1.relay=" + "true",
       "-c", "stripe.2.node.1.replica-hostname=" + "localhost",
       "-c", "stripe.2.node.1.replica-port=" + "9411"), is(successful()));
 

@@ -68,8 +68,8 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
-import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
-import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -525,10 +525,10 @@ public class ConfigurationTest {
       // empty value not allowed
       // set allowed for scope node
       Stream.of(
-        tuple2(RELAY_MODE, "true"),
+        tuple2(RELAY, "true"),
         tuple2(REPLICA_HOSTNAME, "foo"),
         tuple2(REPLICA_PORT, "9410"),
-        tuple2(REPLICA_MODE, "true"),
+        tuple2(REPLICA, "true"),
         tuple2(RELAY_HOSTNAME, "foo"),
         tuple2(RELAY_PORT, "9410"),
         tuple2(RELAY_GROUP_PORT, "9430")
@@ -822,8 +822,8 @@ public class ConfigurationTest {
       }));
     });
 
-    // relay-mode: GET at any levels, SET/UNSET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
-    Stream.of("relay-mode").forEach(setting -> {
+    // relay: GET at any levels, SET/UNSET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
+    Stream.of("relay").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
 
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
@@ -874,8 +874,8 @@ public class ConfigurationTest {
       }));
     });
 
-    // replica-mode: GET at any levels, IMPORT at NODE level, NO SET/UNSET
-    Stream.of("replica-mode").forEach(setting -> {
+    // replica: GET at any levels, IMPORT at NODE level, NO SET/UNSET
+    Stream.of("replica").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
 
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));

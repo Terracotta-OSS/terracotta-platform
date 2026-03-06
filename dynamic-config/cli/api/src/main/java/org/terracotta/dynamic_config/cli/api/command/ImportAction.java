@@ -93,7 +93,7 @@ public class ImportAction extends RemoteAction {
         throw new IllegalStateException("Node: " + node + " is already activated");
       }
       if (isReplica(node)) {
-        throw new IllegalStateException("Node: " + node + " has replica-mode enabled");
+        throw new IllegalStateException("Node: " + node + " has the replica setting enabled");
       }
     }
 

@@ -328,10 +328,10 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setRelayModeProperties() {
+  public void setRelayProperties() {
     waitForActive(1);
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.relay=" + "true",
       "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
       "-c", "stripe.1.node.1.replica-port=" + "9410"), allOf(is(successful())));
 
@@ -342,13 +342,13 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setReplicaModeProperties() {
+  public void setReplicaProperties() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.replica-mode=" + "true")
+        "-c", "stripe.1.node.1.replica=" + "true")
       , allOf(
         not(successful()),
         containsOutput("Invalid input"),
-        containsOutput("'replica-mode' cannot be set")
+        containsOutput("'replica' cannot be set")
       ));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),

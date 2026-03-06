@@ -30,11 +30,11 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(autoActivate = true)
 public class UnsetCommand1x1IT extends DynamicConfigIT {
   @Test
-  public void test_unset_failed_relay_mode_properties() {
+  public void test_unset_failed_relay_properties() {
     // it'll fail as there is no active and relay node is not part of nomad transaction
     waitForActive(1);
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-      "-c", "stripe.1.node.1.relay-mode=" + "true",
+      "-c", "stripe.1.node.1.relay=" + "true",
       "-c", "stripe.1.node.1.replica-hostname=" + "localhost",
       "-c", "stripe.1.node.1.replica-port=" + "9410"), allOf(is(successful())));
 
@@ -43,7 +43,7 @@ public class UnsetCommand1x1IT extends DynamicConfigIT {
 
     waitForPassiveRelay(1, 1);
 
-    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":relay-mode"),
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":relay"),
       allOf(not(successful()), containsOutput("Expected 1 active per stripe, but found no online node")));
   }
 }

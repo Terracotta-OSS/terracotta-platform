@@ -169,13 +169,13 @@ public class NodeTest {
   }
 
   @Test
-  public void test_relay_mode_properties() {
-    assertThat(newTestNode("node1", "localhost").getRelayMode().orDefault(), is(false));
+  public void test_relay_properties() {
+    assertThat(newTestNode("node1", "localhost").getRelay().orDefault(), is(false));
     assertThat(newTestNode("node1", "localhost").getReplicaHostname().isConfigured(), is(false));
     assertThat(newTestNode("node1", "localhost").getReplicaPort().isConfigured(), is(false));
 
-    Node node = newTestNode("node1", "localhost").setRelayMode(true).setReplicaHostname("relay-host").setReplicaPort(9410);
-    assertThat(node.getRelayMode().get(), is(equalTo(true)));
+    Node node = newTestNode("node1", "localhost").setRelay(true).setReplicaHostname("relay-host").setReplicaPort(9410);
+    assertThat(node.getRelay().get(), is(equalTo(true)));
     assertThat(node.getReplicaHostname().get(), is(equalTo("relay-host")));
     assertThat(node.getReplicaPort().get(), is(equalTo(9410)));
 
@@ -185,19 +185,19 @@ public class NodeTest {
   }
 
   @Test
-  public void test_replica_mode_properties() {
-    assertThat(newTestNode("node1", "localhost").getReplicaMode().orDefault(), is(false));
+  public void test_replica_properties() {
+    assertThat(newTestNode("node1", "localhost").getReplica().orDefault(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayHostname().isConfigured(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayPort().isConfigured(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayGroupPort().isConfigured(), is(false));
 
     Node node = newTestNode("node1", "localhost")
-      .setReplicaMode(true)
+      .setReplica(true)
       .setRelayHostname("dest-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
 
-    assertThat(node.getReplicaMode().get(), is(equalTo(true)));
+    assertThat(node.getReplica().get(), is(equalTo(true)));
     assertThat(node.getRelayHostname().get(), is(equalTo("dest-host")));
     assertThat(node.getRelayPort().get(), is(equalTo(9410)));
     assertThat(node.getRelayGroupPort().get(), is(equalTo(9430)));

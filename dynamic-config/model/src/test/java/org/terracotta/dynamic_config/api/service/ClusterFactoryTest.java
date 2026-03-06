@@ -111,8 +111,8 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"))
-          .setRelayMode(false)
-          .setReplicaMode(false),
+          .setRelay(false)
+          .setReplica(false),
       Testing.newTestNode("node-2", "localhost2")
           .setUID(Testing.N_UIDS[2])
           .setPort(9410)
@@ -124,8 +124,8 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
-          .setRelayMode(false)
-          .setReplicaMode(false)
+          .setRelay(false)
+          .setReplica(false)
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)

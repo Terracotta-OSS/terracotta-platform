@@ -59,10 +59,10 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PO
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.SettingName.RELAY;
 import static org.terracotta.dynamic_config.api.model.SettingName.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_MODE;
+import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
@@ -118,8 +118,8 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + NODE_BACKUP_DIR}, description = "Node backup directory. Default: <unset>")
   private String backupDir;
 
-  @Parameter(names = {"-" + RELAY_MODE}, description = "Relay mode setting (true|false). Default: false")
-  private String relayMode;
+  @Parameter(names = {"-" + RELAY}, description = "Relay setting (true|false). Default: false")
+  private String relay;
 
   @Parameter(names = {"-" + REPLICA_HOSTNAME}, description = "Replica node host name. Default: <unset>")
   private String replicaHostname;
@@ -127,8 +127,8 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + REPLICA_PORT}, description = "Replica node port. Default: <unset>")
   private String replicaPort;
 
-  @Parameter(names = {"-" + REPLICA_MODE}, description = "Replica mode setting (true|false). Default: false")
-  private String replicaMode;
+  @Parameter(names = {"-" + REPLICA}, description = "Replica setting (true|false). Default: false")
+  private String replica;
 
   @Parameter(names = {"-" + RELAY_HOSTNAME}, description = "Relay node host name. Default: <unset>")
   private String relayHostname;
@@ -278,8 +278,8 @@ public class OptionsParsingImpl implements OptionsParsing {
       }
     } else {
       // when using CLI parameters
-      if (Objects.equals(replicaMode, "true") && allowsAutoActivation) {
-        throw new IllegalArgumentException(String.format("The '%s' parameter cannot be used when '%s' parameter is set to true.", addDash(SettingName.AUTO_ACTIVATE), addDash(REPLICA_MODE)));
+      if (Objects.equals(replica, "true") && allowsAutoActivation) {
+        throw new IllegalArgumentException(String.format("The '%s' parameter cannot be used when '%s' parameter is set to true.", addDash(SettingName.AUTO_ACTIVATE), addDash(REPLICA)));
       }
       if (licenseFile != null) {
         if (clusterName == null) {

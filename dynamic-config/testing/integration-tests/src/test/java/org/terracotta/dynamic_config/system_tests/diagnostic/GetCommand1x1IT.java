@@ -96,15 +96,15 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testNode_getDefaultRelayMode() {
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-mode"), containsOutput("relay-mode=false"));
+  public void testNode_getDefaultRelay() {
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay"), containsOutput("relay=false"));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica-hostname"), not(containsOutput("replica-hostname")));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica-port"), not(containsOutput("replica-port")));
   }
 
   @Test
-  public void testNode_getDefaultReplicaMode() {
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica-mode"), containsOutput("replica-mode=false"));
+  public void testNode_getDefaultReplica() {
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica"), containsOutput("replica=false"));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-hostname"), not(containsOutput("relay-hostname")));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-port"), not(containsOutput("relay-port")));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "relay-group-port"), not(containsOutput("relay-group-port")));
