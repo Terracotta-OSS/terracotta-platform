@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
@@ -33,16 +34,20 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.api.restart.RestartProgress;
 import org.terracotta.inet.HostPort;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
@@ -52,6 +57,7 @@ import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
@@ -66,8 +72,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   protected boolean autoRestart;
   protected boolean force;
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   protected ConfigurationMutationAction(Operation operation) {
     super(operation);
@@ -75,14 +79,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   public void setAutoRestart(boolean autoRestart) {
     this.autoRestart = autoRestart;
-  }
-
-  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
-    this.restartWaitTime = restartWaitTime;
-  }
-
-  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
-    this.restartDelay = restartDelay;
   }
 
   public void setForce(boolean force) {
@@ -118,6 +114,9 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           .filter(o -> o.getScope() == NODE)
           .map(PropertyHolder::getName)
           .filter(originalCluster::containsNode)
+          // we filter out relay nodes, they are not contacted to apply configuration changes at runtime
+          // Instead, they will be automatically restarted to sync configuration changes during passive sync
+          .filter(name -> !originalCluster.is(name, DisasterRecoveryMode.RELAY))
           .forEach(name -> {
             targetedNodes.add(name);
             if (c.getSetting().requires(NODE_RESTART)) {
@@ -142,7 +141,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
 
-    new ClusterValidator(updatedCluster).validate(allOnlineNodesActivated ? ACTIVATED : CONFIGURING);
+    new ClusterValidator(updatedCluster).validate(allOnlineNodesActivated ? ACTIVATED : CONFIGURING, operation);
 
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
@@ -159,6 +158,18 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.debug("New configuration change(s) can be sent");
 
     if (allOnlineNodesActivated) {
+      // Filter out relay nodes from onlineNodes, they are not contacted to apply configuration changes at runtime
+      // onlineRelayNodes will contain the list of relay nodes we will automatically restart
+      // to sync configuration changes during passive sync
+      final Set<Endpoint> onlineRelayNodes = new HashSet<>();
+      onlineNodes.entrySet().removeIf(entry -> {
+        if (entry.getValue().isPassiveRelay()) {
+          onlineRelayNodes.add(entry.getKey());
+          return true;
+        }
+        return false;
+      });
+
       // cluster is active, we need to run a nomad change and eventually a restart
 
       // validate that all the online nodes are either actives or passives
@@ -176,6 +187,26 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         runConfigurationChange(updatedCluster, onlineNodes, changes);
       }
 
+      // display unreachable nodes
+      final Set<String> unreachableRelayNodes = originalCluster.getNodes()
+        .stream()
+        .filter(DisasterRecoveryMode::isRelay)
+        .filter(node -> node.getEndpoints().stream().noneMatch(onlineRelayNodes::contains))
+        .map(Node::getName)
+        .collect(Collectors.toSet());
+      if (!unreachableRelayNodes.isEmpty()) {
+        output.info("Relay nodes: {} are unreachable. Please restart them manually to apply the configuration changes.", toString(unreachableRelayNodes));
+      }
+
+      RestartProgress relayRestartProgress = null;
+      if (!onlineRelayNodes.isEmpty()) {
+        output.info("Performing automatic restart of relay nodes: {}. " +
+          "If the restart fails, please verify the nodes status or restart manually.", toString(onlineRelayNodes));
+        relayRestartProgress = restartService.restartNodesIfPassives(
+          onlineRelayNodes,
+          Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
+      }
       // do we need to restart to apply the changes ?
       if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         output.out("Restart required for cluster");
@@ -238,6 +269,9 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         }
       }
 
+      if (!onlineRelayNodes.isEmpty()) {
+        followRestart(relayRestartProgress, onlineRelayNodes);
+      }
     } else {
       // cluster is not active, we just need to replace the topology
       output.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
@@ -318,17 +352,13 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.info("Restarting non active nodes: {}...", toString(others));
     restartNodesIfPassives(
         others,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
     LOGGER.info("Restarting active nodes: {}...", toString(actives));
     restartNodesIfActives(
         actives,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
     concat(actives.stream(), others.stream())

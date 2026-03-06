@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,13 @@ public interface TopologyService {
    * @return true if this node has been activated (is part of a named cluster that has been licensed)
    */
   boolean isActivated();
+
+  /**
+   * Indicates whether this node is running in replica mode.
+   *
+   * @return true if the node is started with replica enabled
+   */
+  boolean isReplica();
 
   /**
    * @return true if some dynamic changes have been done which cannot be applied at runtime and need a restart to be applied

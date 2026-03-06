@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
+      ensureNodesAreEitherActiveOrPassive(filter(destinationOnlineNodes, (endpoint, state) -> !state.isPassiveRelay()));
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
     }
   }
@@ -151,7 +151,7 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {
-        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+        runTopologyChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isPassiveRelay()), nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }

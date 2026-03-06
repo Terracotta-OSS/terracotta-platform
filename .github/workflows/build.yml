@@ -12,7 +12,7 @@ concurrency:
 
 permissions:
   checks: write
-  
+
 jobs:
 
   build:
@@ -71,6 +71,7 @@ jobs:
           path: |
             **/build/reports/
             **/build/test-results/
+            **/build/angela/work/
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4

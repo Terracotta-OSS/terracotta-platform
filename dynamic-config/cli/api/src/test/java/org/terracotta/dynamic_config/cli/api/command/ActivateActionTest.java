@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ConfigSource;
+import org.terracotta.dynamic_config.api.service.MalformedClusterException;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.BaseTest;
 import org.terracotta.dynamic_config.cli.api.NomadTestHelper;
@@ -39,6 +40,7 @@ import org.terracotta.nomad.server.NomadServer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
@@ -249,6 +251,60 @@ public class ActivateActionTest extends BaseTest {
     command.setNodes(asList(HostPort.create("localhost", 9411)));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
+  }
+
+  @Test
+  public void test_activation_fails_single_node_replica_enabled() {
+    Cluster clusterWithReplica = newTestCluster(
+      "my-cluster",
+      newTestStripe("stripe1", Testing.S_UIDS[1]).addNode(
+        Testing.newTestNode("node1", "localhost", 9411, Testing.N_UIDS[1])
+          .setReplica(true)
+          .setRelayHostname("relay-host")
+          .setRelayPort(9410)
+          .setRelayGroupPort(9431)
+      ));
+
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(clusterWithReplica, Testing.N_UIDS[1]));
+
+    assertThat(
+      () -> {
+        ActivateAction cmd = command();
+        cmd.setNodes(List.of(HostPort.create("localhost", 9411)));
+        cmd.setClusterName("my-cluster");
+        cmd.run();
+      },
+      is(throwing(instanceOf(MalformedClusterException.class))
+        .andMessage(allOf(
+          containsString("Node with name: node1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")
+        )))
+    );
+  }
+
+  @Test
+  public void test_activation_fails_replica_with_other_nodes() {
+    Cluster clusterWithReplica = cluster.clone();
+    clusterWithReplica.getStripe(Testing.S_UIDS[1]).get()
+      .getNode(Testing.N_UIDS[1]).get()
+      .setReplica(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9431);
+
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(clusterWithReplica, Testing.N_UIDS[1]));
+
+    assertThat(
+      () -> {
+        ActivateAction cmd = command();
+        cmd.setNodes(List.of(HostPort.create("localhost", 9411)));
+        cmd.setClusterName("my-cluster");
+        cmd.run();
+      },
+      is(throwing(instanceOf(MalformedClusterException.class))
+        .andMessage(allOf(
+          containsString("Node with name: node1 has the replica setting enabled and cannot coexist with other nodes with names: [node2, node3]")
+        )))
+    );
   }
 
   private void doRunAndVerify(String clusterName, ActivateAction command) {
