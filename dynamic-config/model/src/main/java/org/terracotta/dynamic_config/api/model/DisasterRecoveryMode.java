@@ -31,6 +31,21 @@ import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_HOSTNA
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 
 public enum DisasterRecoveryMode {
+  /**
+   * When in RELAY mode, a node acts as a data relay in disaster recovery scenarios.
+   * <p>
+   * A node in RELAY mode operates in the {@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_RELAY PASSIVE_RELAY} state
+   * and is responsible for sending data to its peer REPLICA node. There is a one-to-one mapping between
+   * a RELAY node and a REPLICA node.
+   * <p>
+   * Required properties when in RELAY mode:
+   * <ul>
+   *   <li>{@code replica-hostname}: The hostname of the replica node to send data to</li>
+   *   <li>{@code replica-port}: The port of the replica node to send data to</li>
+   * </ul>
+   * <p>
+   * A node cannot be both a RELAY and a REPLICA simultaneously.
+   */
   RELAY(SettingName.RELAY_MODE) {
     @Override
     public boolean isEnabled(Node node) {
@@ -51,6 +66,26 @@ public enum DisasterRecoveryMode {
     }
   },
 
+  /**
+   * When in REPLICA mode, a node acts as a data replica in disaster recovery scenarios.
+   * <p>
+   * A node in REPLICA mode operates in one of two states:
+   * <ul>
+   *   <li>{@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_REPLICA_START PASSIVE_REPLICA_START}:
+   *       Initial state where the replica is requesting to receive data from its relay node</li>
+   *   <li>{@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_REPLICA PASSIVE_REPLICA}:
+   *       Final state where the replica is actively receiving and storing replicated data from its relay node</li>
+   * </ul>
+   * <p>
+   * Required properties when in REPLICA mode:
+   * <ul>
+   *   <li>{@code relay-hostname}: The hostname of the relay node to receive data from</li>
+   *   <li>{@code relay-port}: The port of the relay node to receive data from</li>
+   *   <li>{@code relay-group-port}: The group port of the relay node to receive data from</li>
+   * </ul>
+   * <p>
+   * A node cannot be both a RELAY and a REPLICA simultaneously.
+   */
   REPLICA(SettingName.REPLICA_MODE) {
     @Override
     public boolean isEnabled(Node node) {
@@ -77,6 +112,12 @@ public enum DisasterRecoveryMode {
     }
   },
 
+  /**
+   * When in NONE mode, the node is not configured for disaster recovery.
+   * <p>
+   * A node in NONE mode operates as a standard node (active or passive) without any relay or replica functionality.
+   * This is the default mode when neither relay nor replica is enabled.
+   */
   NONE("none") {
     @Override
     public boolean isEnabled(Node node) {

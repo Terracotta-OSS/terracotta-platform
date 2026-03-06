@@ -29,6 +29,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -567,7 +568,7 @@ public abstract class RemoteAction implements Runnable {
     followRestart(progress, endpoints);
   }
 
-  protected void followRestart(RestartProgress progress, Collection<Endpoint> endpoints) {
+  protected final void followRestart(RestartProgress progress, Collection<Endpoint> endpoints) {
     try {
       Duration maximumWaitTime = Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS));
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
@@ -689,6 +690,7 @@ public abstract class RemoteAction implements Runnable {
    * So this method will also validate that if a restart is needed because a hostname/port change has been done,
    * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
    * in the stripes.
+   * we filter out relay nodes from the cluster, they are not contacted to apply configuration changes at runtime
    */
   protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     // current actives
@@ -705,9 +707,10 @@ public abstract class RemoteAction implements Runnable {
         .map(Map.Entry::getKey)
         .map(Endpoint::getNodeName)
         .collect(Collectors.toCollection(TreeSet::new));
-    // expected passives
+    // expected passives without relay nodes (relay nodes are not contacted to apply configuration changes at runtime)
     Collection<String> expectedPassives = cluster.getNodes()
         .stream()
+        .filter(node -> !DisasterRecoveryMode.isRelay(node))
         .map(Node::getName)
         .collect(Collectors.toCollection(TreeSet::new));
     expectedPassives.removeAll(actives);

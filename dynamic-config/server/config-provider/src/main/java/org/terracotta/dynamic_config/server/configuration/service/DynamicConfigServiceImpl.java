@@ -260,7 +260,9 @@ public final class DynamicConfigServiceImpl implements TopologyService, DynamicC
 
   @Override
   public boolean isReplica() {
-    // The runtimeNodeContext is reliable since replica nodes do not permit SET, UNSET, or IMPORT operations.
+    // The runtimeNodeContext is reliable since we restrict any SET, UNSET, or IMPORT operations on a replica node.
+    // We also prevent any DC change for the replica setting (in both CONFIGURING and ACTIVATED state) on a node and only allow it to be specified either through the CLI for a single node or in the config file at startup
+    // which also means a config file with replica=true cannot be imported on a node, making the replica setting immutable
     return DisasterRecoveryMode.isReplica(getRuntimeNodeContext().getNode());
   }
 
