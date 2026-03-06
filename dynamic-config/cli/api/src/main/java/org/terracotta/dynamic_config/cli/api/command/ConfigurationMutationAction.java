@@ -114,10 +114,9 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           .filter(o -> o.getScope() == NODE)
           .map(PropertyHolder::getName)
           .filter(originalCluster::containsNode)
-          .filter(nodeName -> {
-            Node node = originalCluster.getNodeByName(nodeName).orElseThrow(AssertionError::new);
-            return !DisasterRecoveryMode.isRelay(node);
-          })
+          // we filter out relay nodes, they are not contacted to apply configuration changes at runtime
+          // Instead, they will be automatically restarted to sync configuration changes during passive sync
+          .filter(name -> !originalCluster.is(name, DisasterRecoveryMode.RELAY))
           .forEach(name -> {
             targetedNodes.add(name);
             if (c.getSetting().requires(NODE_RESTART)) {
@@ -159,25 +158,16 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.debug("New configuration change(s) can be sent");
 
     if (allOnlineNodesActivated) {
-      Set<Endpoint> onlineRelayNodes = new HashSet<>();
-      // filter out relay nodes from onlineNodes in-place
+      // Filter out relay nodes from onlineNodes, they are not contacted to apply configuration changes at runtime
+      // onlineRelayNodes will contain the list of relay nodes we will automatically restart
+      // to sync configuration changes during passive sync
+      final Set<Endpoint> onlineRelayNodes = new HashSet<>();
       onlineNodes.entrySet().removeIf(entry -> {
         if (entry.getValue().isPassiveRelay()) {
           onlineRelayNodes.add(entry.getKey());
           return true;
         }
         return false;
-      });
-
-      // filter out relay nodes from originalCluster in-place
-      Set<Node> allConfiguredRelayNodes = new HashSet<>();
-      RestartProgress relayRestartProgress = null;
-      // getNodes() returns a new list
-      originalCluster.getNodes().forEach(node -> {
-        if (DisasterRecoveryMode.isRelay(node)) {
-          originalCluster.removeNode(node.getUID());
-          allConfiguredRelayNodes.add(node);
-        }
       });
 
       // cluster is active, we need to run a nomad change and eventually a restart
@@ -197,15 +187,18 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         runConfigurationChange(updatedCluster, onlineNodes, changes);
       }
 
-      if (!allConfiguredRelayNodes.isEmpty()) {
-        Set<UID> reachableRelayNodeUIDs = onlineRelayNodes.stream().map(Endpoint::getNodeUID).collect(Collectors.toSet());
-        Set<String> unreachableRelayNodes = allConfiguredRelayNodes.stream()
-          .filter(node -> !reachableRelayNodeUIDs.contains(node.getUID())).map(Node::getName).collect(Collectors.toSet());
-        if (!unreachableRelayNodes.isEmpty()) {
-          output.info("Relay nodes: {} are unreachable. Please restart them manually to apply the configuration changes.", toString(unreachableRelayNodes));
-        }
+      // display unreachable nodes
+      final Set<String> unreachableRelayNodes = originalCluster.getNodes()
+        .stream()
+        .filter(DisasterRecoveryMode::isRelay)
+        .filter(node -> node.getEndpoints().stream().noneMatch(onlineRelayNodes::contains))
+        .map(Node::getName)
+        .collect(Collectors.toSet());
+      if (!unreachableRelayNodes.isEmpty()) {
+        output.info("Relay nodes: {} are unreachable. Please restart them manually to apply the configuration changes.", toString(unreachableRelayNodes));
       }
 
+      RestartProgress relayRestartProgress = null;
       if (!onlineRelayNodes.isEmpty()) {
         output.info("Performing automatic restart of relay nodes: {}. " +
           "If the restart fails, please verify the nodes status or restart manually.", toString(onlineRelayNodes));

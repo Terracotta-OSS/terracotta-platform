@@ -142,16 +142,20 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public InetSocketAddress getRelayPeer() {
+    // diagnostic or repair modes
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    // replica mode
     Node node = nodeContextSupplier.get().getNode();
     if (replicaMode) {
       return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
     }
-    if (isPartialConfiguration()) {
-      return null;
-    }
+    // activated and relay
     if (DisasterRecoveryMode.isRelay(node)) {
       return DisasterRecoveryMode.RELAY.getPeer(node).orElseThrow(AssertionError::new);
     }
+    // activated but without DR
     return null;
   }
 
