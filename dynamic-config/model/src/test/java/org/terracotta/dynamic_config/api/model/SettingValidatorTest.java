@@ -43,10 +43,10 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
@@ -153,8 +153,8 @@ public class SettingValidatorTest {
   }
 
   @Test
-  public void test_RELAY_REPLICA_MODE() {
-    Stream.of(RELAY_MODE, REPLICA_MODE).forEach(setting -> {
+  public void test_RELAY_REPLICA() {
+    Stream.of(RELAY, REPLICA).forEach(setting -> {
       validateRequired(setting);
       setting.validate(null); // get supported
       setting.validate("true");

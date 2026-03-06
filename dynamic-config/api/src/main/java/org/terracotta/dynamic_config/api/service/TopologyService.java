@@ -60,7 +60,7 @@ public interface TopologyService {
   /**
    * Indicates whether this node is running in replica mode.
    *
-   * @return true if the node is started with replica-mode enabled
+   * @return true if the node is started with replica enabled
    */
   boolean isReplica();
 

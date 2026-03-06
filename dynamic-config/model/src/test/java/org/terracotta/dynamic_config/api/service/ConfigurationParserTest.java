@@ -379,19 +379,19 @@ public class ConfigurationParserTest {
         "stripe.1.node.1.name=node1",
         "stripe.1.node.1.hostname=localhost",
         "cluster-name=foo",
-        "stripe.1.node.1.relay-mode=true",
+        "stripe.1.node.1.relay=true",
         "stripe.1.node.1.replica-hostname=localhost",
         "stripe.1.node.1.replica-port=1234",
-        "stripe.1.node.1.replica-mode=true",
+        "stripe.1.node.1.replica=true",
         "stripe.1.node.1.relay-hostname=localhost",
         "stripe.1.node.1.relay-port=4567",
         "stripe.1.node.1.relay-group-port=5678"
       ),
       Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")
-        .setRelayMode(true)
+        .setRelay(true)
         .setReplicaHostname("localhost")
         .setReplicaPort(1234)
-        .setReplicaMode(true)
+        .setReplica(true)
         .setRelayHostname("localhost")
         .setRelayPort(4567)
         .setRelayGroupPort(5678))).setFailoverPriority(null),

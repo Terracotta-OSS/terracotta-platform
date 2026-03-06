@@ -56,7 +56,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRI
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
@@ -95,8 +95,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
     addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
 
-    // relay-mode properties
-    addToManager(configChangeHandlerManager, accept(), RELAY_MODE);
+    // relay properties
+    addToManager(configChangeHandlerManager, accept(), RELAY);
     addToManager(configChangeHandlerManager, accept(), REPLICA_HOSTNAME);
     addToManager(configChangeHandlerManager, accept(), REPLICA_PORT);
 

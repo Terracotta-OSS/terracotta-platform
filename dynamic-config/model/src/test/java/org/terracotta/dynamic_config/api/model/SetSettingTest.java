@@ -36,10 +36,10 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRI
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.RELAY_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_MODE;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
@@ -287,29 +287,29 @@ public class SetSettingTest {
   @Test
   public void test_setProperty_RELAY_REPLICA() {
     Node node = Testing.newTestNode("node1", "localhost");
-    assertFalse(node.getRelayMode().orDefault());
+    assertFalse(node.getRelay().orDefault());
     assertFalse(node.getReplicaHostname().isConfigured());
     assertFalse(node.getReplicaPort().isConfigured());
 
-    assertFalse(node.getReplicaMode().orDefault());
+    assertFalse(node.getReplica().orDefault());
     assertFalse(node.getRelayHostname().isConfigured());
     assertFalse(node.getRelayPort().isConfigured());
     assertFalse(node.getRelayGroupPort().isConfigured());
 
-    RELAY_MODE.setProperty(node, "true");
+    RELAY.setProperty(node, "true");
     REPLICA_HOSTNAME.setProperty(node, "replica-host");
     REPLICA_PORT.setProperty(node, "9411");
 
-    REPLICA_MODE.setProperty(node, "true");
+    REPLICA.setProperty(node, "true");
     RELAY_HOSTNAME.setProperty(node, "relay-host");
     RELAY_PORT.setProperty(node, "9412");
     RELAY_GROUP_PORT.setProperty(node, "9413");
 
-    assertTrue(node.getRelayMode().orDefault());
+    assertTrue(node.getRelay().orDefault());
     assertThat(node.getReplicaHostname().orDefault(), is("replica-host"));
     assertThat(node.getReplicaPort().orDefault(), is(9411));
 
-    assertTrue(node.getReplicaMode().orDefault());
+    assertTrue(node.getReplica().orDefault());
     assertThat(node.getRelayHostname().orDefault(), is("relay-host"));
     assertThat(node.getRelayPort().orDefault(), is(9412));
     assertThat(node.getRelayGroupPort().orDefault(), is(9413));

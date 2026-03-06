@@ -443,14 +443,14 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_unset_relay_mode_on_passive() {
+  public void test_unset_relay_on_passive() {
     waitForActive(1);
     waitForNPassives(1, 1);
     Random random = new Random();
     int relayId = random.nextInt(2) + 1;
     String relay = getNodeName(1, relayId);
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-      "-c", relay + ":relay-mode=" + "true",
+      "-c", relay + ":relay=" + "true",
       "-c", relay + ":replica-hostname=" + "localhost",
       "-c", relay + ":replica-port=" + "9410"), is(successful()));
 
@@ -459,19 +459,19 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
 
     waitForPassiveRelay(1, relayId);
 
-    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", relay + ":relay-mode"), is(successful()));
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", relay + ":relay"), is(successful()));
 
     // becomes passive after unset, no restart required as relay nodes are restarted automatically
     waitForPassive(1, relayId);
   }
 
   @Test
-  public void test_unset_replica_mode() {
+  public void test_unset_replica() {
     assertThat(
       configTool("unset", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.replica-mode")
+        "-c", "stripe.1.node.1.replica")
       , allOf(not(successful()),
         containsOutput("Invalid input"),
-        containsOutput("'replica-mode' cannot be unset")));
+        containsOutput("'replica' cannot be unset")));
   }
 }

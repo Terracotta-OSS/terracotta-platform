@@ -137,8 +137,8 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
-    // start a second node with relay-mode
-    startNode(1, 2, getNewOptions(getNode(1, 2), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    // start a second node with relay
+    startNode(1, 2, getNewOptions(getNode(1, 2), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach

@@ -162,8 +162,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
   @Test
   public void test_attach_relay_nodes_with_passive() {
-    // start a third node with relay-mode
-    startNode(1, 3, getNewOptions(getNode(1, 3), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    // start a third node with relay
+    startNode(1, 3, getNewOptions(getNode(1, 3), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach

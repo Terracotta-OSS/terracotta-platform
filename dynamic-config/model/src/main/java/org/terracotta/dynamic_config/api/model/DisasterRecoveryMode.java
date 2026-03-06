@@ -46,10 +46,10 @@ public enum DisasterRecoveryMode {
    * <p>
    * A node cannot be both a RELAY and a REPLICA simultaneously.
    */
-  RELAY(SettingName.RELAY_MODE) {
+  RELAY(SettingName.RELAY) {
     @Override
     public boolean isEnabled(Node node) {
-      return node.getRelayMode().orDefault();
+      return node.getRelay().orDefault();
     }
 
     @Override
@@ -86,10 +86,10 @@ public enum DisasterRecoveryMode {
    * <p>
    * A node cannot be both a RELAY and a REPLICA simultaneously.
    */
-  REPLICA(SettingName.REPLICA_MODE) {
+  REPLICA(SettingName.REPLICA) {
     @Override
     public boolean isEnabled(Node node) {
-      return node.getReplicaMode().orDefault();
+      return node.getReplica().orDefault();
     }
 
     @Override
@@ -157,8 +157,7 @@ public enum DisasterRecoveryMode {
     boolean replicaMode = REPLICA.isEnabled(node);
 
     if (relayMode && replicaMode) {
-      throw new AssertionError("Node with name: " + node.getName() + " has both relay-mode and replica-mode enabled. " +
-        "A node cannot have both relay-mode and replica-mode active");
+      throw new AssertionError("Node with name: " + node.getName() + " has both relay and replica settings enabled");
     }
 
     if (relayMode) return RELAY;

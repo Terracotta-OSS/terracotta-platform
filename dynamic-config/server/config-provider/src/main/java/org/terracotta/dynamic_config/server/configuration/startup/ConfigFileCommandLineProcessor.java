@@ -65,8 +65,8 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     if (options.allowsAutoActivation()) {
       List<String> replicaNodes = cluster.getNodes().stream().filter(DisasterRecoveryMode::isReplica).map(Node::getName).toList();
       if (!replicaNodes.isEmpty()) {
-        throw new IllegalArgumentException(String.format("Nodes with names: %s have replica-mode enabled. " +
-          "The '%s' parameter cannot be used when replica-mode is enabled on any node.", replicaNodes, ConsoleParamsUtils.addDash(SettingName.AUTO_ACTIVATE)));
+        throw new IllegalArgumentException(String.format("Nodes with names: %s have the replica setting enabled. " +
+          "The '%s' parameter cannot be used when replica setting is enabled on any node.", replicaNodes, ConsoleParamsUtils.addDash(SettingName.AUTO_ACTIVATE)));
       }
     }
 

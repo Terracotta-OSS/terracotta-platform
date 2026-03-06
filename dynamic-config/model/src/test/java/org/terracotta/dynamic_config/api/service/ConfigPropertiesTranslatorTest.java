@@ -152,27 +152,27 @@ public class ConfigPropertiesTranslatorTest {
     r = getReader(new String[]{
       "stripe-names=s1",
       "s1:node-names=n1,n2",
-      "n1:relay-mode=true",
+      "n1:relay=true",
       "n1:replica-hostname=localhost",
       "n1:replica-port=9410",
-      "n1:replica-mode=true",
+      "n1:replica=true",
       "n2:relay-hostname=localhost",
       "n2:relay-port=9410",
       "n2:relay-group-port=9430"
     });
     props = translateToProperties(r);
-    assertThat(props.getProperty("stripe.1.node.1.relay-mode"), is("true"));
+    assertThat(props.getProperty("stripe.1.node.1.relay"), is("true"));
     assertThat(props.getProperty("stripe.1.node.1.replica-hostname"), is("localhost"));
     assertThat(props.getProperty("stripe.1.node.1.replica-port"), is("9410"));
-    assertThat(props.getProperty("stripe.1.node.1.replica-mode"), is("true"));
+    assertThat(props.getProperty("stripe.1.node.1.replica"), is("true"));
     assertThat(props.getProperty("stripe.1.node.2.relay-hostname"), is("localhost"));
     assertThat(props.getProperty("stripe.1.node.2.relay-port"), is("9410"));
     assertThat(props.getProperty("stripe.1.node.2.relay-group-port"), is("9430"));
     assertThat(translateToConfigFormat(props), allOf(
-      containsString("node:n1:relay-mode=true"),
+      containsString("node:n1:relay=true"),
       containsString("node:n1:replica-hostname=localhost"),
       containsString("node:n1:replica-port=9410"),
-      containsString("node:n1:replica-mode=true"),
+      containsString("node:n1:replica=true"),
       containsString("node:n2:relay-hostname=localhost"),
       containsString("node:n2:relay-port=9410"),
       containsString("node:n2:relay-group-port=9430")

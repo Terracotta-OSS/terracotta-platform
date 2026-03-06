@@ -125,7 +125,7 @@ public class ConfigurationGeneratorVisitor {
 
   void startReplicaMode(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
     String nodeName = nodeContext.getNode().getName();
-    server.console("Starting node: {} with replica-mode enabled", nodeName);
+    server.console("Starting node: {} with replica enabled", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
 
     nomadServerManager.configure(nodeConfigurationDir, nodeContext);

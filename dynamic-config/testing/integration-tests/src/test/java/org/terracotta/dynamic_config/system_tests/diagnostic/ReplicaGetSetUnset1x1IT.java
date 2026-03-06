@@ -32,29 +32,29 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class ReplicaGetSetUnset1x1IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
-    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForPassiveRelay(1, 1);
   }
 
   @Test
   public void testGetAllowedReplica() {
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica-mode"), allOf(is(successful()), containsOutput("node-1-1:replica-mode=true")));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica"), allOf(is(successful()), containsOutput("node-1-1:replica=true")));
   }
 
   @Test
   public void testExportReplica() {
-    assertThat(configTool("export", "-s", "localhost:" + getNodePort()), allOf(is(successful()), containsOutput("node-1-1:replica-mode=true")));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort()), allOf(is(successful()), containsOutput("node-1-1:replica=true")));
   }
 
   @Test
   public void testSetOperationNotAllowedReplica() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:foo"),
-      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has replica-mode enabled. SET operation is not supported on replica node.")));
+      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has the replica setting enabled. SET operation is not supported on replica node")));
   }
 
   @Test
   public void testUnsetOperationNotAllowedReplica() {
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
-      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has replica-mode enabled. UNSET operation is not supported on replica node.")));
+      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has the replica setting enabled. UNSET operation is not supported on replica node")));
   }
 }

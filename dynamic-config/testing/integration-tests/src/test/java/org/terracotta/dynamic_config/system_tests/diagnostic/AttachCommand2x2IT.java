@@ -108,15 +108,15 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     stopNode(2, 1);
     waitForStopped(2, 1);
     startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("Only a single node can have replica-mode enabled. Nodes with replica-mode: [node-1-1, node-2-1]")));
+      allOf(not(successful()), containsOutput("Only a single node can have the replica setting enabled. Nodes with replica: [node-1-1, node-2-1]")));
   }
 
   @Test
@@ -126,15 +126,15 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     stopNode(2, 1);
     waitForStopped(2, 1);
     startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1),
-      "-c", "stripe.1.node.1.relay-mode=true",
+      "-c", "stripe.1.node.1.relay=true",
       "-c", "stripe.1.node.1.replica-hostname=localhost",
       "-c", "stripe.1.node.1.replica-port=9410"), is(successful()));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("Node with name: node-2-1 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
+      allOf(not(successful()), containsOutput("Node with name: node-2-1 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test
@@ -144,10 +144,10 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     stopNode(2, 1);
     waitForStopped(2, 1);
     startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica-mode", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("Node with name: node-2-1 has replica-mode enabled and cannot coexist with other nodes with names: [node-1-1]")));
+      allOf(not(successful()), containsOutput("Node with name: node-2-1 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
 
   @Test
@@ -157,12 +157,12 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     stopNode(2, 2);
     waitForStopped(2, 2);
 
-    startNode(1, 2, getNewOptions(getNode(1, 2), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
-    startNode(2, 2, getNewOptions(getNode(2, 2), "-relay-mode", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    startNode(1, 2, getNewOptions(getNode(1, 2), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    startNode(2, 2, getNewOptions(getNode(2, 2), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
 
-    // create a 1x2 with relay-mode
+    // create a 1x2 with relay
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    // create a 1x2 with relay-mode
+    // create a 1x2 with relay
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
@@ -172,6 +172,6 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-t", "properties"),
       allOf(
         successful(),
-        containsOutput("stripe.1.node.2.relay-mode=true"), containsOutput("stripe.2.node.2.relay-mode=true")));
+        containsOutput("stripe.1.node.2.relay=true"), containsOutput("stripe.2.node.2.relay=true")));
   }
 }

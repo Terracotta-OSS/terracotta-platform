@@ -64,7 +64,7 @@ public class SetCommand2x3IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testSetMultipleRelayModeWithAutoRestart() {
+  public void testSetMultipleRelayWithAutoRestart() {
     waitForActive(1);
     waitForActive(2);
     waitForPassives(1);
@@ -77,7 +77,7 @@ public class SetCommand2x3IT extends DynamicConfigIT {
     for (int stripeId = 1; stripeId <= 2; stripeId++) {
       for (int nodeId = 2; nodeId <= 3; nodeId++) {
         String prefix = "stripe." + stripeId + ".node." + nodeId;
-        args.addAll(List.of("-setting", prefix + ".relay-mode=true"));
+        args.addAll(List.of("-setting", prefix + ".relay=true"));
         args.addAll(List.of("-setting", prefix + ".replica-hostname=localhost"));
         args.addAll(List.of("-setting", prefix + ".replica-port=" + (basePort++)));
       }

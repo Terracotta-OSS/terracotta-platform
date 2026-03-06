@@ -393,13 +393,13 @@ public class CommandLineProcessorChainTest {
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(eq(NODE_NAME), any(ConfigSource.class), eq(replicaCluster))).thenReturn(replicaNode);
 
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, mainCommandLineProcessor::process);
-    assertThat(e.getMessage(), containsString("Nodes with names: [" + NODE_NAME + "] have replica-mode enabled"));
-    assertThat(e.getMessage(), containsString("The '-auto-activate' parameter cannot be used when replica-mode is enabled on any node."));
+    assertThat(e.getMessage(), containsString("Nodes with names: [" + NODE_NAME + "] have the replica setting enabled"));
+    assertThat(e.getMessage(), containsString("The '-auto-activate' parameter cannot be used when replica setting is enabled on any node."));
   }
 
   private static Node getReplicaNode() {
     return Testing.newTestNode(NODE_NAME, HOST_NAME, Integer.parseInt(NODE_PORT))
-      .setReplicaMode(true)
+      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(19411)
       .setRelayGroupPort(19412);

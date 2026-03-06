@@ -254,12 +254,12 @@ public class ActivateActionTest extends BaseTest {
   }
 
   @Test
-  public void test_activation_fails_single_replica_mode_enabled() {
+  public void test_activation_fails_single_node_replica_enabled() {
     Cluster clusterWithReplica = newTestCluster(
       "my-cluster",
       newTestStripe("stripe1", Testing.S_UIDS[1]).addNode(
         Testing.newTestNode("node1", "localhost", 9411, Testing.N_UIDS[1])
-          .setReplicaMode(true)
+          .setReplica(true)
           .setRelayHostname("relay-host")
           .setRelayPort(9410)
           .setRelayGroupPort(9431)
@@ -276,17 +276,17 @@ public class ActivateActionTest extends BaseTest {
       },
       is(throwing(instanceOf(MalformedClusterException.class))
         .andMessage(allOf(
-          containsString("Node with name: node1 has replica-mode enabled. A cluster cannot be in activated state if replica-mode is enabled on any node.")
+          containsString("Node with name: node1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")
         )))
     );
   }
 
   @Test
-  public void test_activation_fails_replica_mode_with_other_nodes() {
+  public void test_activation_fails_replica_with_other_nodes() {
     Cluster clusterWithReplica = cluster.clone();
     clusterWithReplica.getStripe(Testing.S_UIDS[1]).get()
       .getNode(Testing.N_UIDS[1]).get()
-      .setReplicaMode(true)
+      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9431);
@@ -302,7 +302,7 @@ public class ActivateActionTest extends BaseTest {
       },
       is(throwing(instanceOf(MalformedClusterException.class))
         .andMessage(allOf(
-          containsString("Node with name: node1 has replica-mode enabled and cannot coexist with other nodes with names: [node2, node3]")
+          containsString("Node with name: node1 has the replica setting enabled and cannot coexist with other nodes with names: [node2, node3]")
         )))
     );
   }
