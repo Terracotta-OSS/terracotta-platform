@@ -51,6 +51,6 @@ public class DetachCommand1x3WithRelayIT extends DynamicConfigIT {
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
     String expectedNomadChange = "Detaching node: node-1-" + passiveId + " from stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange)));
   }
 }

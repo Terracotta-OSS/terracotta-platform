@@ -65,7 +65,7 @@ public class AttachStripeWithRelayIT extends DynamicConfigIT {
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     waitForPassiveRelay(2, 2);
 
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput("Attaching stripe:")));
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput("Attaching stripe:")));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput("Attaching stripe:")));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput("Attaching stripe:")));
   }
 }

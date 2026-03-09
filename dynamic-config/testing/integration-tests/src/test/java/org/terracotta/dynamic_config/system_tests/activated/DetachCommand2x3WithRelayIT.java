@@ -73,16 +73,15 @@ public class DetachCommand2x3WithRelayIT extends DynamicConfigIT {
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, 2), "-s", "localhost:" + getNodePort(1, firstStripePassiveId)), is(successful()));
 
     String expectedNomadChangeFirstStripe = "Detaching node: node-1-" + firstStripePassiveId +" from stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFirstStripe)));
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFirstStripe)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFirstStripe)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFirstStripe)));
 
     stopNode(2, secondStripePassiveId);
     waitUntil(() -> angela.tsa().getStopped().size(), is(2));
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(2, 2), "-s", "localhost:" + getNodePort(2, secondStripePassiveId)), is(successful()));
 
     String expectedNomadChangeSecondStripe = "Detaching node: node-2-" + secondStripePassiveId +" from stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
-
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeSecondStripe)));
   }
 }

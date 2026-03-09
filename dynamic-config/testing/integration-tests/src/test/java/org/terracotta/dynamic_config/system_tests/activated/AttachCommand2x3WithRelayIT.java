@@ -59,15 +59,15 @@ public class AttachCommand2x3WithRelayIT extends DynamicConfigIT {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     String expectedNomadChange_1_3 = "Attaching node: node-1-3@" + getDefaultHostname(1, 3) + ":" + getNodePort(1, 3) + " to stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange_1_3)));
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChange_1_3)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange_1_3)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChange_1_3)));
 
     // now attach 1 node to the second stripe
     startNode(2, 3);
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 3)), is(successful()));
 
     String expectedNomadChangeFor2_3 = "Attaching node: node-2-3@" + getDefaultHostname(2, 3) + ":" + getNodePort(2, 3) + " to stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFor2_3)));
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFor2_3)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFor2_3)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 2)), allOf(is(successful()), containsOutput(expectedNomadChangeFor2_3)));
   }
 }

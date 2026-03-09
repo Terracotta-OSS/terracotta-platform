@@ -56,7 +56,7 @@ public class LockConfigWithRelayIT extends DynamicConfigIT {
       throw new AssertionError("lock failed");
     }
     unlock();
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)),
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)),
       allOf(is(successful()),
         containsOutput("Locking the config by 'platform (dynamic-scale)'"),
         containsOutput("Unlocking the config (forced=false)")));

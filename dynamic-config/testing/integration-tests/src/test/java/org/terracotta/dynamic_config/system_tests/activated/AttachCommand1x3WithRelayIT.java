@@ -51,7 +51,7 @@ public class AttachCommand1x3WithRelayIT extends DynamicConfigIT {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(3)));
     String expectedNomadChange = "Attaching node: node-1-3@" + getDefaultHostname(1, 3) + ":" + getNodePort(1, 3) + " to stripe";
-    assertThat(configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange)));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)), allOf(is(successful()), containsOutput(expectedNomadChange)));
   }
 }
 
