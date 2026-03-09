@@ -69,6 +69,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:foo"), allOf(is(successful()),
       containsOutput("Restart required for nodes"),
       containsOutput("Performing automatic restart of relay nodes")));
+    waitForChangeToSync();
 
     List<Matcher<? super ToolExecutionResult>> change = getAllNodesConfigMutation(".tc-properties=foo:foo", false);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties", "-t", "index"), allOf(change), WAIT_UNTIL);
@@ -77,6 +78,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     // unset change targeting all nodes
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"), allOf(is(successful()),
       containsOutput("Restart required for nodes")));
+    waitForChangeToSync();
 
     List<Matcher<? super ToolExecutionResult>> negatedChange = getAllNodesConfigMutation(".tc-properties=foo:foo", true);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
@@ -84,16 +86,19 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
 
     // set change targeting non-relay node
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":tc-properties=foo:bar"), allOf(is(successful())));
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties"), allOf(successful(), containsOutput(getNodeName(1, 1) + ":tc-properties=foo:bar")), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "tc-properties"), allOf(successful(), containsOutput(getNodeName(1, 1) + ":tc-properties=foo:bar")), WAIT_UNTIL);
 
     // unset change targeting non-relay node
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":tc-properties"), allOf(is(successful())));
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties"), allOf(successful(), not(containsOutput(getNodeName(1, 1) + ":tc-properties=foo:bar"))), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "tc-properties"), allOf(successful(), not(containsOutput(getNodeName(1, 1) + ":tc-properties=foo:bar"))), WAIT_UNTIL);
 
     // set change targeting relay nodes and connect-to=relay address
     waitUntil(() -> configTool("set", "-s", "localhost:" + getNodePort(1, 3), "-c", getNodeName(1, 3) + ":tc-properties=foo:baz", "-c", getNodeName(2, 3) + ":tc-properties=foo:baz"), is(successful()), WAIT_UNTIL);
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties"),
       allOf(successful(), containsOutput(getNodeName(1, 3) + ":tc-properties=foo:baz"), containsOutput(getNodeName(2, 3) + ":tc-properties=foo:baz")), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "tc-properties"),
@@ -101,6 +106,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
 
     // unset change targeting relay node and connect-to=relay address
     waitUntil(() -> configTool("unset", "-s", "localhost:" + getNodePort(1, 3), "-c", getNodeName(1, 3) + ":tc-properties", "-c", getNodeName(2, 3) + ":tc-properties"), is(successful()), WAIT_UNTIL);
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties"),
       allOf(successful(), not(containsOutput(getNodeName(1, 3) + ":tc-properties=foo:baz")), not(containsOutput(getNodeName(2, 3) + ":tc-properties=foo:baz"))), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "tc-properties"),
@@ -113,6 +119,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.foo:TRACE"), allOf(is(successful()),
       containsOutput("Performing automatic restart of relay nodes"),
       not(containsOutput("Restart required for nodes"))));
+    waitForChangeToSync();
 
     List<Matcher<? super ToolExecutionResult>> change = getAllNodesConfigMutation(".logger-overrides=org.terracotta.foo:TRACE", false);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides", "-t", "index"), allOf(change), WAIT_UNTIL);
@@ -121,6 +128,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     // unset change targeting all nodes
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"), allOf(is(successful()),
       not(containsOutput("Restart required for nodes"))));
+    waitForChangeToSync();
 
     List<Matcher<? super ToolExecutionResult>> negatedChange = getAllNodesConfigMutation(".logger-overrides=org.terracotta.foo:TRACE", true);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
@@ -128,17 +136,20 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
 
     // set change targeting non-relay node
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":logger-overrides=org.terracotta.bar:TRACE"), allOf(is(successful())));
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides"), allOf(successful(), containsOutput(getNodeName(1, 1) + ":logger-overrides=org.terracotta.bar:TRACE")), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "logger-overrides"), allOf(successful(), containsOutput(getNodeName(1, 1) + ":logger-overrides=org.terracotta.bar:TRACE")), WAIT_UNTIL);
 
     // unset change targeting non-relay node
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", getNodeName(1, 1) + ":logger-overrides"), allOf(is(successful())));
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides"), allOf(successful(), not(containsOutput(getNodeName(1, 1) + ":logger-overrides=org.terracotta.bar:TRACE"))), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "logger-overrides"), allOf(successful(), not(containsOutput(getNodeName(1, 1) + ":logger-overrides=org.terracotta.bar:TRACE"))), WAIT_UNTIL);
 
     // set change targeting relay node and connect-to=relay address
     waitUntil(() -> configTool("set", "-s", "localhost:" + getNodePort(1, 3), "-c", getNodeName(1, 3) + ":logger-overrides=org.terracotta.baz:TRACE", "-c", getNodeName(2, 3) + ":logger-overrides=org.terracotta.baz:TRACE"),
       is(successful()), WAIT_UNTIL);
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides"),
       allOf(successful(), containsOutput(getNodeName(1, 3) + ":logger-overrides=org.terracotta.baz:TRACE"), containsOutput(getNodeName(2, 3) + ":logger-overrides=org.terracotta.baz:TRACE")), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "logger-overrides"),
@@ -146,6 +157,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
 
     // unset change targeting relay node and connect-to=relay address
     waitUntil(() -> configTool("unset", "-s", "localhost:" + getNodePort(1, 3), "-c", getNodeName(1, 3) + ":logger-overrides", "-c", getNodeName(2, 3) + ":logger-overrides"), is(successful()), WAIT_UNTIL);
+    waitForChangeToSync();
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides"),
       allOf(successful(), not(containsOutput(getNodeName(1, 3) + ":logger-overrides=org.terracotta.baz:TRACE")), not(containsOutput(getNodeName(2, 3) + ":logger-overrides=org.terracotta.baz:TRACE"))), WAIT_UNTIL);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "logger-overrides"),
@@ -163,6 +175,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.foo:TRACE"), allOf(is(successful()),
       containsOutput("Relay nodes: " + getNodeName(1, 3) + ", " + getNodeName(2, 3) + " are unreachable"),
       not(containsOutput("Restart required for nodes"))));
+    waitForChangeToSync();
 
     startNode(1, 3);
     startNode(2, 3);
@@ -183,6 +196,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.foo:TRACE"), allOf(is(successful()),
       containsOutput("Relay nodes: " + getNodeName(2, 3) + " are unreachable"),
       not(containsOutput("Restart required for nodes"))));
+    waitForChangeToSync();
 
     startNode(2, 3);
     waitForPassiveRelay(2, 3);
@@ -198,6 +212,7 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.foo:TRACE"), allOf(is(successful()),
       containsOutput("Performing automatic restart of relay nodes"),
       not(containsOutput("Restart required for nodes"))));
+    waitForChangeToSync();
 
     List<Matcher<? super ToolExecutionResult>> change = getAllNodesConfigMutation(".logger-overrides=org.terracotta.foo:TRACE", false);
     waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides", "-t", "index"), allOf(change), WAIT_UNTIL);
@@ -207,13 +222,14 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     waitForStopped(2, 3);
 
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"), allOf(is(successful())));
+    waitForChangeToSync();
     List<Matcher<? super ToolExecutionResult>> negatedChange = getAllNodesConfigMutation(".logger-overrides=org.terracotta.foo:TRACE", true);
 
     startNode(2, 3);
     waitForPassiveRelay(2, 3);
 
-    waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "tc-properties", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
-    waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "tc-properties", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
+    waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(1, 3), "-c", "logger-overrides", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
+    waitUntil(() -> configTool("get", "-s", "localhost:" + getNodePort(2, 3), "-c", "logger-overrides", "-t", "index"), allOf(negatedChange), WAIT_UNTIL);
   }
 
   private List<Matcher<? super ToolExecutionResult>> getAllNodesConfigMutation(String property, boolean negate) {
@@ -226,5 +242,15 @@ public class RelaySetUnsetCommand2x3IT extends DynamicConfigIT {
     }
 
     return Stream.concat(change, Stream.of(successful())).collect(Collectors.toList());
+  }
+
+  /**
+   * Waits for configuration changes to sync to relay nodes. Relay nodes are automatically restarted
+   * by the config tool, then restarted again during passive sync, making them temporarily unavailable.
+   * This ensures they complete the second restart
+   */
+  private void waitForChangeToSync() {
+    waitUntilServerLogs(getNode(1, 3), "No configuration change left to sync");
+    waitUntilServerLogs(getNode(2, 3), "No configuration change left to sync");
   }
 }
