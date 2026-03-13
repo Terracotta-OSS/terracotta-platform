@@ -93,9 +93,9 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
-import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_REPLICA;
-import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_REPLICA_START;
+import static org.terracotta.diagnostic.model.LogicalServerState.RELAY;
+import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA;
+import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
@@ -172,7 +172,7 @@ public abstract class RemoteAction implements Runnable {
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
         EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING,
-          PASSIVE_RELAY, PASSIVE_REPLICA_START, PASSIVE_REPLICA));
+          RELAY, REPLICA_SUSPENDED, REPLICA));
     output.info("All nodes came back up");
   }
 
@@ -344,7 +344,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
     LOGGER.trace("lock({})", lockContext);
-    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isPassiveRelay()), new LockConfigNomadChange(lockContext));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new LockConfigNomadChange(lockContext));
     // user must see the lock token
     LOGGER.trace("Config locked.");
     LOGGER.trace("Token: " + lockContext.getToken());
@@ -367,7 +367,7 @@ public abstract class RemoteAction implements Runnable {
 
   private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
     output.info("Trying to unlock the config...");
-    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isPassiveRelay()), new UnlockConfigNomadChange(force));
+    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new UnlockConfigNomadChange(force));
     output.info("Config unlocked.");
     if (nomadManager instanceof LockAwareNomadManager) {
       this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
@@ -621,7 +621,7 @@ public abstract class RemoteAction implements Runnable {
    * Relay nodes need to be restarted to sync with recent config
    */
   protected final void restartRelayNodesIfPresent(Map<Endpoint, LogicalServerState> nodes) {
-    LinkedHashMap<Endpoint, LogicalServerState> relayNodes = filter(nodes, ((endpoint, state) -> state.isPassiveRelay()));
+    LinkedHashMap<Endpoint, LogicalServerState> relayNodes = filter(nodes, ((endpoint, state) -> state.isRelay()));
     if (!relayNodes.isEmpty()) {
       output.info("Restarting relay nodes: {}", relayNodes.keySet());
       try {

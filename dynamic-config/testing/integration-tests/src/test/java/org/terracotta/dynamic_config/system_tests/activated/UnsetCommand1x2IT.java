@@ -457,6 +457,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     stopNode(1, relayId);
     startNode(1, relayId);
 
+    waitUntilServerLogs(getNode(1, relayId), "No configuration change left to sync");
     waitForPassiveRelay(1, relayId);
 
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", relay + ":relay"), is(successful()));

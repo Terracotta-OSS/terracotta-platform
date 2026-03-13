@@ -57,7 +57,7 @@ import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_RELAY;
+import static org.terracotta.diagnostic.model.LogicalServerState.RELAY;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
@@ -163,7 +163,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       // to sync configuration changes during passive sync
       final Set<Endpoint> onlineRelayNodes = new HashSet<>();
       onlineNodes.entrySet().removeIf(entry -> {
-        if (entry.getValue().isPassiveRelay()) {
+        if (entry.getValue().isRelay()) {
           onlineRelayNodes.add(entry.getKey());
           return true;
         }
@@ -205,7 +205,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         relayRestartProgress = restartService.restartNodesIfPassives(
           onlineRelayNodes,
           Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
       }
       // do we need to restart to apply the changes ?
       if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
@@ -352,13 +352,13 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.info("Restarting non active nodes: {}...", toString(others));
     restartNodesIfPassives(
         others,
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
     LOGGER.info("Restarting active nodes: {}...", toString(actives));
     restartNodesIfActives(
         actives,
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, PASSIVE_RELAY));
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
     concat(actives.stream(), others.stream())

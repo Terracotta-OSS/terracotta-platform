@@ -39,19 +39,19 @@ public enum LogicalServerState {
   PASSIVE("PASSIVE", "PASSIVE-STANDBY"),
 
   /**
-   * Passive server configured as a relay, ready to send data to a replica server
+   * Server configured as a relay, ready to send data to a replica server
    */
-  PASSIVE_RELAY("PASSIVE_RELAY", "PASSIVE-RELAY"),
+  RELAY("RELAY", "PASSIVE-RELAY"),
 
   /**
-   * Passive server configured as a replica in the starting state, requesting to receive data from a relay server
+   * Server configured as a replica in the suspended state, requesting to receive data from a relay server
    */
-  PASSIVE_REPLICA_START("PASSIVE_REPLICA_START", "PASSIVE-REPLICA-START"),
+  REPLICA_SUSPENDED("REPLICA_SUSPENDED", "PASSIVE-REPLICA-START"),
 
   /**
-   * Passive server configured as a replica in the final state, actively receiving data from a relay server
+   * Server configured as a replica in the final state, ready to receive data from a relay server
    */
-  PASSIVE_REPLICA("PASSIVE_REPLICA", "PASSIVE-REPLICA"),
+  REPLICA("REPLICA", "PASSIVE-REPLICA"),
 
   /**
    * Active server is ready to receive clients
@@ -155,15 +155,15 @@ public enum LogicalServerState {
     return this == START_SUSPENDED || this == ACTIVE_SUSPENDED || this == PASSIVE_SUSPENDED;
   }
 
-  public boolean isPassiveRelay() {
-    return this == PASSIVE_RELAY;
+  public boolean isRelay() {
+    return this == RELAY;
   }
 
-  public boolean isPassiveReplicaStart() {
-    return this == PASSIVE_REPLICA_START;
+  public boolean isReplicaSuspended() {
+    return this == REPLICA_SUSPENDED;
   }
 
-  public boolean isPassiveReplica() {
-    return this == PASSIVE_REPLICA;
+  public boolean isReplica() {
+    return this == REPLICA;
   }
 }
