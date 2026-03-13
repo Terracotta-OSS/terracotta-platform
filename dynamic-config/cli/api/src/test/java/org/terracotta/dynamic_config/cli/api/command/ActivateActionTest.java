@@ -307,6 +307,28 @@ public class ActivateActionTest extends BaseTest {
     );
   }
 
+  @Test
+  public void test_activation_fails_replica_missing_in_one_stripe() {
+    Cluster clusterWithPartialReplica = cluster.clone();
+    clusterWithPartialReplica.getNode(Testing.N_UIDS[1]).get()
+      .setReplica(true).setRelayHostname("relay-host").setRelayPort(9410).setRelayGroupPort(9431);
+
+    when(topologyServiceMock("localhost", 9411).isReplica()).thenReturn(true);
+
+    assertThat(
+      () -> {
+        ActivateAction cmd = command();
+        cmd.setConfigSource(ConfigSource.from(config));
+        cmd.run();
+      },
+      is(throwing(instanceOf(IllegalArgumentException.class))
+        .andMessage(allOf(
+          containsString("Cluster activation failed, each stripe must have at least one replica node"),
+          containsString("No replica nodes found")
+        )))
+    );
+  }
+
   private void doRunAndVerify(String clusterName, ActivateAction command) {
     UUID lastChangeUUID = UUID.randomUUID();
 

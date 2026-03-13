@@ -17,6 +17,7 @@
 package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Test;
+import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -263,7 +264,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testReplicaActivation_without_relay_link() {
+  public void test_replica_activation_without_relay_link() {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
@@ -277,5 +278,42 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     waitForActive(1);
     waitForPassives(1);
+  }
+
+  @Test
+  public void test_1x1_replica_activation_without_relay_link() {
+    // activation with single replica node
+    stopNode(1, 2);
+    waitForStopped(1, 2);
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveReplicaStart(1, 1);
+
+    // with 1x1 cluster
+    String config = copyConfigProperty("/config-property-files/1x1.properties").toString();
+
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
+
+    waitForActive(1);
+  }
+
+  @Test
+  public void test_failed_fast_activation_with_replica() {
+    stopNode(1, 2);
+    waitForStopped(1, 2);
+    startNode(1, 2, getNewOptions(getNode(1, 2),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveReplicaStart(1, 2);
+
+    ToolExecutionResult activate = configTool("activate", "-cluster-name", "my-cluster",
+      "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2));
+
+    assertThat(activate, allOf(
+      not(successful()),
+      containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")
+    ));
   }
 }
