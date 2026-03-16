@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
+import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -38,6 +39,7 @@ import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -62,6 +64,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final Supplier<NodeContext> nodeContextSupplier;
   private final boolean unConfigured;
   private final boolean repairMode;
+  private final boolean replicaMode;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
@@ -69,10 +72,11 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final GroupPortMapper groupPortMapper;
 
   @SuppressWarnings("deprecation")
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, boolean replicaMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
+    this.replicaMode = replicaMode;
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
@@ -121,6 +125,46 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   @Override
   public boolean isPartialConfiguration() {
     return unConfigured || repairMode;
+  }
+
+  @Override
+  public boolean isRelaySource() {
+    if (isPartialConfiguration()) {
+      return false;
+    }
+    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
+  }
+
+  @Override
+  public boolean isRelayDestination() {
+    return replicaMode;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeer() {
+    // diagnostic or repair modes
+    if (isPartialConfiguration()) {
+      return null;
+    }
+    // replica mode
+    Node node = nodeContextSupplier.get().getNode();
+    if (replicaMode) {
+      return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
+    }
+    // activated and relay
+    if (DisasterRecoveryMode.isRelay(node)) {
+      return DisasterRecoveryMode.RELAY.getPeer(node).orElseThrow(AssertionError::new);
+    }
+    // activated but without DR
+    return null;
+  }
+
+  @Override
+  public InetSocketAddress getRelayPeerGroupPort() {
+    if (replicaMode) {
+      return DisasterRecoveryMode.REPLICA.getPeerGroupPort(nodeContextSupplier.get().getNode()).orElseThrow(AssertionError::new);
+    }
+    return null;
   }
 
   @Override
@@ -177,6 +221,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
     startupConfig.addState("unConfigured", unConfigured);
     startupConfig.addState("repairMode", repairMode);
+    startupConfig.addState("replicaMode", replicaMode);
     startupConfig.addState("partialConfig", isPartialConfiguration());
     startupConfig.addState("startupNodeContext", toMap(nodeContextSupplier.get()));
 
