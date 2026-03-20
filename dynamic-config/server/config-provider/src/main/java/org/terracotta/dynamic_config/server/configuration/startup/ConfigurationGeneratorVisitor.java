@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,10 +102,22 @@ public class ConfigurationGeneratorVisitor {
       return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     } else {
       // configured mode
+      //-----------
+      // TDB-20080: We backup the startup configuration, in order to serve it to core during a passive sync.
+      // This configuration can be stale (old) and be out of sync with the active.
+      // Core will then pick up settings that could be invalid with regard to the current stripe.
+      // After the passive sync, the server will restart if some changes have been added.
+      // So during passive sync, core will set up settings in the passive server that potentially won't match the stripe because core does not wait until the config is synced.
+      //-----------
+      Optional<NodeContext> startupConfig = nomadServerManager.getConfiguration();
       return new StartupConfiguration(
-          () -> nomadServerManager.getConfiguration()
-              .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-          false, false, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
+          () -> nomadServerManager.getConfiguration().orElseGet(() -> {
+            if(server.isActive() || server.isReconnectWindow() || startupConfig.isEmpty()) {
+              throw new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.");
+            }
+            return startupConfig.get();
+          }),
+        false, false, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     }
   }
 

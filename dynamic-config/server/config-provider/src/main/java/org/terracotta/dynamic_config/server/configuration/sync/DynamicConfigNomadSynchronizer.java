@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,6 +387,8 @@ public class DynamicConfigNomadSynchronizer {
         return RESTART_REQUIRED;
       case ROLLED_BACK:
         rollback(nomadChangeInfo, discoverResponse.getMutativeMessageCount());
+        // NOTHING because last was PREPARED, so server was not started with this setting but the ones before.
+        // So this does not require a restart (this is a no-op)
         return NOTHING;
       default:
         throw new AssertionError(nomadChangeInfo.getChangeRequestState());
@@ -415,6 +417,7 @@ public class DynamicConfigNomadSynchronizer {
       case ROLLED_BACK:
         prepare(nomadChangeInfo, mutativeMessageCount);
         rollback(nomadChangeInfo, mutativeMessageCount + 1);
+        // nothing because we are syncing a no-op operation: prepare + rollback
         return NOTHING;
       default:
         throw new AssertionError(nomadChangeInfo.getChangeRequestState());
