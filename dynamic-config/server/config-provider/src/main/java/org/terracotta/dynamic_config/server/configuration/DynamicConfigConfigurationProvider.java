@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import org.terracotta.server.StopAction;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -172,6 +173,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
       configuration.registerExtendedConfiguration(NomadRoutingChangeProcessor.class, nomadServerManager.getNomadRoutingChangeProcessor());
       configuration.registerExtendedConfiguration(NomadPermissionChangeProcessor.class, nomadServerManager.getNomadPermissionChangeProcessor());
+
+      // install system properties. This allows the user to change some key system properties eagerly at startup from DC like:
+      // - com.terracottatech.frs.ReportFsyncLatenciesInSecs (FRF): 5 mins by default
+      // - com.terracottatech.store.server.usage.log.interval (Tc Store): 5 mins by default
+      // - org.terracotta.statistics.logging.period (Server stats log line) : 5 mins by default
+      // with:
+      // > config-tool set -connect-to foo -setting tc-properties:org.terracotta.statistics.logging.period=120
+      Properties sysProps = System.getProperties();
+      sysProps.putAll(configuration.getTcProperties());
+      System.setProperties(sysProps);
 
       // discover the dynamic config extensions (offheap, dataroot, lease, etc)
       configuration.discoverExtensions();
