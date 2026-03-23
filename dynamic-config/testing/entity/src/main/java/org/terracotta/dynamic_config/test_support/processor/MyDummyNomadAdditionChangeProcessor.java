@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher
 
 public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
-  private static final String PLATFORM_MBEAN_OPERATION_NAME = "addPassive";
   private static final String failAtPrepare = "prepareAddition-failure";
   private static final String killAtPrepare = "killAddition-prepare";
   private static final String killAtCommit = "killAddition-commit";

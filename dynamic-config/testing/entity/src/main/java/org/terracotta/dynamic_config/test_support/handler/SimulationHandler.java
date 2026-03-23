@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 
 /**
  * Handler for <pre>org.terracotta.dynamic-config.simulate</pre>
@@ -41,8 +42,13 @@ import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
 public class SimulationHandler implements ConfigChangeHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimulationHandler.class);
+  private final TopologyService topologyService;
 
   private volatile String state = "";
+
+  public SimulationHandler(TopologyService topologyService) {
+    this.topologyService = topologyService;
+  }
 
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
@@ -54,6 +60,10 @@ public class SimulationHandler implements ConfigChangeHandler {
 
     if ("TRACE".equals(change.getValue().get())) {
       throw new InvalidConfigChangeException("Simulate prepare failure");
+    }
+
+    if ("prepare-failure".equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get("org.terracotta.SimulationHandler.action"))) {
+      throw new InvalidConfigChangeException("Simulate prepare failure from tc property");
     }
   }
 

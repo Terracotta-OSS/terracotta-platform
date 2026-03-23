@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
       ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();
       // override the logging handler by hooking into some special properties
       SelectingConfigChangeHandler<String> selectingConfigChangeHandler = new SelectingConfigChangeHandler<String>()
-          .add("org.terracotta.dynamic-config.simulate", new SimulationHandler())
+          .add("org.terracotta.dynamic-config.simulate", new SimulationHandler(topologyService))
           .add("org.terracotta.group-port.simulate", new GroupPortSimulateHandler())
           .fallback(handler)
           .selector(configuration -> {

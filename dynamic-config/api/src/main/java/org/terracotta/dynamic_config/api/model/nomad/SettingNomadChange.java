@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class SettingNomadChange extends FilteredNomadChange {
       // - is to create a new config on disk for all the nodes
       // - NOT call any config handler #apply() method
       // - NOT update the runtime topology of node1 (since it requires a restart)
-      // - BUT update the runtime topology of node1 once Nomad commits because node2 is not part of the change
+      // - BUT update the runtime topology of node2 once Nomad commits because node2 is not part of the change
       LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): NO (this targeted node requires a restart)", configuration, getApplicability(), currentNode);
       return false;
     }
