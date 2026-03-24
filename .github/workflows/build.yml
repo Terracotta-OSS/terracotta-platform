@@ -12,7 +12,7 @@ concurrency:
 
 permissions:
   checks: write
-  
+
 jobs:
 
   build:
@@ -32,11 +32,11 @@ jobs:
 
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -45,26 +45,26 @@ jobs:
           restore-keys: gradle
 
       - name: "Setup JDK ${{ matrix.jdk }}"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: ${{ matrix.jdk }}
 
       - name: "Setup JVM ${{ matrix.jvm }}"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: ${{ matrix.jvm }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Build with Gradle
         run: ./gradlew build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x spotbugsXml -x checkstyleMain -x checkstyleTest -x checkstyleXml -x copyright -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}
 
       - name: Upload Test Results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: "junit-build-${{ matrix.os }}-jdk${{ matrix.jdk }}-jvm${{ matrix.jvm }}"
           retention-days: 5
@@ -73,7 +73,7 @@ jobs:
             **/build/test-results/
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v6
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
         with:
