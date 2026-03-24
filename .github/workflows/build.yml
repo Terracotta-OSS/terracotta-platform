@@ -57,7 +57,7 @@ jobs:
           java-version: ${{ matrix.jvm }}
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build with Gradle
         run: ./gradlew build check -x dependencyCheckAggregate -x spotbugsMain -x spotbugsTest -x spotbugsXml -x checkstyleMain -x checkstyleTest -x checkstyleXml -x copyright -x :management:testing:integration-tests:test -x :dynamic-config:testing:integration-tests:test --no-daemon -PcompileVM=${{ matrix.jdk }} -PtestVM=${{ matrix.jvm }}

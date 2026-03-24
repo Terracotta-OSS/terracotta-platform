@@ -36,7 +36,7 @@ jobs:
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       # Generates and submits a dependency graph for a Gradle project,
       # allowing GitHub to alert about reported vulnerabilities in project dependencies.
@@ -44,4 +44,4 @@ jobs:
       # Gradle project and submit it immediately to the repository via
       # the Dependency Submission API.
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@v6
