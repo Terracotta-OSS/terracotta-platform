@@ -17,31 +17,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-ubuntu-latest
           restore-keys: gradle
-  
+
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: 17
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-  
+        uses: gradle/actions/setup-gradle@v5
+
       # Generates and submits a dependency graph for a Gradle project,
       # allowing GitHub to alert about reported vulnerabilities in project dependencies.
-      #  The following workflow will generate a dependency graph for a 
-      # Gradle project and submit it immediately to the repository via 
+      #  The following workflow will generate a dependency graph for a
+      # Gradle project and submit it immediately to the repository via
       # the Dependency Submission API.
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
