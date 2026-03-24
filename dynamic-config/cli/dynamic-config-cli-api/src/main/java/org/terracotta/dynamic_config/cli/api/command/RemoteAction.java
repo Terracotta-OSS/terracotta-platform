@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,7 @@ public abstract class RemoteAction implements Runnable {
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
-          .forEach(service -> service.resetAndSync(nomadChanges, cluster));
+          .forEach(service -> service.applyChanges(nomadChanges, cluster));
       output.info("Nomad changes sync successful");
     }
   }

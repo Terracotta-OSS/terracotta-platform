@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
-  public void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster) {
+  public void applyChanges(NomadChangeInfo[] nomadChanges, Cluster cluster) {
     server.audit("Reset and sync invoked", new Properties());
-    dynamicConfigService.resetAndSync(nomadChanges, cluster);
+    dynamicConfigService.applyChanges(nomadChanges, cluster);
   }
 
   @Override

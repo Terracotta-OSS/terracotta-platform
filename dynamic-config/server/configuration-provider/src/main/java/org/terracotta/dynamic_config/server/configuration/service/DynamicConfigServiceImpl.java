@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,33 +99,39 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster) {
+  public void applyChanges(NomadChangeInfo[] nomadChanges, Cluster to) {
     DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
     DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(nomadServerManager.getConfiguration().orElse(null), nomadServer);
 
-    topologies.withUpcoming(upcomingNodeContext -> {
-      Cluster thisTopology = upcomingNodeContext.getCluster();
+    final Cluster from = topologies.getUpcomingNodeContext().getCluster();
+    final List<NomadChangeInfo> backup;
 
-      List<NomadChangeInfo> backup;
+    try {
+      backup = nomadServer.getChangeHistory();
+    } catch (NomadException e) {
+      throw new IllegalStateException("Unable get change history from Nomad system: " + e.getMessage(), e);
+    }
 
+    // reserve the nomad system for ourselves
+    nomadServer.reserve();
+
+    try {
+      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges), to);
+    } catch (NomadException e) {
+
+      // rollback procedure
       try {
-        backup = nomadServer.getChangeHistory();
-      } catch (NomadException e) {
-        throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+        nomadServer.reset();
+        nomadSynchronizer.syncNomadChanges(backup, from);
+      } catch (NomadException suppressed) {
+        e.addSuppressed(suppressed);
       }
 
-      try {
-        nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges), cluster);
-      } catch (NomadException e) {
-        try {
-          nomadServer.reset();
-          nomadSynchronizer.syncNomadChanges(backup, thisTopology);
-        } catch (NomadException nomadException) {
-          e.addSuppressed(nomadException);
-        }
-        throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
-      }
-    });
+      throw new IllegalStateException("Unable to apply Nomad changes: " + e.getMessage(), e);
+    } finally {
+      // release the Nomad system to other threads
+      nomadServer.release();
+    }
   }
 
   @Override
