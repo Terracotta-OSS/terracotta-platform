@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,11 @@ public class DynamicConfigNomadSynchronizer {
     this.nomadServer = nomadServer;
   }
 
+  /**
+   * Applies the given Nomad changes from cluster "sourceTopology", eventually resetting the config if needed.
+   *
+   * Calls to this method must be surrounded by a proper locking system using {@link DynamicConfigNomadServer#reserve()} and {@link DynamicConfigNomadServer#release()}
+   */
   public Set<Require> syncNomadChanges(List<NomadChangeInfo> sourceChanges, Cluster sourceTopology) throws NomadException {
     // ensure the source list and this node's list of changes are all committed ones
     // We might have some relevant prepared changes at the end that we will handle after
@@ -129,7 +134,7 @@ public class DynamicConfigNomadSynchronizer {
           forced.offer(sourceRelevantChanges.poll());
         }
 
-        nomadServer.forceSync(forced, (previousConfig, nomadChange) -> {
+        nomadServer.applyChanges(forced, (previousConfig, nomadChange) -> {
           LOGGER.trace("SYNC: {}", nomadChange);
           DynamicConfigNomadChange dynamicConfigNomadChange = ((DynamicConfigNomadChange) nomadChange).unwrap();
           Cluster previous = previousConfig == null ? null : previousConfig.getCluster();

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ import org.terracotta.server.StopAction;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -209,28 +210,36 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   @Override
   public void sync(byte[] bytes) {
     if (dynamicConfigurationPassiveSync != null) {
+      final Set<Require> requires = new HashSet<>();
+      boolean mustStop = false;
 
-      Set<Require> requires;
+      // Reserve the Nomad System for the current thread syncing the data
+      nomadServerManager.getNomadServer().reserve();
       try {
         DynamicConfigSyncData data = synCodec.decode(bytes);
-        requires = dynamicConfigurationPassiveSync.sync(data);
+        requires.addAll(dynamicConfigurationPassiveSync.sync(data));
       } catch (RuntimeException | NomadException e) {
         // only log the full trace if in trace/debug mode
         LOGGER.debug("Error: {}", e.getMessage(), e);
         server.warn(lineSeparator() + lineSeparator()
-                + "==============================================================================================================================================" + lineSeparator()
-                + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
-                + "(please change the logging config to see more details)" + lineSeparator()
-                + "==============================================================================================================================================" + lineSeparator(),
-            e.getMessage());
-        // ask for the server to stop and not restart
+            + "==============================================================================================================================================" + lineSeparator()
+            + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
+            + "(please change the logging config to see more details)" + lineSeparator()
+            + "==============================================================================================================================================" + lineSeparator(),
+          e.getMessage());
+        mustStop = true;
+      } finally {
+        nomadServerManager.getNomadServer().release();
+      }
+
+      if (mustStop) {
         server.stop();
-        // do not continue anymore
         return;
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
         server.stop(StopAction.RESTART);
+        return;
       }
 
       warnIfPreparedChange();
