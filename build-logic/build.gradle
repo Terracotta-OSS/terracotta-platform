@@ -11,7 +11,7 @@ dependencies {
   api 'org.terracotta.build:terracotta-gradle-plugins'
   api 'com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.27'
   api 'org.unbroken-dome.gradle-plugins:gradle-xjc-plugin:2.0.0'
-  api 'org.owasp:dependency-check-gradle:8.4.3'
+  api 'org.owasp:dependency-check-gradle:9.2.0'
   api 'org.jfrog.buildinfo:build-info-extractor-gradle:6.0.4'
   api 'biz.aQute.bnd:biz.aQute.bnd.gradle:7.2.1'
 
