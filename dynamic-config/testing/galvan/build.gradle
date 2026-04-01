@@ -7,6 +7,7 @@ plugins {
 dependencies {
   api ("org.terracotta.internal:galvan-support:$terracottaCoreVersion") {
     exclude group: 'org.slf4j'
+    exclude group: 'junit'
   }
 
   implementation project(':common:test-utilities')
@@ -22,4 +23,12 @@ deploy {
   groupId = 'org.terracotta'
   artifactId = 'terracotta-dynamic-config-testing-galvan'
   name = 'Platform Galvan Support'
+}
+
+configurations.all {
+  resolutionStrategy {
+    dependencySubstitution {
+      substitute(module("junit:junit:4.13.1")).using(module("junit:junit:${junitVersion}"))
+    }
+  }
 }
