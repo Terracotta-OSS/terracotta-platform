@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,17 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
+  /**
+   * Reserve the usage of this class for the current thread.
+   * No other thread will be able to access it.
+   */
+  void reserve();
+
+  /**
+   * Release usage of this class from current thread
+   */
+  void release();
+
   void setChangeApplicator(ChangeApplicator<NodeContext> changeApplicator);
 
   ChangeApplicator<NodeContext> getChangeApplicator();
@@ -37,13 +48,13 @@ public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
   List<NomadChangeInfo> getChangeHistory() throws NomadException;
 
   /**
-   * Forces the sync of a stream of changes in a node's append log.
+   * Apply a stream of changes in a node's append log.
    * <p>
    * To construct the configurations to write, a function must be passed,
    * which will return a new configuration from 2 parameters: the change and
    * the previous configuration, which might be null at the beginning.
    */
-  void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
+  void applyChanges(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
 
   static DynamicConfigNomadServer empty() {
     return new EmptyDynamicConfigNomadServer();
