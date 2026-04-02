@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,14 @@ import java.util.function.BiFunction;
  * @author Mathieu Carbou
  */
 class EmptyDynamicConfigNomadServer implements DynamicConfigNomadServer {
+  @Override
+  public void reserve() {
+  }
+
+  @Override
+  public void release() {
+  }
+
   @Override
   public boolean hasIncompleteChange() {
     return false;
@@ -106,6 +114,6 @@ class EmptyDynamicConfigNomadServer implements DynamicConfigNomadServer {
   }
 
   @Override
-  public void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
+  public void applyChanges(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
   }
 }

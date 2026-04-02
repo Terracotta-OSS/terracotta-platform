@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,12 @@ public class DelegatingDynamicConfigNomadServer implements DynamicConfigNomadSer
   }
 
   @Override
+  public void reserve() { delegate.reserve(); }
+
+  @Override
+  public void release() { delegate.release(); }
+
+  @Override
   public boolean hasIncompleteChange() {return delegate.hasIncompleteChange();}
 
   @Override
@@ -90,7 +96,7 @@ public class DelegatingDynamicConfigNomadServer implements DynamicConfigNomadSer
   public List<NomadChangeInfo> getChangeHistory() throws NomadException {return delegate.getChangeHistory();}
 
   @Override
-  public void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {delegate.forceSync(changes, fn);}
+  public void applyChanges(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {delegate.applyChanges(changes, fn);}
 
   @Override
   public String toString() {

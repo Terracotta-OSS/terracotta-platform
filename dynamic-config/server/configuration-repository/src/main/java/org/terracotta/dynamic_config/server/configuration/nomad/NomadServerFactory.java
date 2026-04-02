@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class NomadServerFactory {
 
     SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
 
-    DynamicConfigNomadServer nomadServer = new SingleThreadedNomadServer(new DynamicConfigNomadServerImpl(serverState)) {
+    DynamicConfigNomadServer nomadServer = new DynamicConfigNomadServerImpl(serverState) {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
