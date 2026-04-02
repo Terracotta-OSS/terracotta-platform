@@ -277,6 +277,89 @@ public class NodeStartupIT extends DynamicConfigIT {
     waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
+  @Test
+  public void testSuccessfulStartupRelay() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410"));
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartRelayWithConfigFile() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartupReplica() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForPassiveReplicaStart(1, 1);
+  }
+
+  @Test
+  public void testSuccessfulStartReplicaWithConfigFile() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForPassiveReplicaStart(1, 1);
+  }
+
+  @Test
+  public void testFailedStartReplicaWithConfigFile() {
+    // checks if the cluster validator logic is executed
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica-invalid1.properties");
+    startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=localhost, relay-port=null, relay-group-port=null} aren't well-formed");
+  }
+
+  @Test
+  public void testFailedStartupReplicaWithAutoActivate() {
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-auto-activate", "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The '-auto-activate' parameter cannot be used when '-replica' parameter is set to true.");
+  }
+
+  @Test
+  public void testFailedStartReplicaWithConfigFileAutoActivate() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
+    startNode(1, 1, "-auto-activate", "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Nodes with names: [node-1-1] have the replica setting enabled. The '-auto-activate' parameter cannot be used when replica setting is enabled on any node.");
+  }
+
+  @Test
+  public void testFailedStartupRelayMissingProperty() {
+    // missing relay property
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay", "true", "-replica-hostname", "localhost"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The relay setting is enabled for node with name: node-1-1, relay properties: {replica-hostname=localhost, replica-port=null} aren't well-formed");
+  }
+
+  @Test
+  public void testFailedStartupReplicaMissingProperty() {
+    // missing replica property
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=localhost, relay-port=null, relay-group-port=9430} aren't well-formed");
+  }
+
+  @Test
+  public void testFailedStartupBothRelayReplica() {
+    // both relay and replica
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay", "true", "-replica-hostname", "localhost", "-replica-port", "9410",
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Node with name: node-1-1 has both relay and replica settings enabled");
+  }
+
+  @Test
+  public void testFailedStartupPartialConfigWhenRelayDisabled() {
+    // partial config with mode disabled
+    startNode(1, 1, getNewOptions(getNode(1, 1), "-relay", "false", "-replica-hostname", "localhost"));
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "The relay setting is disabled for node with name: node-1-1, properties: {replica-hostname=localhost, replica-port=null} are partially configured");
+  }
+
   private void startSingleNodeWithDash(String dash, String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(

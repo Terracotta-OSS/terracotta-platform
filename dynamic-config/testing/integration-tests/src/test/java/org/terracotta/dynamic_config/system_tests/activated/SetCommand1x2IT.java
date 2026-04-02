@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,19 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.stream.Stream;
+
+import static java.util.function.Predicate.isEqual;
+import static java.util.stream.IntStream.rangeClosed;
+import static java.util.stream.Stream.concat;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
@@ -95,5 +103,21 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "security-log-dir=foo"),
         containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+  }
+
+  @Test
+  public void testSetRelay_passiveServerMovesToRelay() {
+    waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
+    String passive = getNodeName(1, passiveId);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
+      "-c", passive + ":relay=" + "true",
+      "-c", passive + ":replica-hostname=" + "localhost",
+      "-c", passive + ":replica-port=" + "9410"), is(successful()));
+
+    stopNode(1, passiveId);
+    startNode(1, passiveId);
+
+    waitForPassiveRelay(1, passiveId);
   }
 }

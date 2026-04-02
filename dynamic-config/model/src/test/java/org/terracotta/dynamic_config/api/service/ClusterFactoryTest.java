@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,9 @@ public class ClusterFactoryTest {
           .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
-          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"))
+          .setRelay(false)
+          .setReplica(false),
       Testing.newTestNode("node-2", "localhost2")
           .setUID(Testing.N_UIDS[2])
           .setPort(9410)
@@ -122,6 +124,8 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
+          .setRelay(false)
+          .setReplica(false)
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)

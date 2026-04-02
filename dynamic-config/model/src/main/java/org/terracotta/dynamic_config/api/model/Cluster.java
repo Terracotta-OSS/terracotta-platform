@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -608,5 +608,9 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public Endpoints determineEndpoints(EndpointType endpointType) {
     return new Endpoints(this, endpointType);
+  }
+
+  public boolean is(String nodeName, DisasterRecoveryMode mode) {
+    return getNodeByName(nodeName).filter(node -> DisasterRecoveryMode.fromNode(node) == mode).isPresent();
   }
 }
