@@ -28,7 +28,7 @@ deploy {
 configurations.all {
   resolutionStrategy {
     dependencySubstitution {
-      substitute(module("junit:junit:4.13.1")).using(module("junit:junit:${junitVersion}"))
+      substitute(module("junit:junit:4.13.2")).using(module("junit:junit:${junitVersion}"))
     }
   }
 }
