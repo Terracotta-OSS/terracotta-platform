@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class LockConfigIT extends DynamicConfigIT {
 
     // we lock the configuration
     // but not all nodes are there
-    if (!lock()) {
+    if (!lock(true)) {
       throw new AssertionError("lock failed");
     }
 
@@ -140,7 +140,13 @@ public class LockConfigIT extends DynamicConfigIT {
   }
 
   private boolean lock() {
-    ToolExecutionResult result = invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
+    return lock(false);
+  }
+
+  private boolean lock(boolean force) {
+    ToolExecutionResult result = force ?
+      invokeWithoutToken("lock-config", "-connect-to", "localhost:" + getNodePort(), "-lock-context", lockContext.toString(), "-force"):
+      invokeWithoutToken("lock-config", "-connect-to", "localhost:" + getNodePort(), "-lock-context", lockContext.toString());
     if (result.getExitStatus() != 0) {
       for (String line : result.getOutput()) {
         System.out.println("LOCK FAIL:" + line);

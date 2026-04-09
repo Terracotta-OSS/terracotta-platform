@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,11 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
-import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.inet.HostPort;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+public class LockConfigAction extends LockUnlockConfigAction {
 
-public class LockConfigAction extends RemoteAction {
-
-  private HostPort node;
   private String lockContext;
-
-  public void setNode(HostPort node) {
-    this.node = node;
-  }
 
   public void setLockContext(String lockContext) {
     this.lockContext = lockContext;
@@ -40,10 +28,7 @@ public class LockConfigAction extends RemoteAction {
 
   @Override
   public final void run() {
-    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    LinkedHashMap<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
-    Cluster cluster = getRuntimeCluster(node);
-    String token = lock(cluster, onlineNodes, LockContext.from(lockContext));
-    output.out("Config lock with token: " + token);
+    super.run();
+    lock(cluster, onlineNodes, LockContext.from(lockContext));
   }
 }

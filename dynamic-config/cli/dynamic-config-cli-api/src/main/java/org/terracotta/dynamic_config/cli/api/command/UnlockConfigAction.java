@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,10 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.inet.HostPort;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-public class UnlockConfigAction extends RemoteAction {
-
-  private HostPort node;
-
-  public void setNode(HostPort node) {
-    this.node = node;
-  }
-
+public class UnlockConfigAction extends LockUnlockConfigAction {
   @Override
   public final void run() {
-    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    LinkedHashMap<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
-    Cluster cluster = getRuntimeCluster(node);
+    super.run();
     unlock(cluster, onlineNodes);
   }
 }
