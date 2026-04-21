@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,19 +81,19 @@ public class Scaling2x1IT extends DynamicConfigIT {
   public void test_rolledBackScaleOut() {
     // attach
     final ToolExecutionResult attach = configTool("attach", "-lock", "-to-cluster", getNodeHostPort(1, 1).toString(), "-stripe-shape", getNodeHostPort(2, 1).toString());
-    assertThat(attach, allOf(is(successful()), containsOutput("Config lock with token: ")));
+    assertThat(attach, allOf(is(successful()), containsOutput("Config locked with token: ")));
 
     final String token = attach.getOutput()
         .stream()
-        .filter(line -> line.startsWith("Config lock with token: "))
-        .map(line -> line.substring("Config lock with token: ".length()))
+        .filter(line -> line.startsWith("Config locked with token: "))
+        .map(line -> line.substring("Config locked with token: ".length()))
         .findFirst()
         .get();
 
     // simulated re-balancing failure: detach + marker + unlock
     assertThat(configTool("-lock-token", token, "detach", "-from-cluster", getNodeHostPort(1, 1).toString(), "-stripe", getNodeHostPort(2, 1).toString()), is(successful()));
     final LockContext marker = new LockContext(token, OWNER_PLATFORM, DENY_SCALE_OUT);
-    assertThat(configTool("-lock-token", token, "lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", marker.toString()), allOf(is(successful()), containsOutput("Config lock with token: " + token)));
+    assertThat(configTool("-lock-token", token, "lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", marker.toString()), allOf(is(successful()), containsOutput("Config locked with token: " + token)));
     assertThat(configTool("-lock-token", token, "unlock-config", "-connect-to", getNodeHostPort(1, 1).toString()), is(successful()));
 
     // verify that scale out is not allowed anymore
@@ -140,9 +140,9 @@ public class Scaling2x1IT extends DynamicConfigIT {
     final String token = UUID.randomUUID().toString();
     final UID stripeUID = getUpcomingCluster(1, 1).getStripes().get(1).getUID();
     final LockContext lock = new LockContext(token, OWNER_PLATFORM, SCALE_IN_PREFIX + stripeUID);
-    assertThat(configTool("lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", lock.toString()), allOf(is(successful()), containsOutput("Config lock with token: " + token)));
+    assertThat(configTool("lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", lock.toString()), allOf(is(successful()), containsOutput("Config locked with token: " + token)));
     final LockContext marker = new LockContext(token, OWNER_PLATFORM, DENY_SCALE_OUT);
-    assertThat(configTool("-lock-token", token, "lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", marker.toString()), allOf(is(successful()), containsOutput("Config lock with token: " + token)));
+    assertThat(configTool("-lock-token", token, "lock-config", "-connect-to", getNodeHostPort(1, 1).toString(), "-lock-context", marker.toString()), allOf(is(successful()), containsOutput("Config locked with token: " + token)));
     assertThat(configTool("-lock-token", token, "unlock-config", "-connect-to", getNodeHostPort(1, 1).toString()), is(successful()));
 
     // verify that we scale in is not allowed anymore

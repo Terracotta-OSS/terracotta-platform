@@ -340,6 +340,7 @@ public abstract class RemoteAction implements Runnable {
       nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
     }
     this.nomadManager = new LockAwareNomadManager<>(lockContext.getToken(), nomadManager);
+    output.out("Config locked with token: " + lockContext.getToken());
     return lockContext.getToken();
   }
 
