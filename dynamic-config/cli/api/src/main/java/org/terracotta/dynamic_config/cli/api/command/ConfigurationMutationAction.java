@@ -161,14 +161,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       // Filter out relay nodes from onlineNodes, they are not contacted to apply configuration changes at runtime
       // onlineRelayNodes will contain the list of relay nodes we will automatically restart
       // to sync configuration changes during passive sync
-      final Set<Endpoint> onlineRelayNodes = new HashSet<>();
-      onlineNodes.entrySet().removeIf(entry -> {
-        if (entry.getValue().isRelay()) {
-          onlineRelayNodes.add(entry.getKey());
-          return true;
-        }
-        return false;
-      });
+      final Collection<Endpoint> onlineRelayNodes = removeRelayNodes(onlineNodes);
 
       // cluster is active, we need to run a nomad change and eventually a restart
 

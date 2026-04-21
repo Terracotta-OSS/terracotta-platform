@@ -67,6 +67,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -671,6 +672,18 @@ public abstract class RemoteAction implements Runnable {
 
   protected final LinkedHashMap<Endpoint, LogicalServerState> filterOnlineNodes(Map<Endpoint, LogicalServerState> nodes) {
     return filter(nodes, (addr, state) -> !state.isUnknown() && !state.isUnreacheable());
+  }
+
+  protected final Collection<Endpoint> removeRelayNodes(Map<Endpoint, LogicalServerState> onlineNodes) {
+    final Collection<Endpoint> onlineRelayNodes = new HashSet<>(onlineNodes.size() / 3);
+    onlineNodes.entrySet().removeIf(entry -> {
+      if (entry.getValue().isRelay()) {
+        onlineRelayNodes.add(entry.getKey());
+        return true;
+      }
+      return false;
+    });
+    return onlineRelayNodes;
   }
 
   protected final <K> LinkedHashMap<K, LogicalServerState> filter(Map<K, LogicalServerState> nodes, BiPredicate<K, LogicalServerState> predicate) {

@@ -49,6 +49,9 @@ public abstract class LockUnlockConfigAction extends RemoteAction {
       throw new IllegalStateException("The cluster is not fully activated: a lock or unlock operation can only be performed on an activated cluster.");
     }
 
+    // Remove Relay nodes from the list: they do not take part of nomad tx
+    removeRelayNodes(onlineNodes);
+
     // validate that all the online nodes are either actives or passives
     ensureNodesAreEitherActiveOrPassive(onlineNodes);
 

@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
@@ -56,6 +57,24 @@ public class LockConfigWithRelayIT extends DynamicConfigIT {
       throw new AssertionError("lock failed");
     }
     unlock();
+
+    // active and passive nodes are part of the DC transaction
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 1)),
+      allOf(is(successful()),
+        containsOutput("Locking the config by 'platform (dynamic-scale)'"),
+        containsOutput("Unlocking the config (forced=false)")));
+
+    // but relay nodes are not
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)),
+      allOf(is(successful()),
+        not(containsOutput("Locking the config by 'platform (dynamic-scale)'")),
+        not(containsOutput("Unlocking the config (forced=false)"))));
+
+    stopNode(1, 2);
+    startNode(1, 2);
+    waitForPassiveRelay(1, 2);
+
+    // after a restart though they have synced the config from active and have the append log entries
     waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 2)),
       allOf(is(successful()),
         containsOutput("Locking the config by 'platform (dynamic-scale)'"),
