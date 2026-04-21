@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,20 +315,28 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     // If not, the restart will throw.
     // This is required because next step is to restart the remaining nodes...
     // Which are active, so we have to ensure that a passive not will be there to take over the active role
-    LOGGER.info("Restarting non active nodes: {}...", toString(others));
-    restartNodesIfPassives(
-        others,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+    if (!others.isEmpty()) {
+      LOGGER.info("Restarting non active nodes: {}...", toString(others));
+      restartNodesIfPassives(
+          others,
+          Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+          Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+    } else {
+      LOGGER.info("No non active nodes to restart");
+    }
 
     // Restarting actives. This will trigger failovers and active will restart as passives.
-    LOGGER.info("Restarting active nodes: {}...", toString(actives));
-    restartNodesIfActives(
-        actives,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+    if (!actives.isEmpty()) {
+      LOGGER.info("Restarting active nodes: {}...", toString(actives));
+      restartNodesIfActives(
+          actives,
+          Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+          Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE));
+    } else {
+      LOGGER.info("No active nodes to restart");
+    }
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
     concat(actives.stream(), others.stream())

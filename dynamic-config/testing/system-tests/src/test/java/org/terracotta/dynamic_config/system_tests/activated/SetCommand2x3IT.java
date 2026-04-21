@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import static java.util.function.Predicate.isEqual;
 import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -53,6 +54,23 @@ public class SetCommand2x3IT extends DynamicConfigIT {
     ).toArray(String[]::new);
 
     assertThat(configTool(cli), both(is(successful())).and(containsOutput("Restart required for nodes:")));
+
+    for (int s = 1; s <= 2; s++) {
+      for (int n = 1; n <= 3; n++) {
+        assertFalse(usingTopologyService(s, n, TopologyService::mustBeRestarted));
+      }
+    }
+  }
+
+  @Test
+  public void testAutoRestartWithPassivesOnly() {
+    int[] passives = waitForNPassives(1, 2);
+
+    // Apply configuration changes to only passive nodes with auto-restart
+    assertThat(configTool("set", "-auto-restart", "-connect-to", "localhost:" + getNodePort(2, 1),
+      "-setting", "stripe.1.node." + passives[0] + ".tc-properties.foo=bar",
+      "-setting", "stripe.1.node." + passives[1] + ".tc-properties.foo=bar"
+    ), is(allOf(successful(), containsOutput("Restart required for nodes:"))));
 
     for (int s = 1; s <= 2; s++) {
       for (int n = 1; n <= 3; n++) {
