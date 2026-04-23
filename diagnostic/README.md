@@ -46,7 +46,7 @@ The subsystem is organized into five submodules:
 
 ### 1. `:diagnostic:model`
 
-- [`LogicalServerState`](diagnostic/model/src/main/java/org/terracotta/diagnostic/model/LogicalServerState.java:23): Unified state enum representing `STARTING`, `UNINITIALIZED`, `SYNCHRONIZING`, `ACTIVE`, `PASSIVE`, `DIAGNOSTIC`, `RECONNECT_WINDOW`, `UNKNOWN`, and stopped states.
+- [`LogicalServerState`](diagnostic/model/src/main/java/org/terracotta/diagnostic/model/LogicalServerState.java:23): Unified state enum representing `BOOTSTRAP`, `STARTING`, `UNINITIALIZED`, `SYNCHRONIZING`, `RECOVERING`, `ACTIVE`, `PASSIVE`, `DIAGNOSTIC`, `STOPPING`, `UNKNOWN`, and stopped states.
 - [`ConnectedClientInformation`](diagnostic/model/src/main/java/org/terracotta/diagnostic/model/ConnectedClientInformation.java:25): Metadata on connected clients (client UUID, host, PID, connection timestamp).
 - [`KitInformation`](diagnostic/model/src/main/java/org/terracotta/diagnostic/model/KitInformation.java:24): Version, build number, and build timestamp of the Terracotta installation.
 

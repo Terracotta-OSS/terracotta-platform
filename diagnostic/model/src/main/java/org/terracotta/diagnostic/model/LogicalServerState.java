@@ -71,7 +71,17 @@ public enum LogicalServerState {
   /**
    * Server is bootstrapping
    */
+  BOOTSTRAP("BOOTSTRAP"),
+
+  /**
+   * Server is starting
+   */
   STARTING("STARTING", "START_STATE", "START-STATE"),
+
+  /**
+   * Server is stopping
+   */
+  STOPPING("STOPPING", "STOP_STATE", "STOP-STATE"),
 
   /**
    * Server startup is suspended
@@ -87,6 +97,8 @@ public enum LogicalServerState {
    * Passive server is synchronizing with active server
    */
   SYNCHRONIZING("SYNCHRONIZING", "PASSIVE-SYNCING"),
+
+  RECOVERING("RECOVERING"),
 
   /**
    * Server is not yet configured
