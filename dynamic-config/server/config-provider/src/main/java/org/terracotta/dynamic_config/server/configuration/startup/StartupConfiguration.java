@@ -64,19 +64,16 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final Supplier<NodeContext> nodeContextSupplier;
   private final boolean unConfigured;
   private final boolean repairMode;
-  private final boolean replicaMode;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
   private final Json json;
   private final GroupPortMapper groupPortMapper;
 
-  @SuppressWarnings("deprecation")
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, boolean replicaMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
-    this.replicaMode = replicaMode;
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
@@ -137,7 +134,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public boolean isRelayDestination() {
-    return replicaMode;
+    return isReplicaMode();
   }
 
   @Override
@@ -148,7 +145,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     }
     // replica mode
     Node node = nodeContextSupplier.get().getNode();
-    if (replicaMode) {
+    if (isReplicaMode()) {
       return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
     }
     // activated and relay
@@ -161,7 +158,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public InetSocketAddress getRelayPeerGroupPort() {
-    if (replicaMode) {
+    if (isReplicaMode()) {
       return DisasterRecoveryMode.REPLICA.getPeerGroupPort(nodeContextSupplier.get().getNode()).orElseThrow(AssertionError::new);
     }
     return null;
@@ -221,7 +218,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
     startupConfig.addState("unConfigured", unConfigured);
     startupConfig.addState("repairMode", repairMode);
-    startupConfig.addState("replicaMode", replicaMode);
+    startupConfig.addState("replicaMode", isReplicaMode());
     startupConfig.addState("partialConfig", isPartialConfiguration());
     startupConfig.addState("startupNodeContext", toMap(nodeContextSupplier.get()));
 
@@ -324,5 +321,9 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   private ServerConfiguration toServerConfiguration(Node node) {
     return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
+  }
+
+  private boolean isReplicaMode() {
+    return DisasterRecoveryMode.REPLICA.isEnabled(nodeContextSupplier.get().getNode());
   }
 }
