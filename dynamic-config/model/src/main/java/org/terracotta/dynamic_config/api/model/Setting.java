@@ -437,9 +437,10 @@ public enum Setting {
     intoNode(Node::setRelayHostname),
     asList(
       when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE)  // Allow changing relay hostname in activated state (requires restart)
     ),
-    EnumSet.noneOf(Requirement.class),
+    of(NODE_RESTART),
     emptyList(),
     emptyList(),
     (key, value) -> HOST_VALIDATOR.accept(SettingName.RELAY_HOSTNAME, tuple2(key, value))
@@ -453,9 +454,10 @@ public enum Setting {
     intoNode((node, value) -> node.setRelayPort(value == null ? null : Integer.parseInt(value))),
     asList(
       when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE)
     ),
-    EnumSet.noneOf(Requirement.class),
+    of(NODE_RESTART),
     emptyList(),
     emptyList(),
     (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_PORT, tuple2(key, value))
@@ -469,9 +471,10 @@ public enum Setting {
     intoNode((node, value) -> node.setRelayGroupPort(value == null ? null : Integer.parseInt(value))),
     asList(
       when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE)
     ),
-    EnumSet.noneOf(Requirement.class),
+    of(NODE_RESTART),
     emptyList(),
     emptyList(),
     (key, value) -> PORT_VALIDATOR.accept(SettingName.RELAY_GROUP_PORT, tuple2(key, value))
