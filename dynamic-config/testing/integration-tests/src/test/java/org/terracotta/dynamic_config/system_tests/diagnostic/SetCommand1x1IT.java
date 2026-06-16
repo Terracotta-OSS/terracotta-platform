@@ -159,16 +159,6 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setReplica() {
-    // set not allowed
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.replica=" + "true"),
-      allOf(
-        not(successful()),
-        containsOutput("Reason: Setting 'replica' cannot be set")));
-  }
-
-  @Test
   public void setIncompleteRelayProperties() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
         "-c", "stripe.1.node.1.relay=" + "true"),

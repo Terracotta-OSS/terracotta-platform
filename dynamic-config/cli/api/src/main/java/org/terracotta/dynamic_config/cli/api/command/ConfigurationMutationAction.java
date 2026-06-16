@@ -183,7 +183,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       // display unreachable nodes
       final Set<String> unreachableRelayNodes = originalCluster.getNodes()
         .stream()
-        .filter(DisasterRecoveryMode::isRelay)
+        .filter(node -> DisasterRecoveryMode.isRelay(node, originalCluster))
         .filter(node -> node.getEndpoints().stream().noneMatch(onlineRelayNodes::contains))
         .map(Node::getName)
         .collect(Collectors.toSet());

@@ -186,18 +186,15 @@ public class NodeTest {
 
   @Test
   public void test_replica_properties() {
-    assertThat(newTestNode("node1", "localhost").getReplica().orDefault(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayHostname().isConfigured(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayPort().isConfigured(), is(false));
     assertThat(newTestNode("node1", "localhost").getRelayGroupPort().isConfigured(), is(false));
 
     Node node = newTestNode("node1", "localhost")
-      .setReplica(true)
       .setRelayHostname("dest-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
 
-    assertThat(node.getReplica().get(), is(equalTo(true)));
     assertThat(node.getRelayHostname().get(), is(equalTo("dest-host")));
     assertThat(node.getRelayPort().get(), is(equalTo(9410)));
     assertThat(node.getRelayGroupPort().get(), is(equalTo(9430)));

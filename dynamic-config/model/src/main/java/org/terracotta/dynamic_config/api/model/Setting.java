@@ -417,12 +417,13 @@ public enum Setting {
     of(V1, V2),
     false,
     always(false),
-    NODE,
-    fromNode(Node::getReplica),
-    intoNode((node, value) -> node.setReplica(value == null ? null : Boolean.valueOf(value))),
+    CLUSTER,
+    fromCluster(Cluster::getReplica),
+    intoCluster((cluster, value) -> cluster.setReplica(value == null ? null : Boolean.valueOf(value))),
     asList(
-      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      when(CONFIGURING, ACTIVATED).allow(GET).atLevel(CLUSTER),
+      when(CONFIGURING).allow(SET, IMPORT).atLevel(CLUSTER),
+      when(CONFIGURING, ACTIVATED).allow(UNSET).atLevel(CLUSTER)  // Activated clusters can only unset, not set to become replica
     ),
     of(PRESENCE),
     asList("true", "false")

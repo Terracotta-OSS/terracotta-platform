@@ -726,7 +726,7 @@ public abstract class RemoteAction implements Runnable {
     // expected passives without relay nodes (relay nodes are not contacted to apply configuration changes at runtime)
     Collection<String> expectedPassives = cluster.getNodes()
         .stream()
-        .filter(node -> !DisasterRecoveryMode.isRelay(node))
+        .filter(node -> !DisasterRecoveryMode.isRelay(node, cluster))
         .map(Node::getName)
         .collect(Collectors.toCollection(TreeSet::new));
     expectedPassives.removeAll(actives);

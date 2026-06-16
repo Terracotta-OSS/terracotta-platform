@@ -624,6 +624,6 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public boolean is(String nodeName, DisasterRecoveryMode mode) {
-    return getNodeByName(nodeName).filter(node -> DisasterRecoveryMode.fromNode(node) == mode).isPresent();
+    return getNodeByName(nodeName).filter(node -> DisasterRecoveryMode.from(node, this) == mode).isPresent();
   }
 }
