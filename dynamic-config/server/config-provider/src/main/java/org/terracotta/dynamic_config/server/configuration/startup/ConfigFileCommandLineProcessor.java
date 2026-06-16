@@ -62,14 +62,6 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     server.console("Starting node from config file: {}", configSource);
     Cluster cluster = clusterCreator.create(configSource);
 
-    if (options.allowsAutoActivation()) {
-      List<String> replicaNodes = cluster.getNodes().stream().filter(DisasterRecoveryMode::isReplica).map(Node::getName).toList();
-      if (!replicaNodes.isEmpty()) {
-        throw new IllegalArgumentException(String.format("Nodes with names: %s have the replica setting enabled. " +
-          "The '%s' parameter cannot be used when replica setting is enabled on any node.", replicaNodes, ConsoleParamsUtils.addDash(SettingName.AUTO_ACTIVATE)));
-      }
-    }
-
     Node node;
     if (options.getNodeName() != null) {
       node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), configSource, cluster);

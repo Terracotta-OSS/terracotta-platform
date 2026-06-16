@@ -312,13 +312,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     waitUntilServerStdOut(getNode(1, 1), "The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=localhost, relay-port=null, relay-group-port=null} aren't well-formed");
   }
 
-  @Test
-  public void testFailedStartReplicaWithConfigFileAutoActivate() {
-    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
-    startNode(1, 1, "-auto-activate", "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
-    waitForStopped(1, 1);
-    waitUntilServerStdOut(getNode(1, 1), "Nodes with names: [node-1-1] have the replica setting enabled. The '-auto-activate' parameter cannot be used when replica setting is enabled on any node.");
-  }
 
   @Test
   public void testFailedStartupRelayMissingProperty() {
