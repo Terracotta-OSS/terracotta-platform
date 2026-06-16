@@ -15,7 +15,6 @@
           "name": "testServer0",
           "port": 23633,
           "relay": false,
-          "replica": false,
           "tcProperties": {
             "terracotta.management.assert": "true"
           },
@@ -46,5 +45,6 @@
   },
   "securitySslTls": false,
   "securityWhitelist": false,
+  "replica": false,
   "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }
