@@ -70,14 +70,4 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. IMPORT operation is not supported on replica node")));
   }
-
-  @Test
-  public void test_failed_import_on_replica_node() throws Exception {
-    stopNode(1, 1);
-    startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "1234", "-relay-group-port", "5678"));
-    waitForPassiveReplicaStart(1, 1);
-    Path configFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
-    assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node: " + getNodeHostPort(1, 1) +  " has the replica setting enabled")));
-  }
 }
