@@ -199,38 +199,36 @@ public class ClusterValidator {
   }
 
   private void validateDRSetting() {
-    Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
-      .collect(Collectors.groupingBy(this::checkAndGetDRMode,
-        Collectors.mapping(Node::getName, Collectors.toList())));
+    // Check if replica is enabled at cluster level
+    boolean clusterReplicaEnabled = DisasterRecoveryMode.REPLICA.isEnabled(null, cluster);
 
-    List<String> replicaNodes = nodesByMode.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList()).stream().sorted().toList();
-
-    if (!replicaNodes.isEmpty()) {
-      // allowed single replica node
-      if (replicaNodes.size() > 1) {
-        throw new MalformedClusterException("Only a single node can have the replica setting enabled. Nodes with replica: " + replicaNodes);
-      }
-
-      List<String> nonReplicaNodes = nodesByMode.entrySet().stream()
-        .filter(entry -> entry.getKey() != DisasterRecoveryMode.REPLICA)
-        .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
-
-      // no other nodes allowed with replica node
-      if (!nonReplicaNodes.isEmpty()) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
+    if (clusterReplicaEnabled) {
+      // at most 1 node per stripe (no replica, relay or normal node allowed alongside replica in a stripe)
+      for (Stripe stripe : cluster.getStripes()) {
+        if (stripe.getNodeCount() > 1) {
+          throw new MalformedClusterException("Stripe with name: " + stripe.getName() + " has " + stripe.getNodeCount() + " nodes with names: " +
+            stripe.getNodes().stream().map(Node::getName).sorted().collect(Collectors.joining(", ")) +
+            ". A replica cluster can have at most 1 replica node per stripe");
+        }
       }
     }
+    // Validate each node's disaster recovery settings
+    // - No node can have both relay and replica enabled
+    // - when no relay or replica is configured, all-or-nothing validation for required properties
+    // - When cluster.replica=true, all nodes must have replica properties configured
+    // - When node.relay=true, node must have relay properties configured
+    cluster.getNodes().forEach(this::checkAndGetDRMode);
   }
 
   private DisasterRecoveryMode checkAndGetDRMode(Node node) {
-    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node);
-    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node);
+    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node, cluster);
+    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node, cluster);
     if (relayMode && replicaMode) {
       throw new MalformedClusterException("Node with name: " + node.getName() + " has both relay and replica settings enabled");
     }
     validateRequiredDRProperties(node, DisasterRecoveryMode.RELAY);
     validateRequiredDRProperties(node, DisasterRecoveryMode.REPLICA);
-    return DisasterRecoveryMode.fromNode(node);
+    return DisasterRecoveryMode.from(node, cluster);
   }
 
   private void validateRequiredDRProperties(Node node, DisasterRecoveryMode mode) {
@@ -243,12 +241,12 @@ public class ClusterValidator {
       .filter(OptionalConfig::isConfigured)
       .count();
 
-    if (mode.isEnabled(node)) {
+    if (mode.isEnabled(node, cluster)) {
       if (configuredCount != requiredProps.size()) {
         Map<String, Object> inconsistent = new LinkedHashMap<>();
         requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
         throw new MalformedClusterException("The " + mode.getLabel() + " setting is enabled for node with name: " + node.getName() +
-          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed");
+          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed, " + requiredProps.keySet() + " need to be set together");
       }
     } else {
       // when mode is disabled and the user sets partial configuration for a node
