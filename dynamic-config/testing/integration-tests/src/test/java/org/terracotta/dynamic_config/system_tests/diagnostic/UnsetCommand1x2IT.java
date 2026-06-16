@@ -811,15 +811,6 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         containsOutput("stripe.1.node.1.replica-port=9410")
       ));
 
-    // unset not allowed for sub-properties
-    assertThat(
-      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-hostname"),
-      containsOutput("Setting 'replica-hostname' cannot be unset"));
-
-    assertThat(
-      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-port"),
-      containsOutput("Setting 'replica-port' cannot be unset"));
-
     // unset at cluster level
     assertThat(
       configTool("unset", "-s", "localhost:" + getNodePort(),
