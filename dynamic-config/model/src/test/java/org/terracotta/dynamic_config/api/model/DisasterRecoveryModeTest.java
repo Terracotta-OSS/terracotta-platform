@@ -27,53 +27,56 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class DisasterRecoveryModeTest {
 
   @Test
-  public void test_fromNode_relay_mode() {
+  public void test_from_relay_mode() {
     Node relayNode = newTestNode("relay", "localhost")
       .setRelay(true)
       .setReplicaHostname("replica-host")
       .setReplicaPort(9410);
+    Cluster cluster = newTestCluster();
 
-    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(relayNode);
+    DisasterRecoveryMode mode = DisasterRecoveryMode.from(relayNode, cluster);
     assertThat(mode, is(equalTo(DisasterRecoveryMode.RELAY)));
-    assertThat(mode.isEnabled(relayNode), is(true));
+    assertThat(mode.isEnabled(relayNode, cluster), is(true));
   }
 
   @Test
-  public void test_fromNode_replica_mode() {
+  public void test_from_replica_mode() {
     Node replicaNode = newTestNode("replica", "localhost")
-      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
+    Cluster cluster = newTestCluster().setReplica(true);
 
-    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(replicaNode);
+    DisasterRecoveryMode mode = DisasterRecoveryMode.from(replicaNode, cluster);
     assertThat(mode, is(equalTo(DisasterRecoveryMode.REPLICA)));
-    assertThat(mode.isEnabled(replicaNode), is(true));
+    assertThat(mode.isEnabled(replicaNode, cluster), is(true));
   }
 
   @Test
-  public void test_fromNode_none() {
+  public void test_from_none() {
     Node normalNode = newTestNode("normal", "localhost");
+    Cluster cluster = newTestCluster();
 
-    DisasterRecoveryMode mode = DisasterRecoveryMode.fromNode(normalNode);
+    DisasterRecoveryMode mode = DisasterRecoveryMode.from(normalNode, cluster);
     assertThat(mode, is(equalTo(DisasterRecoveryMode.NONE)));
-    assertThat(mode.isEnabled(normalNode), is(true));
+    assertThat(mode.isEnabled(normalNode, cluster), is(true));
   }
 
   @Test
-  public void test_fromNode_both_modes_throws_exception() {
+  public void test_from_both_modes_throws_exception() {
     Node invalidNode = newTestNode("invalid", "localhost")
-      .setRelay(true)
-      .setReplica(true);
+      .setRelay(true);
+    Cluster cluster = newTestCluster().setReplica(true);
 
     assertThat(
-      () -> DisasterRecoveryMode.fromNode(invalidNode),
+      () -> DisasterRecoveryMode.from(invalidNode, cluster),
       is(throwing(instanceOf(AssertionError.class))
         .andMessage(containsString("has both relay and replica settings enabled"))));
   }
@@ -99,7 +102,6 @@ public class DisasterRecoveryModeTest {
   @Test
   public void test_replica_mode_getPeer() {
     Node replicaNode = newTestNode("replica", "localhost")
-      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
@@ -112,7 +114,6 @@ public class DisasterRecoveryModeTest {
   @Test
   public void test_relay_mode_getPeerGroupPort() {
     Node replicaNode = newTestNode("replica", "localhost")
-      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
@@ -123,7 +124,6 @@ public class DisasterRecoveryModeTest {
   @Test
   public void test_replica_mode_getPeerGroupPort() {
     Node replicaNode = newTestNode("replica", "localhost")
-      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
@@ -167,7 +167,6 @@ public class DisasterRecoveryModeTest {
   @Test
   public void test_getRequiredProperties_replica_mode() {
     Node replicaNode = newTestNode("replica", "localhost")
-      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
@@ -188,24 +187,30 @@ public class DisasterRecoveryModeTest {
   @Test
   public void test_isEnabled_relay_mode() {
     Node relayNode = newTestNode("relay", "localhost").setRelay(true);
-    assertThat(DisasterRecoveryMode.RELAY.isEnabled(relayNode), is(true));
-    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(relayNode), is(false));
-    assertThat(DisasterRecoveryMode.NONE.isEnabled(relayNode), is(false));
+    Cluster cluster = newTestCluster();
+
+    assertThat(DisasterRecoveryMode.RELAY.isEnabled(relayNode, cluster), is(true));
+    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(relayNode, cluster), is(false));
+    assertThat(DisasterRecoveryMode.NONE.isEnabled(relayNode, cluster), is(false));
   }
 
   @Test
   public void test_isEnabled_replica_mode() {
-    Node replicaNode = newTestNode("replica", "localhost").setReplica(true);
-    assertThat(DisasterRecoveryMode.RELAY.isEnabled(replicaNode), is(false));
-    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(replicaNode), is(true));
-    assertThat(DisasterRecoveryMode.NONE.isEnabled(replicaNode), is(false));
+    Node replicaNode = newTestNode("replica", "localhost");
+    Cluster cluster = newTestCluster().setReplica(true);
+
+    assertThat(DisasterRecoveryMode.RELAY.isEnabled(replicaNode, cluster), is(false));
+    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(replicaNode, cluster), is(true));
+    assertThat(DisasterRecoveryMode.NONE.isEnabled(replicaNode, cluster), is(false));
   }
 
   @Test
   public void test_isEnabled_none() {
     Node normalNode = newTestNode("normal", "localhost");
-    assertThat(DisasterRecoveryMode.RELAY.isEnabled(normalNode), is(false));
-    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(normalNode), is(false));
-    assertThat(DisasterRecoveryMode.NONE.isEnabled(normalNode), is(true));
+    Cluster cluster = newTestCluster();
+
+    assertThat(DisasterRecoveryMode.RELAY.isEnabled(normalNode, cluster), is(false));
+    assertThat(DisasterRecoveryMode.REPLICA.isEnabled(normalNode, cluster), is(false));
+    assertThat(DisasterRecoveryMode.NONE.isEnabled(normalNode, cluster), is(true));
   }
 }

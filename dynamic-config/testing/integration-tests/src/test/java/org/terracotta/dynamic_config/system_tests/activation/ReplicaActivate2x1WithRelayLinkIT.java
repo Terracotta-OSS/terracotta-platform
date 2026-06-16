@@ -16,6 +16,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -38,6 +39,7 @@ import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 4, autoStart = false)
+@Ignore("requires failover command")
 public class ReplicaActivate2x1WithRelayLinkIT extends DynamicConfigIT {
   @Test
   public void test_replica_activation_with_relay_link() throws Exception {

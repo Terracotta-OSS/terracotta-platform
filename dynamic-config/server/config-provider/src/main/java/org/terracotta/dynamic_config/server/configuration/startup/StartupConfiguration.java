@@ -132,7 +132,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     if (isPartialConfiguration()) {
       return false;
     }
-    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
+    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get());
   }
 
   @Override
@@ -147,12 +147,13 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
       return null;
     }
     // replica mode
-    Node node = nodeContextSupplier.get().getNode();
+    NodeContext nodeContext = nodeContextSupplier.get();
+    Node node = nodeContext.getNode();
     if (replicaMode) {
       return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
     }
     // activated and relay
-    if (DisasterRecoveryMode.isRelay(node)) {
+    if (DisasterRecoveryMode.isRelay(nodeContext)) {
       return DisasterRecoveryMode.RELAY.getPeer(node).orElseThrow(AssertionError::new);
     }
     // activated but without DR

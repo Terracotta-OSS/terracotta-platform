@@ -52,7 +52,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
@@ -87,7 +86,6 @@ public class Node implements Cloneable, PropertyHolder {
   private Boolean relay;
   private String replicaHostname;
   private Integer replicaPort;
-  private Boolean replica;
   private String relayHostname;
   private Integer relayPort;
   private Integer relayGroupPort;
@@ -180,10 +178,6 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Integer> getReplicaPort() {
     return OptionalConfig.of(REPLICA_PORT, replicaPort);
-  }
-
-  public OptionalConfig<Boolean> getReplica() {
-    return OptionalConfig.of(REPLICA, replica);
   }
 
   public OptionalConfig<String> getRelayHostname() {
@@ -388,11 +382,6 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node setReplicaPort(Integer port) {
     this.replicaPort = port;
-    return this;
-  }
-
-  public Node setReplica(Boolean replica) {
-    this.replica = replica;
     return this;
   }
 
@@ -638,7 +627,6 @@ public class Node implements Cloneable, PropertyHolder {
     clone.relay = this.relay;
     clone.replicaHostname = this.replicaHostname;
     clone.replicaPort = this.replicaPort;
-    clone.replica = this.replica;
     clone.relayHostname = this.relayHostname;
     clone.relayPort = this.relayPort;
     clone.relayGroupPort = this.relayGroupPort;
@@ -671,7 +659,6 @@ public class Node implements Cloneable, PropertyHolder {
         Objects.equals(relay, node.relay) &&
         Objects.equals(replicaHostname, node.replicaHostname) &&
         Objects.equals(replicaPort, node.replicaPort) &&
-        Objects.equals(replica, node.replica) &&
         Objects.equals(relayHostname, node.relayHostname) &&
         Objects.equals(relayPort, node.relayPort) &&
         Objects.equals(relayGroupPort, node.relayGroupPort);
@@ -682,8 +669,7 @@ public class Node implements Cloneable, PropertyHolder {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
         securityDir, securityAuditLogDir, securityLogDir, dataDirs, uid,
-      relay, replicaHostname, replicaPort,
-      replica, relayHostname, relayPort, relayGroupPort);
+        relay, replicaHostname, replicaPort, relayHostname, relayPort, relayGroupPort);
   }
 
   @Override

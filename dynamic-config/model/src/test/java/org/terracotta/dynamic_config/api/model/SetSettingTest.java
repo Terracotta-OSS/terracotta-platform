@@ -286,32 +286,33 @@ public class SetSettingTest {
 
   @Test
   public void test_setProperty_RELAY_REPLICA() {
+    // Test RELAY
     Node node = Testing.newTestNode("node1", "localhost");
     assertFalse(node.getRelay().orDefault());
     assertFalse(node.getReplicaHostname().isConfigured());
     assertFalse(node.getReplicaPort().isConfigured());
-
-    assertFalse(node.getReplica().orDefault());
-    assertFalse(node.getRelayHostname().isConfigured());
-    assertFalse(node.getRelayPort().isConfigured());
-    assertFalse(node.getRelayGroupPort().isConfigured());
-
     RELAY.setProperty(node, "true");
     REPLICA_HOSTNAME.setProperty(node, "replica-host");
     REPLICA_PORT.setProperty(node, "9411");
-
-    REPLICA.setProperty(node, "true");
-    RELAY_HOSTNAME.setProperty(node, "relay-host");
-    RELAY_PORT.setProperty(node, "9412");
-    RELAY_GROUP_PORT.setProperty(node, "9413");
-
     assertTrue(node.getRelay().orDefault());
     assertThat(node.getReplicaHostname().orDefault(), is("replica-host"));
     assertThat(node.getReplicaPort().orDefault(), is(9411));
 
-    assertTrue(node.getReplica().orDefault());
-    assertThat(node.getRelayHostname().orDefault(), is("relay-host"));
-    assertThat(node.getRelayPort().orDefault(), is(9412));
-    assertThat(node.getRelayGroupPort().orDefault(), is(9413));
+    // Test REPLICA
+    Cluster cluster = Testing.newTestCluster();
+    assertFalse(cluster.getReplica().orDefault());
+    REPLICA.setProperty(cluster, "true");
+    assertTrue(cluster.getReplica().orDefault());
+
+    Node replicaNode = Testing.newTestNode("node2", "localhost");
+    assertFalse(replicaNode.getRelayHostname().isConfigured());
+    assertFalse(replicaNode.getRelayPort().isConfigured());
+    assertFalse(replicaNode.getRelayGroupPort().isConfigured());
+    RELAY_HOSTNAME.setProperty(replicaNode, "relay-host");
+    RELAY_PORT.setProperty(replicaNode, "9412");
+    RELAY_GROUP_PORT.setProperty(replicaNode, "9413");
+    assertThat(replicaNode.getRelayHostname().orDefault(), is("relay-host"));
+    assertThat(replicaNode.getRelayPort().orDefault(), is(9412));
+    assertThat(replicaNode.getRelayGroupPort().orDefault(), is(9413));
   }
 }

@@ -873,12 +873,4 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         not(containsOutput("stripe.1.node.1.replica-port=9410"))
       ));
   }
-
-  @Test
-  public void unset_replica() {
-    // unset not allowed
-    assertThat(
-      configTool("unset", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.replica"), containsOutput("Setting 'replica' cannot be unset"));
-  }
 }
