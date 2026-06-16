@@ -73,7 +73,6 @@ public class ClusterValidator {
   private static final String[] FORBIDDEN_NAMES_NO_EXT = new String[]{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
   // special chars in DC
   private static final char[] FORBIDDEN_DC_CHARS = new char[]{' ', ',', ':', '=', '%', '{', '}'};
-  private static final EnumSet<Operation> UNSUPPORTED_REPLICA_OPERATIONS = EnumSet.of(Operation.SET, Operation.UNSET, Operation.IMPORT);
 
   static {
     // sorting because using binary search after
@@ -89,20 +88,11 @@ public class ClusterValidator {
   public ClusterValidator(Cluster cluster) {
     this.cluster = cluster;
   }
-
   public void validate(ClusterState clusterState) throws MalformedClusterException {
     validate(clusterState, Version.CURRENT);
   }
 
   public void validate(ClusterState clusterState, Version version) throws MalformedClusterException {
-    validate(clusterState, version, null);
-  }
-
-  public void validate(ClusterState clusterState, Operation operation) throws MalformedClusterException {
-    validate(clusterState, Version.CURRENT, operation);
-  }
-
-  public void validate(ClusterState clusterState, Version version, Operation operation) throws MalformedClusterException {
     validateNodeNames();
     validateNames(clusterState);
     validateAddresses();
@@ -110,7 +100,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
-    validateDRSetting(clusterState, operation);
+    validateDRSetting();
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -208,7 +198,7 @@ public class ClusterValidator {
     }
   }
 
-  private void validateDRSetting(ClusterState clusterState, Operation operation) {
+  private void validateDRSetting() {
     Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
       .collect(Collectors.groupingBy(this::checkAndGetDRMode,
         Collectors.mapping(Node::getName, Collectors.toList())));
@@ -228,16 +218,6 @@ public class ClusterValidator {
       // no other nodes allowed with replica node
       if (!nonReplicaNodes.isEmpty()) {
         throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
-      }
-
-      if (UNSUPPORTED_REPLICA_OPERATIONS.contains(operation)) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. "
-          + operation.name() + " operation is not supported on replica node");
-      }
-
-      if (clusterState == ClusterState.ACTIVATED) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. " +
-          "A cluster cannot be in activated state if replica setting is enabled on any node");
       }
     }
   }
