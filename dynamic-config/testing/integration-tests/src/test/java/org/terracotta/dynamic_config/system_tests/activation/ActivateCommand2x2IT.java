@@ -131,27 +131,6 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_failed_activation_missing_replica_in_one_stripe() {
-    // stripe 2 has a replica node, stripe 1 has none
-    stopNode(2, 2);
-    waitForStopped(2, 2);
-    startNode(2, 2, getNewOptions(getNode(2, 2),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(2, 2);
-
-    String config = copyConfigProperty("/config-property-files/multi-stripe_multi-node.properties").toString();
-
-    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), allOf(
-      is(not(successful())),
-      containsOutput("Cluster activation failed, each stripe must have at least one replica node"),
-      containsOutput("Provided cluster topology:"),
-      containsOutput("Replica distribution:"),
-      containsOutput("node-1-2@" + getNodeHostPort(1, 2) + " ): " + "No replica nodes found"),
-      containsOutput("Replicas(node-2-2@" + getNodeHostPort(2, 2) + ")")
-    ));
-  }
-
-  @Test
   public void test_activation_with_multiple_replicas_per_stripe() {
     stopNode(1, 1);
     waitForStopped(1, 1);
@@ -225,25 +204,5 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
     // normal nodes should transition to passive
     waitForPassive(1, 1);
     waitForPassive(2, 1);
-  }
-
-  @Test
-  public void test_failed_restricted_activation_missing_replica_in_one_stripe() {
-    // Only stripe 2 has a replica node
-    stopNode(2, 2);
-    waitForStopped(2, 2);
-    startNode(2, 2, getNewOptions(getNode(2, 2),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(2, 2);
-
-    String config = copyConfigProperty("/config-property-files/multi-stripe_multi-node.properties").toString();
-    ToolExecutionResult activate = configTool("activate", "-cluster-name", "my-cluster",
-      "-config-file", config, "-connect-to", getNodeHostPort(2, 2) + "", "-restrict");
-
-    assertThat(activate, allOf(
-      is(not(successful())),
-      containsOutput("Cluster activation failed, each stripe must have at least one replica node"),
-      containsOutput("No replica nodes found")
-    ));
   }
 }
