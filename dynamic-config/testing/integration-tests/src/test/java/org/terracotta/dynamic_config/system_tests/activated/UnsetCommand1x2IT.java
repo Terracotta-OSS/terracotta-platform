@@ -464,6 +464,30 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
 
     // becomes passive after unset, no restart required as relay nodes are restarted automatically
     waitForPassive(1, relayId);
+
+    // unset relay dependent properties
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(1, relayId), "-c", "relay"), containsOutput("relay=false"));
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(1, relayId), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node." + relayId + ".replica-hostname=localhost"),
+        containsOutput("stripe.1.node." + relayId + ".replica-port=9410")
+      ));
+    // unset partial dependent properties on a node
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(1, relayId), "-c", "stripe.1.node." + relayId + ".replica-hostname"),
+      allOf(is(not(successful())),
+        containsOutput("The relay setting is disabled for node with name: " + relay + ", properties: {replica-hostname=null, replica-port=9410} are partially configured. Either remove all properties or set all required properties"))
+    );
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(1, relayId), "-c", "stripe.1.node." + relayId + ".replica-hostname", "-c", "stripe.1.node." + relayId + ".replica-port"),
+      is(successful())
+    );
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(1, relayId), "-t", "properties"),
+      allOf(
+        not(containsOutput("stripe.1.node." + relayId + ".replica-hostname=localhost")),
+        not(containsOutput("stripe.1.node." + relayId + ".replica-port=9410"))
+      ));
   }
 
   @Test
