@@ -254,27 +254,23 @@ public class ActivateActionTest extends BaseTest {
   }
 
   @Test
-  public void test_activation_fails_replica_with_other_nodes() {
-    Cluster clusterWithReplica = cluster.clone();
-    clusterWithReplica.getStripe(Testing.S_UIDS[1]).get()
-      .getNode(Testing.N_UIDS[1]).get()
-      .setReplica(true)
-      .setRelayHostname("relay-host")
-      .setRelayPort(9410)
-      .setRelayGroupPort(9431);
+  public void test_activation_fails_replica_cluster_with_multiple_nodes_per_stripe() {
+    Cluster replicaCluster = cluster.clone();
+    replicaCluster.setReplica(true);
 
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(clusterWithReplica, Testing.N_UIDS[1]));
+    // cluster already has stripe2 with 2 nodes (node2, node3)
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(replicaCluster, Testing.N_UIDS[1]));
 
     assertThat(
       () -> {
         ActivateAction cmd = command();
         cmd.setNodes(List.of(HostPort.create("localhost", 9411)));
-        cmd.setClusterName("my-cluster");
         cmd.run();
       },
       is(throwing(instanceOf(MalformedClusterException.class))
         .andMessage(allOf(
-          containsString("Node with name: node1 has the replica setting enabled and cannot coexist with other nodes with names: [node2, node3]")
+          containsString("Stripe with name: stripe2 has 2 nodes"),
+          containsString("A replica cluster can have at most 1 replica node per stripe")
         )))
     );
   }
