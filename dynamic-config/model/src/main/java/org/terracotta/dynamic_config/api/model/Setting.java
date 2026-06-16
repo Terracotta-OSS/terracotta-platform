@@ -388,7 +388,7 @@ public enum Setting {
     intoNode(Node::setReplicaHostname),
     asList(
       when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE),  // Allow unset to remove properties after removing relay
       when(CONFIGURING).allow(IMPORT).atLevel(NODE)
     ),
     of(NODE_RESTART),
@@ -405,7 +405,7 @@ public enum Setting {
     intoNode((node, value) -> node.setReplicaPort(value == null ? null : Integer.parseInt(value))),
     asList(
       when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-      when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(NODE),
       when(CONFIGURING).allow(IMPORT).atLevel(NODE)
     ),
     of(NODE_RESTART),
