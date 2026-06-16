@@ -159,6 +159,16 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setReplica() {
+    String nodeName = getNodeName(1, 1);
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true",
+      "-setting", nodeName + ":relay-hostname=" + "localhost1",
+      "-setting", nodeName + ":relay-port=" + "9411",
+      "-setting", nodeName + ":relay-group-port=" + "9411"), is(successful()));
+    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica"), containsOutput("replica=true"));
+  }
+
+  @Test
   public void setIncompleteRelayProperties() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
         "-c", "stripe.1.node.1.relay=" + "true"),
@@ -172,6 +182,22 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         is(not(successful())),
         containsOutput("The relay setting is disabled for node with name: node-1-1, " +
           "properties: {replica-hostname=localhost, replica-port=null} are partially configured. " +
+          "Either remove all properties or set all required properties")));
+  }
+
+  @Test
+  public void setIncompleteReplicaProperties() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "replica=" + "true"),
+      allOf(
+        not(successful()),
+        containsOutput("The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed")));
+
+    // since replica is set to false, setting partial config will throw (all or none allowed)
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay-hostname=" + "localhost"),
+      allOf(
+        is(not(successful())),
+        containsOutput("The replica setting is disabled for node with name: node-1-1, " +
+          "properties: {relay-hostname=localhost, relay-port=null, relay-group-port=null} are partially configured. " +
           "Either remove all properties or set all required properties")));
   }
 }
