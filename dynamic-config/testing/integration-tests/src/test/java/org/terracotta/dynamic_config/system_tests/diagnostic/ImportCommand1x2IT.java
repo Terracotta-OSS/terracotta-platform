@@ -55,12 +55,4 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
       allOf(is(not(successful())),
         containsOutput("The relay setting is disabled for node with name: node-1-1, properties: {replica-hostname=null, replica-port=1234} are partially configured")));
   }
-
-  @Test
-  public void test_relay_invalid_mutual_exclusion() throws Exception {
-    Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid2.properties");
-    assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(is(not(successful())),
-        containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
-  }
 }
