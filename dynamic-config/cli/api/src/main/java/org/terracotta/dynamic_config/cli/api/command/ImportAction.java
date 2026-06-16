@@ -92,9 +92,6 @@ public class ImportAction extends RemoteAction {
       if (isActivated(node)) {
         throw new IllegalStateException("Node: " + node + " is already activated");
       }
-      if (isReplica(node)) {
-        throw new IllegalStateException("Node: " + node + " has the replica setting enabled");
-      }
     }
 
     output.info("Importing cluster configuration from config file: {} to nodes: {}", configSource, toString(nodes));
