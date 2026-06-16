@@ -811,6 +811,20 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         containsOutput("stripe.1.node.1.replica-port=9410")
       ));
 
+    // unset partial dependent properties when relay true
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-hostname"),
+      allOf(is(not(successful())),
+        containsOutput("The relay setting is enabled for node with name: node-1-1, relay properties: {replica-hostname=null, replica-port=9410} aren't well-formed"))
+    );
+
+    // unset partial dependent properties when relay false
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.relay", "-c", "stripe.1.node.1.replica-hostname"),
+      allOf(is(not(successful())),
+        containsOutput("The relay setting is disabled for node with name: node-1-1, properties: {replica-hostname=null, replica-port=9410} are partially configured. Either remove all properties or set all required properties"))
+    );
+
     // unset at cluster level
     assertThat(
       configTool("unset", "-s", "localhost:" + getNodePort(),
@@ -844,6 +858,19 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         containsOutput("stripe.1.node.1.relay=false"),
         containsOutput("stripe.1.node.1.replica-hostname=127.0.0.1"),
         containsOutput("stripe.1.node.1.replica-port=9410")
+      ));
+
+    // unset relay dependent properties
+    assertThat(
+      configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica-hostname", "-c",  "stripe.1.node.1.replica-port"),
+      is(successful())
+    );
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+      allOf(
+        containsOutput("stripe.1.node.1.relay=false"),
+        not(containsOutput("stripe.1.node.1.replica-hostname=127.0.0.1")),
+        not(containsOutput("stripe.1.node.1.replica-port=9410"))
       ));
   }
 
