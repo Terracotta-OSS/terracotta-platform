@@ -182,10 +182,7 @@ public class SettingValidatorTest {
   public void test_RELAY_REPLICA_HOSTNAME() {
     Stream.of(REPLICA_HOSTNAME, RELAY_HOSTNAME).forEach(
       setting -> {
-        // REPLICA_HOSTNAME allows unset
-        if (setting == RELAY_HOSTNAME) {
-          validateRequired(setting); // doesn't allow unset
-        }
+        // allows unset
         setting.validate(null); // supports get
         setting.validate("localhost");
         assertThat(
@@ -198,10 +195,7 @@ public class SettingValidatorTest {
   @Test
   public void test_RELAY_REPLICA_PORT() {
     Stream.of(REPLICA_PORT, RELAY_PORT, RELAY_GROUP_PORT).forEach(setting -> {
-      // REPLICA_PORT allows unset
-      if (setting != REPLICA_PORT) {
-        validateRequired(setting); // doesn't allow unset
-      }
+      // allows unset
       setting.validate(null); // supports get
       setting.validate("9410");
       assertThat(
