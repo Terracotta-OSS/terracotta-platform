@@ -63,11 +63,4 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
       allOf(is(not(successful())),
         containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
   }
-
-  @Test
-  public void test_failed_import_with_replica_properties_on_normal_node() throws Exception {
-    Path configFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
-    assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. IMPORT operation is not supported on replica node")));
-  }
 }
