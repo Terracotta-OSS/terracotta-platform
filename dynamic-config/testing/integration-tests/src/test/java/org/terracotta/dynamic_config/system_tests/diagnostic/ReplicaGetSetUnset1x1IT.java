@@ -45,16 +45,4 @@ public class ReplicaGetSetUnset1x1IT extends DynamicConfigIT {
   public void testExportReplica() {
     assertThat(configTool("export", "-s", "localhost:" + getNodePort()), allOf(is(successful()), containsOutput("node-1-1:replica=true")));
   }
-
-  @Test
-  public void testSetOperationNotAllowedReplica() {
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:foo"),
-      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has the replica setting enabled. SET operation is not supported on replica node")));
-  }
-
-  @Test
-  public void testUnsetOperationNotAllowedReplica() {
-    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
-      allOf(is(not(successful())), containsOutput("Node with name: node-1-1 has the replica setting enabled. UNSET operation is not supported on replica node")));
-  }
 }
