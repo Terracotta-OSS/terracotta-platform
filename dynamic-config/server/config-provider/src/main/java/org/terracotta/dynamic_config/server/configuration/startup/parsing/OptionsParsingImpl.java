@@ -278,9 +278,6 @@ public class OptionsParsingImpl implements OptionsParsing {
       }
     } else {
       // when using CLI parameters
-      if (Objects.equals(replica, "true") && allowsAutoActivation) {
-        throw new IllegalArgumentException(String.format("The '%s' parameter cannot be used when '%s' parameter is set to true.", addDash(SettingName.AUTO_ACTIVATE), addDash(REPLICA)));
-      }
       if (licenseFile != null) {
         if (clusterName == null) {
           throw new IllegalArgumentException("'" + addDash(LICENSE_FILE) + "' parameter must be used with '" + addDash(CLUSTER_NAME) + "' parameter");
