@@ -111,8 +111,7 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"))
-          .setRelay(false)
-          .setReplica(false),
+          .setRelay(false),
       Testing.newTestNode("node-2", "localhost2")
           .setUID(Testing.N_UIDS[2])
           .setPort(9410)
@@ -125,7 +124,6 @@ public class ClusterFactoryTest {
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setRelay(false)
-          .setReplica(false)
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
@@ -134,7 +132,8 @@ public class ClusterFactoryTest {
       .setClientLeaseDuration(150, TimeUnit.SECONDS)
       .setFailoverPriority(consistency(2))
       .putOffheapResource("foo", 1, MemoryUnit.GB)
-      .putOffheapResource("bar", 2, MemoryUnit.GB);
+      .putOffheapResource("bar", 2, MemoryUnit.GB)
+      .setReplica(false);
 
   @Test
   public void test_create_cli() {
@@ -356,6 +355,29 @@ public class ClusterFactoryTest {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  @Test
+  public void test_toProperties_with_replica_cluster() {
+    Cluster replicaCluster = Testing.newTestCluster("replica-cluster",
+        newTestStripe("stripe1").addNodes(
+          Testing.newTestNode("replica-node", "localhost")
+            .setRelayHostname("relay-host")
+            .setRelayPort(9410)
+            .setRelayGroupPort(9430)
+        ))
+      .setReplica(true);
+
+    Properties props = replicaCluster.toProperties(false, false, false);
+    assertThat(props.getProperty("replica"), is("true"));
+    assertThat(props.getProperty("stripe.1.node.1.relay-hostname"), is("relay-host"));
+    assertThat(props.getProperty("stripe.1.node.1.relay-port"), is("9410"));
+    assertThat(props.getProperty("stripe.1.node.1.relay-group-port"), is("9430"));
+
+    Cluster built = clusterFactory.create(props);
+    Testing.resetRequiredUIDs(replicaCluster, Testing.A_UID);
+    Testing.resetRequiredUIDs(built, Testing.A_UID);
+    assertThat(built, is(equalTo(replicaCluster)));
   }
 
   @FunctionalInterface
