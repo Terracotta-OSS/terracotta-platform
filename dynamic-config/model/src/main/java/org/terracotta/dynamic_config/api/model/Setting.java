@@ -163,11 +163,17 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *
  *  replica-hostname, replica-port
  *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
- *      Permission: when: [activated, configuring] allow: [set] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [set, unset] at levels: [node]
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *
- *  replica, relay-hostname, relay-port, relay-group-port
+ *  replica
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster]
+ *      Permission: when: [configuring] allow: [set, import] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [unset] at levels: [cluster]
+ *
+ *  relay-hostname, relay-port, relay-group-port
  *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated, configuring] allow: [set, unset] at levels: [node]
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *
  * </pre>
