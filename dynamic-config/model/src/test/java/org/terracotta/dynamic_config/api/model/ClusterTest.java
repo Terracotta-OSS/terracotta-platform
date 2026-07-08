@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,5 +197,16 @@ public class ClusterTest {
     cluster.setSecurityAuthc("availability");
     workingCluster.setSecurityAuthc("availability");
     assertTrue(cluster.equals(workingCluster));
+  }
+
+  @Test
+  public void test_replica() {
+    Cluster cluster = this.cluster.clone();
+    assertThat(cluster.getReplica().isConfigured(), is(false));
+    assertThat(cluster.getReplica().orDefault(), is(false));
+    Cluster replica = cluster.setReplica(true).clone();
+    assertThat(replica.getReplica().isConfigured(), is(true));
+    assertThat(cluster, is(equalTo(replica)));
+    assertThat(cluster.hashCode(), is(equalTo(replica.hashCode())));
   }
 }
