@@ -473,6 +473,28 @@ public class ClusterValidatorTest {
   }
 
   @Test
+  public void testGoodDR_replicaCluster() {
+    // Single replica node in single stripe cluster
+    Node node1 = newTestNode("node1", "localhost1", Testing.N_UIDS[1])
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)).setReplica(true);
+    new ClusterValidator(cluster1).validate(ClusterState.CONFIGURING);
+
+    // Multiple replica nodes in different stripes (1 per stripe)
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setRelayHostname("relay-host2")
+      .setRelayPort(9411)
+      .setRelayGroupPort(9431);
+    Cluster cluster2 = newTestCluster("cluster2",
+      newTestStripe("stripe1").addNodes(node1),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))
+      .setReplica(true);
+    new ClusterValidator(cluster2).validate(ClusterState.CONFIGURING);
+  }
+
+  @Test
   public void testBadDR_incompleteConfiguration() {
     // Incomplete relay, missing hostname
     Node node1 = newTestNode("node1", "localhost1")
