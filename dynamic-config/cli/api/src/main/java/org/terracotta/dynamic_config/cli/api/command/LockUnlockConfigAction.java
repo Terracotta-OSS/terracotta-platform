@@ -53,11 +53,13 @@ public abstract class LockUnlockConfigAction extends RemoteAction {
     removeRelayNodes(onlineNodes);
 
     // validate that all the online nodes are either actives or passives
-    ensureNodesAreEitherActiveOrPassive(onlineNodes);
+    if (!isReplicaCluster(onlineNodes)) {
+      ensureNodesAreEitherActiveOrPassive(onlineNodes);
 
-    ensureActivesAreAllOnline(cluster, onlineNodes);
+      ensureActivesAreAllOnline(cluster, onlineNodes);
+    }
 
-    if (requiresAllNodesAlive()) {
+    if (requiresAllNodesAlive() && !isReplicaCluster(onlineNodes)) {
       // Check passive nodes as well if the setting requires all nodes to be online
       ensurePassivesAreAllOnline(cluster, onlineNodes);
     }
