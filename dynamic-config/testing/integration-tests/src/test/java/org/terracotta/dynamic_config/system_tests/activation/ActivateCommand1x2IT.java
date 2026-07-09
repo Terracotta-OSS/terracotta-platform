@@ -246,4 +246,58 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     assertThat(getRuntimeCluster(1, 1), is(equalTo(getRuntimeCluster(1, 2))));
   }
+
+  @Test
+  public void testSingleNodeReplicaActivationWithConfigFile() {
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/1x1-replica.properties").toString(), "-n", "my-cluster"),
+      allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForPassiveReplicaStart(1, 1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    });
+  }
+
+  @Test
+  public void test_1x1_replica_activation_without_relay_link() {
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-connect-to", getNodeHostPort(1, 1).toString()), is(successful()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
+
+    waitForPassiveReplicaStart(1, 1);
+  }
+
+  @Test
+  public void test_fast_activation_with_replica() {
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+
+    assertThat(
+      configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1).toString()),
+      allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForPassiveReplicaStart(1, 1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(1)));
+    });
+  }
+
+  @Test
+  public void test_failed_activation_with_replica() {
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/1x2-replica-invalid1.properties").toString(), "-n", "my-cluster"),
+      allOf(is(not(successful())), containsOutput("Stripe with name: stripe1 has 2 nodes with names: node-1-1, node-1-2. A replica cluster can have at most 1 replica node per stripe")));
+  }
 }
