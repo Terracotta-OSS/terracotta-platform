@@ -356,7 +356,11 @@ public abstract class RemoteAction implements Runnable {
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
     LOGGER.trace("lock({})", lockContext);
-    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new LockConfigNomadChange(lockContext));
+    if (isReplicaCluster(onlineNodes)) {
+      runConfigurationChangeViaDiagnostic(onlineNodes, new LockConfigNomadChange(lockContext));
+    } else {
+      runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new LockConfigNomadChange(lockContext));
+    }
     // user must see the lock token
     LOGGER.trace("Config locked.");
     LOGGER.trace("Token: " + lockContext.getToken());
@@ -380,7 +384,11 @@ public abstract class RemoteAction implements Runnable {
 
   private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
     output.info("Trying to unlock the config...");
-    runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new UnlockConfigNomadChange(force));
+    if (isReplicaCluster(onlineNodes)) {
+      runConfigurationChangeViaDiagnostic(onlineNodes, new UnlockConfigNomadChange(force));
+    } else {
+      runConfigurationChange(destinationCluster, filter(onlineNodes, (endpoint, state) -> !state.isRelay()), new UnlockConfigNomadChange(force));
+    }
     output.info("Config unlocked.");
     if (nomadManager instanceof LockAwareNomadManager) {
       this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
