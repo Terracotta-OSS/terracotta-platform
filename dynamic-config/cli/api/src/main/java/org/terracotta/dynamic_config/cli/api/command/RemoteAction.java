@@ -220,6 +220,10 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
+  protected final boolean isReplicaCluster(Map<Endpoint, LogicalServerState> onlineNodes) {
+    return !onlineNodes.isEmpty() && onlineNodes.values().stream().allMatch(s -> s == REPLICA || s == REPLICA_SUSPENDED);
+  }
+
   protected final boolean mustBeRestarted(Endpoint endpoint) {
     return mustBeRestarted(endpoint.getHostPort());
   }
