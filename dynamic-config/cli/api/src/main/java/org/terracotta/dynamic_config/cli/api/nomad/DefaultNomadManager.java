@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,15 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
+    }
+  }
+
+  @Override
+  public void runConfigurationChangeViaDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change via diagnostic: {} on nodes: {}", changes, onlineNodes);
+    List<Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
+    try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
     }
   }
