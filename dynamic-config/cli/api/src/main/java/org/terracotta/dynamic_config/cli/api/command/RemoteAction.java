@@ -273,6 +273,13 @@ public abstract class RemoteAction implements Runnable {
     failures.reThrowReasons();
   }
 
+  protected final void runConfigurationChangeViaDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange change) {
+    LOGGER.trace("runConfigurationChangeViaDiagnostic({}, {})", onlineNodes, change);
+    NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
+    nomadManager.runConfigurationChangeViaDiagnostic(onlineNodes, change, failures);
+    failures.reThrowReasons();
+  }
+
   protected final Optional<HostPort> findScalingVetoer(Map<Endpoint, LogicalServerState> endpoints) {
     return findScalingVetoer(endpoints.keySet().stream().map(Endpoint::getHostPort).collect(toList()));
   }
