@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,11 @@ public class LockAwareNomadManager<T> implements NomadManager<T> {
   public void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes,
                                      DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
     this.underlying.runConfigurationChange(destinationCluster, onlineNodes, new LockAwareDynamicConfigNomadChange(lockToken, changes), results);
+  }
+
+  @Override
+  public void runConfigurationChangeViaDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
+    this.underlying.runConfigurationChangeViaDiagnostic(onlineNodes, new LockAwareDynamicConfigNomadChange(lockToken, changes), results);
   }
 
   @Override
