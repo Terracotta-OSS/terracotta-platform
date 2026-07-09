@@ -164,20 +164,27 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       final Collection<Endpoint> onlineRelayNodes = removeRelayNodes(onlineNodes);
 
       // cluster is active, we need to run a nomad change and eventually a restart
-
-      // validate that all the online nodes are either actives or passives
-      ensureNodesAreEitherActiveOrPassive(onlineNodes);
-
-      if (requiresAllNodesAlive()) {
-        // Check passive nodes as well if the setting requires all nodes to be online
-        ensurePassivesAreAllOnline(originalCluster, onlineNodes);
-      }
-
-      ensureActivesAreAllOnline(originalCluster, onlineNodes);
-      output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
-      if (!changes.getChanges().isEmpty()) {
-        runConfigurationChange(updatedCluster, onlineNodes, changes);
+      if (isReplicaCluster(onlineNodes)) {
+        output.info("Applying new configuration change(s) to replica nodes: {}", toString(onlineNodes.keySet()));
+        if (!changes.getChanges().isEmpty()) {
+          runConfigurationChangeViaDiagnostic(onlineNodes, changes);
+        }
+      } else {
+
+        // validate that all the online nodes are either actives or passives
+        ensureNodesAreEitherActiveOrPassive(onlineNodes);
+
+        if (requiresAllNodesAlive()) {
+          // Check passive nodes as well if the setting requires all nodes to be online
+          ensurePassivesAreAllOnline(originalCluster, onlineNodes);
+        }
+
+        ensureActivesAreAllOnline(originalCluster, onlineNodes);
+        output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
+        if (!changes.getChanges().isEmpty()) {
+          runConfigurationChange(updatedCluster, onlineNodes, changes);
+        }
       }
 
       // display unreachable nodes
@@ -204,7 +211,11 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         output.out("Restart required for cluster");
         if (autoRestart) {
-          rollingRestart(updatedCluster, onlineNodes.keySet().stream().collect(toMap(Endpoint::getNodeName, identity())));
+          if (isReplicaCluster(onlineNodes)) {
+            restartNodes(onlineNodes.keySet());
+          } else {
+            rollingRestart(updatedCluster, onlineNodes.keySet().stream().collect(toMap(Endpoint::getNodeName, identity())));
+          }
         } else {
           LOGGER.warn(lineSeparator() +
               "====================================================================" + lineSeparator() +
@@ -250,9 +261,15 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
               .collect(toList());
           output.out("Restart required for nodes: {} ", toString(addresses));
           if (autoRestart) {
-            rollingRestart(updatedCluster, onlineNodes.keySet().stream()
+            if (isReplicaCluster(onlineNodes)) {
+              restartNodes(onlineNodes.keySet().stream()
+                .filter(endpoint -> nodesRequiringRestart.contains(endpoint.getNodeName()))
+                .collect(toList()));
+            } else {
+              rollingRestart(updatedCluster, onlineNodes.keySet().stream()
                 .filter(endpoint -> nodesRequiringRestart.contains(endpoint.getNodeName()))
                 .collect(toMap(Endpoint::getNodeName, identity())));
+            }
           } else {
             LOGGER.warn(lineSeparator() +
                 "=======================================================================================" + lineSeparator() +
