@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -145,7 +146,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1);
     activateCluster();
 
-    LockContext lockContext = new LockContext("some-uuid", "test", "test");
+    LockContext lockContext = new LockContext(UUID.randomUUID().toString(), "test", "test");
 
     assertThat(configTool("lock-config", "-s", "localhost:" + getNodePort(1, 1),
         "--lock-context", lockContext.toString()), is(successful()));

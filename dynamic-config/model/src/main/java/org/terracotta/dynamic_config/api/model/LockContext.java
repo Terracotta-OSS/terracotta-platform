@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.terracotta.dynamic_config.api.model;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import static java.lang.String.format;
 
@@ -57,7 +58,24 @@ public class LockContext {
       throw new IllegalArgumentException(format("Invalid lock-context '%s', expected format 'uuid;owner-name;owner-tags", contextStr));
     }
 
+    if (!isValidLockToken(substrings[0])) {
+      throw new IllegalArgumentException("Lock token should be a valid UUID");
+    }
+
     return new LockContext(substrings[0], substrings[1], substrings[2]);
+  }
+
+  private static boolean isValidLockToken(String lockToken) {
+    if (lockToken == null) {
+      return false;
+    }
+
+    try {
+      UUID.fromString(lockToken);
+      return true;
+    } catch(IllegalArgumentException e) {
+      return false;
+    }
   }
 
   @Override
