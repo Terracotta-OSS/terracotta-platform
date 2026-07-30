@@ -34,8 +34,9 @@ test {
   if (System.getenv("DC_IT_MAX_FORKS") != null) {
       maxParallelForks = Integer.parseInt(System.getenv("DC_IT_MAX_FORKS"))
   }
-  // . for java21 memory leak .
-  forkEvery = 1
+// some integration tests with large inline server count (>4) require more heap space
+  maxHeapSize = "2048m"
+
   systemProperty 'org.terracotta.voter.topology.fetch.interval', '5000'
 // give tests more time to complete handshake for slow machines
   systemProperty 'com.tc.tc.transport.handshake.timeout', '60000'
