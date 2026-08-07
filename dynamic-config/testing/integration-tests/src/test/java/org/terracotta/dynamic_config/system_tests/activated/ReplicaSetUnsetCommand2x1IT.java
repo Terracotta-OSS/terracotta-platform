@@ -243,4 +243,39 @@ public class ReplicaSetUnsetCommand2x1IT extends DynamicConfigIT {
         not(containsOutput("stripe.2.node.1.tc-properties="))
       ));
   }
+
+  @Test
+  public void unsetSetReplicaProperties() {
+    // change properties
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1),
+      "-c", "stripe.1.node.1.relay-hostname=" + "node-1", "-c", "stripe.1.node.1.relay-port=" + "1234", "-c", "stripe.1.node.1.relay-group-port=" + "4567",
+      "-c", "stripe.2.node.1.relay-hostname=" + "node-2", "-c", "stripe.2.node.1.relay-port=" + "4567", "-c", "stripe.2.node.1.relay-group-port=" + "1234"),
+      allOf(is(successful()), containsOutput("Restart required for nodes:")));
+
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-t", "properties", "-r"),
+      allOf(containsOutput("stripe.1.node.1.relay-hostname=localhost"), containsOutput("stripe.1.node.1.relay-port=9411"), containsOutput("stripe.1.node.1.relay-group-port=9511")));
+
+    // restart node
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1);
+    waitForPassiveReplicaStart(1, 1);
+
+    // config updated at runtime
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-t", "properties", "-r"),
+      allOf(containsOutput("stripe.1.node.1.relay-hostname=node-1"), containsOutput("stripe.1.node.1.relay-port=1234"), containsOutput("stripe.1.node.1.relay-group-port=4567")));
+
+    // unset replica properties
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "replica"),
+      allOf(successful(), not(containsOutput("Restart required for nodes:"))));
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(),
+      "-c", "stripe.1.node.1.relay-hostname", "-c", "stripe.1.node.1.relay-port", "-c", "stripe.1.node.1.relay-group-port",
+      "-c", "stripe.2.node.1.relay-hostname", "-c", "stripe.2.node.1.relay-port", "-c", "stripe.2.node.1.relay-group-port"),
+      allOf(successful(), containsOutput("Restart required for nodes:")));
+
+    // upcoming cluster
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-t", "properties"),
+      allOf(not(containsOutput("stripe.1.node.1.relay-hostname")), not(containsOutput("stripe.1.node.1.relay-port")), not(containsOutput("stripe.1.node.1.relay-group-port")),
+        not(containsOutput("stripe.1.node.2.relay-hostname")), not(containsOutput("stripe.1.node.2.relay-port")), not(containsOutput("stripe.1.node.2.relay-group-port"))));
+  }
 }
