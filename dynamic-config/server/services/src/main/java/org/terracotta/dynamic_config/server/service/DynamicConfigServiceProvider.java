@@ -38,6 +38,7 @@ import org.terracotta.dynamic_config.api.server.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
+import org.terracotta.dynamic_config.server.service.handler.ReplicaChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -57,6 +58,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
@@ -99,6 +101,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     addToManager(configChangeHandlerManager, accept(), RELAY);
     addToManager(configChangeHandlerManager, accept(), REPLICA_HOSTNAME);
     addToManager(configChangeHandlerManager, accept(), REPLICA_PORT);
+
+    // replica properties
+    ReplicaChangeHandler replicaChangeHandler = new ReplicaChangeHandler(server);
+    addToManager(configChangeHandlerManager, replicaChangeHandler, REPLICA);
 
     // cluster name
     addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
