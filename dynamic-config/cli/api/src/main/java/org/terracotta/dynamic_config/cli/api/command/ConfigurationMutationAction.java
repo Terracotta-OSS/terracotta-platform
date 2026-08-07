@@ -166,6 +166,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       // cluster is active, we need to run a nomad change and eventually a restart
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
       if (isReplicaCluster(onlineNodes)) {
+        ensureReplicasAreAllOnline(originalCluster, onlineNodes);
         output.info("Applying new configuration change(s) to replica nodes: {}", toString(onlineNodes.keySet()));
         if (!changes.getChanges().isEmpty()) {
           runConfigurationChangeViaDiagnostic(onlineNodes, changes);
