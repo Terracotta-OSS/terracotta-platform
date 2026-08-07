@@ -769,6 +769,19 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
+  protected final void ensureReplicasAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    if (onlineNodes.isEmpty()) {
+      throw new IllegalStateException("Expected 1 replica per stripe, but found no online node.");
+    }
+    // replicas == list of current replica nodes in the runtime topology
+    List<String> replicas = onlineNodes.entrySet().stream().filter(e -> e.getValue().isReplica() || e.getValue().isReplicaSuspended()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toList());
+    // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
+    // The stripe count only changes in case of a runtime topology change, which is another case.
+    if (cluster.getStripeCount() != replicas.size()) {
+      throw new IllegalStateException("Expected 1 replica per stripe, but only these nodes are in replica state: " + toString(replicas));
+    }
+  }
+
   protected final void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
     for (Map.Entry<Endpoint, LogicalServerState> entry : onlineNodes.entrySet()) {
       if (entry.getValue().isStarting() || entry.getValue().isSynchronizing()) {
