@@ -58,6 +58,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.RELAY_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.REPLICA_PORT;
@@ -105,6 +108,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // replica properties
     ReplicaChangeHandler replicaChangeHandler = new ReplicaChangeHandler(server);
     addToManager(configChangeHandlerManager, replicaChangeHandler, REPLICA);
+    addToManager(configChangeHandlerManager, accept(), RELAY_HOSTNAME);
+    addToManager(configChangeHandlerManager, accept(), RELAY_PORT);
+    addToManager(configChangeHandlerManager, accept(), RELAY_GROUP_PORT);
 
     // cluster name
     addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
