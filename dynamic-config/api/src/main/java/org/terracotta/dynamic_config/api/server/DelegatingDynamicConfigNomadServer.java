@@ -50,6 +50,10 @@ public class DelegatingDynamicConfigNomadServer implements DynamicConfigNomadSer
     this.delegate = delegate;
   }
 
+  public DynamicConfigNomadServer getDelegate() {
+    return delegate;
+  }
+
   @Override
   public void reserve() { delegate.reserve(); }
 
