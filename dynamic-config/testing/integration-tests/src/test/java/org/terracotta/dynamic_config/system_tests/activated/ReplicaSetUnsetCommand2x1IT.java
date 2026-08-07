@@ -245,7 +245,7 @@ public class ReplicaSetUnsetCommand2x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void unsetSetReplicaProperties() {
+  public void setUnsetReplicaProperties() {
     // change properties
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1),
       "-c", "stripe.1.node.1.relay-hostname=" + "node-1", "-c", "stripe.1.node.1.relay-port=" + "1234", "-c", "stripe.1.node.1.relay-group-port=" + "4567",
@@ -260,6 +260,10 @@ public class ReplicaSetUnsetCommand2x1IT extends DynamicConfigIT {
     waitForStopped(1, 1);
     startNode(1, 1);
     waitForPassiveReplicaStart(1, 1);
+    stopNode(2, 1);
+    waitForStopped(2, 1);
+    startNode(2, 1);
+    waitForPassiveReplicaStart(2, 1);
 
     // config updated at runtime
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-t", "properties", "-r"),
