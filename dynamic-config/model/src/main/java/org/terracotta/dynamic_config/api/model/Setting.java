@@ -167,9 +167,9 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  *      Permission: when: [configuring] allow: [import] at levels: [node]
  *
  *  replica
- *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster]
- *      Permission: when: [configuring] allow: [set, import] at levels: [cluster]
- *      Permission: when: [activated, configuring] allow: [unset] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [set, import] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [unset] at levels: [node]
  *
  *  relay-hostname, relay-port, relay-group-port
  *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
@@ -423,13 +423,13 @@ public enum Setting {
     of(V1, V2),
     false,
     always(false),
-    CLUSTER,
-    fromCluster(Cluster::getReplica),
-    intoCluster((cluster, value) -> cluster.setReplica(value == null ? null : Boolean.valueOf(value))),
+    NODE,
+    fromNode(Node::getReplica),
+    intoNode((node, value) -> node.setReplica(value == null ? null : Boolean.valueOf(value))),
     asList(
-      when(CONFIGURING, ACTIVATED).allow(GET).atLevel(CLUSTER),
-      when(CONFIGURING).allow(SET, IMPORT).atLevel(CLUSTER),
-      when(CONFIGURING, ACTIVATED).allow(UNSET).atLevel(CLUSTER)  // Activated clusters can only unset, not set to become replica
+      when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+      when(CONFIGURING).allow(SET, IMPORT).atLevel(NODE),
+      when(CONFIGURING, ACTIVATED).allow(UNSET).atLevel(NODE)  // Activated clusters can only unset, not set to become replica
     ),
     of(PRESENCE),
     asList("true", "false")

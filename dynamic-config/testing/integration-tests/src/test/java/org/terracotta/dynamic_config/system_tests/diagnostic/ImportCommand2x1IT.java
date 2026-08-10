@@ -61,7 +61,7 @@ public class ImportCommand2x1IT extends DynamicConfigIT {
     assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica", "-c", "relay-hostname", "-c", "relay-port", "-c", "relay-group-port", "-t", "index"),
       allOf(is(successful()),
-        containsOutput("replica=true"),
+        containsOutput("stripe.1.node.1.replica=true"), containsOutput("stripe.2.node.1.replica=true"),
         containsOutput("stripe.1.node.1.relay-hostname=localhost"), containsOutput("stripe.1.node.1.relay-port=1234"), containsOutput("stripe.1.node.1.relay-group-port=5678"),
         containsOutput("stripe.2.node.1.relay-hostname=localhost"), containsOutput("stripe.2.node.1.relay-port=1234"), containsOutput("stripe.2.node.1.relay-group-port=5678")));
   }

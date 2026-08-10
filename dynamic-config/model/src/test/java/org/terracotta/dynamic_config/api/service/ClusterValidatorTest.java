@@ -476,21 +476,22 @@ public class ClusterValidatorTest {
   public void testGoodDR_replicaCluster() {
     // Single replica node in single stripe cluster
     Node node1 = newTestNode("node1", "localhost1", Testing.N_UIDS[1])
+      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
-    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)).setReplica(true);
+    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1));
     new ClusterValidator(cluster1).validate(ClusterState.CONFIGURING);
 
     // Multiple replica nodes in different stripes (1 per stripe)
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setReplica(true)
       .setRelayHostname("relay-host2")
       .setRelayPort(9411)
       .setRelayGroupPort(9431);
     Cluster cluster2 = newTestCluster("cluster2",
       newTestStripe("stripe1").addNodes(node1),
-      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))
-      .setReplica(true);
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2));
     new ClusterValidator(cluster2).validate(ClusterState.CONFIGURING);
   }
 
@@ -512,34 +513,37 @@ public class ClusterValidatorTest {
       "The relay setting is enabled for node with name: node2, relay properties: {replica-hostname=replica-host, replica-port=null} aren't well-formed",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2)));
 
-    // Incomplete replica (cluster-level), missing hostname
+    // Incomplete replica (node-level), missing hostname
     Node node3 = newTestNode("node3", "localhost3")
+      .setReplica(true)
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
     assertClusterValidationFailsContainsMessage(
       "The replica setting is enabled for node with name: node3, replica properties: {relay-hostname=null, relay-port=9410, relay-group-port=9430} aren't well-formed",
-      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node3)).setReplica(true));
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node3)));
 
-    // Incomplete replica (cluster-level), missing multiple properties
+    // Incomplete replica (node-level), missing multiple properties
     Node node6 = newTestNode("node6", "localhost4")
+      .setReplica(true)
       .setRelayHostname("relay-host");
     assertClusterValidationFailsContainsMessage(
       "The replica setting is enabled for node with name: node6, replica properties: {relay-hostname=relay-host, relay-port=null, relay-group-port=null} aren't well-formed",
-      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node6)).setReplica(true));
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node6)));
 
-    // Cluster with replica=true but node has no replica properties
-    Node node7 = newTestNode("node7", "localhost1");
-    Cluster cluster = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node7)).setReplica(true);
+    // Node with replica=true but no relay properties configured
+    Node node7 = newTestNode("node7", "localhost1")
+      .setReplica(true);
     assertClusterValidationFailsContainsMessage(
       "The replica setting is enabled for node with name: node7, replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed",
-      cluster);
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node7)));
   }
 
   @Test
   public void testBadDR_mutualExclusivityWithinNode() {
-    // Both relay (node-level) and replica (cluster-level) enabled
+    // Both relay (node-level) and replica (node-level) enabled
     Node node1 = newTestNode("node1", "localhost1")
       .setRelay(true)
+      .setReplica(true)
       .setReplicaHostname("replica-host")
       .setReplicaPort(9410)
       .setRelayHostname("relay-host")
@@ -547,54 +551,74 @@ public class ClusterValidatorTest {
       .setRelayGroupPort(9430);
     assertClusterValidationFailsContainsMessage(
       "Node with name: node1 has both relay and replica settings enabled",
-      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)).setReplica(true));
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
   }
 
   @Test
   public void testBadDR_replicaClusterWithMultipleNodesPerStripe() {
-    // Multiple replica nodes in first stripe when cluster.replica=true
+    // Multiple replica nodes in same stripe
     Node node1 = newTestNode("node1", "localhost1")
+      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setReplica(true)
       .setRelayHostname("relay-host2")
       .setRelayPort(9411)
       .setRelayGroupPort(9431);
-    Cluster cluster = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2)).setReplica(true);
+    Cluster cluster = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1, node2));
     assertClusterValidationFailsContainsMessage(
-      "Stripe with name: stripe1 has 2 nodes with names: node1, node2. A replica cluster can have at most 1 replica node per stripe",
+      "Stripe with name: stripe1 has 2 nodes [node1 (replica), node2 (replica)]. A replica stripe can have at most 1 node.",
       cluster);
 
-    // Multiple replica nodes in second stripe when cluster.replica=true
+    // Multiple replica nodes in second stripe (while first stripe has 1)
     Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3])
+      .setReplica(true)
       .setRelayHostname("relay-host3")
       .setRelayPort(9412)
       .setRelayGroupPort(9432);
     Cluster cluster2 = newTestCluster("cluster2",
       newTestStripe("stripe1").addNodes(node1),
-      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2, node3))
-      .setReplica(true);
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2, node3));
     assertClusterValidationFailsContainsMessage(
-      "Stripe with name: stripe2 has 2 nodes with names: node2, node3. A replica cluster can have at most 1 replica node per stripe",
+      "Stripe with name: stripe2 has 2 nodes [node2 (replica), node3 (replica)]. A replica stripe can have at most 1 node.",
       cluster2);
 
-    // multiple nodes in replica stripe (normal and replica node)
+    // Replica node alongside a normal node in same stripe
     Node node4 = newTestNode("node4", "localhost4", Testing.N_UIDS[2]);
-    Cluster cluster3 = newTestCluster("cluster3", newTestStripe("stripe1").addNodes(node1, node4)).setReplica(true);
+    Cluster cluster3 = newTestCluster("cluster3", newTestStripe("stripe1").addNodes(node1, node4));
     assertClusterValidationFailsContainsMessage(
-      "Stripe with name: stripe1 has 2 nodes with names: node1, node4. A replica cluster can have at most 1 replica node per stripe",
+      "Stripe with name: stripe1 has 2 nodes [node1 (replica), node4]. A replica stripe can have at most 1 node.",
       cluster3);
   }
 
   @Test
+  public void testBadDR_replicaClusterMissingReplicaNodeInSomeStripes() {
+    // Stripe1 has a replica node but stripe2 has only a normal node — violates all-or-nothing per stripe
+    Node node1 = newTestNode("node1", "localhost1")
+      .setReplica(true)
+      .setRelayHostname("relay-host")
+      .setRelayPort(9410)
+      .setRelayGroupPort(9430);
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
+    Cluster cluster = newTestCluster("cluster1",
+      newTestStripe("stripe1").addNodes(node1),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2));
+    assertClusterValidationFailsContainsMessage(
+      "If any stripe has a replica node, all stripes must have exactly 1 replica node. Stripes with a replica: [stripe1]. Stripes missing a replica: [stripe2]",
+      cluster);
+  }
+
+  @Test
   public void testBadDR_replicaClusterWithRelayNode() {
-    // Cluster with replica=true but node has relay=true
+    // Node with both relay=true and replica=true
     Node node1 = newTestNode("node1", "localhost1")
       .setRelay(true)
+      .setReplica(true)
       .setReplicaHostname("replica-host")
       .setReplicaPort(9410);
-    Cluster cluster = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)).setReplica(true);
+    Cluster cluster = newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1));
     assertClusterValidationFailsContainsMessage(
       "Node with name: node1 has both relay and replica settings enabled",
       cluster);
@@ -620,7 +644,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadDR_partialReplicaConfigWithReplicaDisabled() {
-    // Partial replica config when cluster replica is disabled (or not set)
+    // Partial replica config when node replica is not set
     Node node1 = newTestNode("node1", "localhost1")
       .setRelayHostname("relay-host")
       .setRelayPort(9410);
@@ -636,20 +660,22 @@ public class ClusterValidatorTest {
         "properties: {relay-hostname=null, relay-port=9410, relay-group-port=null} are partially configured",
       newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2)));
 
-    // Explicitly set cluster replica to false
+    // Explicitly set node replica to false
     Node node3 = newTestNode("node3", "localhost3", Testing.N_UIDS[3])
+      .setReplica(false)
       .setRelayHostname("relay-host")
       .setRelayGroupPort(9430);
     assertClusterValidationFailsContainsMessage(
       "The replica setting is disabled for node with name: node3, " +
         "properties: {relay-hostname=relay-host, relay-port=null, relay-group-port=9430} are partially configured",
-      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node3)).setReplica(false));
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node3)));
   }
 
   @Test
-  public void testBadDR_partialRelayConfigWithReplicaClusterEnabled() {
-    // Partial relay config when cluster replica is enabled
+  public void testBadDR_partialRelayConfigWithReplicaNodeEnabled() {
+    // Partial relay config on a node that also has replica=true
     Node node1 = newTestNode("node1", "localhost1")
+      .setReplica(true)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430)
@@ -657,7 +683,7 @@ public class ClusterValidatorTest {
     assertClusterValidationFailsContainsMessage(
       "The relay setting is disabled for node with name: node1, " +
         "properties: {replica-hostname=replica-host, replica-port=null} are partially configured",
-      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)).setReplica(true));
+      newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1)));
   }
 
   @Test
@@ -669,12 +695,13 @@ public class ClusterValidatorTest {
       .setReplicaPort(9410);
     new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node1))).validate(ClusterState.ACTIVATED);
 
-    // All replica properties set even when cluster replica is disabled
+    // All replica properties set even when node replica is disabled
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2])
+      .setReplica(false)
       .setRelayHostname("relay-host")
       .setRelayPort(9410)
       .setRelayGroupPort(9430);
-    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2)).setReplica(false)).validate(ClusterState.ACTIVATED);
+    new ClusterValidator(newTestCluster("cluster1", newTestStripe("stripe1").addNodes(node2))).validate(ClusterState.ACTIVATED);
   }
 
   private String generateAddress() {
