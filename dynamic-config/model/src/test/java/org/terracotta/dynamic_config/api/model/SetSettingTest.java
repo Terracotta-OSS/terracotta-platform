@@ -299,12 +299,11 @@ public class SetSettingTest {
     assertThat(node.getReplicaPort().orDefault(), is(9411));
 
     // Test REPLICA
-    Cluster cluster = Testing.newTestCluster();
-    assertFalse(cluster.getReplica().orDefault());
-    REPLICA.setProperty(cluster, "true");
-    assertTrue(cluster.getReplica().orDefault());
-
     Node replicaNode = Testing.newTestNode("node2", "localhost");
+    assertFalse(replicaNode.getReplica().orDefault());
+    REPLICA.setProperty(replicaNode, "true");
+    assertTrue(replicaNode.getReplica().orDefault());
+
     assertFalse(replicaNode.getRelayHostname().isConfigured());
     assertFalse(replicaNode.getRelayPort().isConfigured());
     assertFalse(replicaNode.getRelayGroupPort().isConfigured());

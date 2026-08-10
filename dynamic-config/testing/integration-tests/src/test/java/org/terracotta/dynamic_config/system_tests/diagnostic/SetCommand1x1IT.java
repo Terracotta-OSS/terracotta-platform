@@ -161,11 +161,11 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void setReplica() {
     String nodeName = getNodeName(1, 1);
-    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true",
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", nodeName + ":replica=" + "true",
       "-setting", nodeName + ":relay-hostname=" + "localhost1",
       "-setting", nodeName + ":relay-port=" + "9411",
       "-setting", nodeName + ":relay-group-port=" + "9411"), is(successful()));
-    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica"), containsOutput("replica=true"));
+    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica"), containsOutput(nodeName + ":replica=true"));
   }
 
   @Test
@@ -187,7 +187,8 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setIncompleteReplicaProperties() {
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "replica=" + "true"),
+    String nodeName = getNodeName(1, 1);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", nodeName + ":replica=" + "true"),
       allOf(
         not(successful()),
         containsOutput("The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed")));

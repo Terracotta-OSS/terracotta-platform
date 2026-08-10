@@ -34,9 +34,9 @@ public class ReplicaSetUnsetCommand2x1IT extends DynamicConfigIT {
   @Before
   public void before() throws Exception {
     startNode(1, 1);
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9411", "-c", "stripe.1.node.1.relay-group-port=" + "9511"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9411", "-c", "stripe.1.node.1.relay-group-port=" + "9511"), is(successful()));
     startNode(2, 1);
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9412", "-c", "stripe.1.node.1.relay-group-port=" + "9512"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.1.node.1.replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9412", "-c", "stripe.1.node.1.relay-group-port=" + "9512"), is(successful()));
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     activateCluster();
     waitForPassiveReplicaStart(1, 1);
@@ -270,7 +270,8 @@ public class ReplicaSetUnsetCommand2x1IT extends DynamicConfigIT {
       allOf(containsOutput("stripe.1.node.1.relay-hostname=node-1"), containsOutput("stripe.1.node.1.relay-port=1234"), containsOutput("stripe.1.node.1.relay-group-port=4567")));
 
     // unset replica properties
-    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "replica"),
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.replica", "-c", "stripe.2.node.1.replica"),
       allOf(successful(), not(containsOutput("Restart required for nodes:"))));
     assertThat(configTool("unset", "-s", "localhost:" + getNodePort(),
       "-c", "stripe.1.node.1.relay-hostname", "-c", "stripe.1.node.1.relay-port", "-c", "stripe.1.node.1.relay-group-port",

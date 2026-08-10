@@ -61,7 +61,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_W
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
-import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
@@ -79,7 +78,6 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Boolean securityWhitelist;
   private FailoverPriority failoverPriority;
   private Map<String, Measure<MemoryUnit>> offheapResources;
-  private Boolean replica;
 
   public Cluster() {
     this(emptyList());
@@ -121,10 +119,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return OptionalConfig.of(SECURITY_SSL_TLS, securitySslTls);
   }
 
-  public OptionalConfig<Boolean> getReplica() {
-    return OptionalConfig.of(REPLICA, replica);
-  }
-
   public OptionalConfig<Boolean> getSecurityWhitelist() {
     return OptionalConfig.of(SECURITY_WHITELIST, securityWhitelist);
   }
@@ -152,11 +146,6 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public Cluster setSecuritySslTls(Boolean securitySslTls) {
     this.securitySslTls = securitySslTls;
-    return this;
-  }
-
-  public Cluster setReplica(Boolean replica) {
-    this.replica = replica;
     return this;
   }
 
@@ -293,15 +282,14 @@ public class Cluster implements Cloneable, PropertyHolder {
         Objects.equals(failoverPriority, that.failoverPriority) &&
         Objects.equals(clientReconnectWindow, that.clientReconnectWindow) &&
         Objects.equals(clientLeaseDuration, that.clientLeaseDuration) &&
-        Objects.equals(offheapResources, that.offheapResources) &&
-        Objects.equals(replica, that.replica);
+        Objects.equals(offheapResources, that.offheapResources);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
         stripes, name, securityAuthc, securitySslTls, securityWhitelist, uid,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, configurationLockContext, replica
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, configurationLockContext
     );
   }
 
@@ -341,7 +329,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     clone.securityAuthc = this.securityAuthc;
     clone.securitySslTls = this.securitySslTls;
     clone.securityWhitelist = this.securityWhitelist;
-    clone.replica = this.replica;
     return clone;
   }
 
@@ -624,6 +611,6 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public boolean is(String nodeName, DisasterRecoveryMode mode) {
-    return getNodeByName(nodeName).filter(node -> DisasterRecoveryMode.from(node, this) == mode).isPresent();
+    return getNodeByName(nodeName).filter(node -> DisasterRecoveryMode.from(node) == mode).isPresent();
   }
 }

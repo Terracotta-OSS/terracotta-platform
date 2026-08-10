@@ -27,7 +27,9 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -197,36 +199,55 @@ public class ClusterValidator {
   }
 
   private void validateDRSetting() {
-    // Check if replica is enabled at cluster level
-    boolean clusterReplicaEnabled = DisasterRecoveryMode.REPLICA.isEnabled(null, cluster);
+    List<Stripe> stripes = cluster.getStripes();
 
-    if (clusterReplicaEnabled) {
-      // at most 1 node per stripe (no replica, relay or normal node allowed alongside replica in a stripe)
-      for (Stripe stripe : cluster.getStripes()) {
-        if (stripe.getNodeCount() > 1) {
-          throw new MalformedClusterException("Stripe with name: " + stripe.getName() + " has " + stripe.getNodeCount() + " nodes with names: " +
-            stripe.getNodes().stream().map(Node::getName).sorted().collect(Collectors.joining(", ")) +
-            ". A replica cluster can have at most 1 replica node per stripe");
-        }
+    Map<Boolean, List<Stripe>> partitionedStripes = stripes.stream().collect(
+      Collectors.partitioningBy(stripe -> stripe.getNodes().stream().anyMatch(DisasterRecoveryMode.REPLICA::isEnabled))
+    );
+
+    List<Stripe> stripesWithReplica = partitionedStripes.get(true);
+    List<Stripe> stripesMissingReplica = partitionedStripes.get(false);
+
+    // a replica stripe can have at most 1 node total
+    for (Stripe stripe : stripesWithReplica) {
+      if (stripe.getNodeCount() > 1) {
+        String nodeDetails = stripe.getNodes().stream()
+          .map(n -> n.getName() + (DisasterRecoveryMode.REPLICA.isEnabled(n) ? " (replica)" : ""))
+          .sorted().collect(Collectors.joining(", "));
+        // Stripe with name: stripe-1 has 3 nodes [node-1 (replica), node-2, node-3]. A replica stripe can have at most 1 node.
+        throw new MalformedClusterException("Stripe with name: " + stripe.getName() + " has " + stripe.getNodeCount() + " nodes [" + nodeDetails + "]. " +
+          "A replica stripe can have at most 1 node.");
       }
     }
+
+    // all-or-nothing across stripes, if one stripe has a replica then all should have
+    if (!stripesWithReplica.isEmpty() && !stripesMissingReplica.isEmpty()) {
+      throw new MalformedClusterException("If any stripe has a replica node, all stripes must have exactly 1 replica node. " +
+        "Stripes with a replica: [" + joinSortedNames(stripesWithReplica) + "]. " +
+        "Stripes missing a replica: [" + joinSortedNames(stripesMissingReplica) + "]");
+    }
+
     // Validate each node's disaster recovery settings
     // - No node can have both relay and replica enabled
     // - when no relay or replica is configured, all-or-nothing validation for required properties
-    // - When cluster.replica=true, all nodes must have replica properties configured
+    // - When node.replica=true, node must have replica properties configured
     // - When node.relay=true, node must have relay properties configured
     cluster.getNodes().forEach(this::checkAndGetDRMode);
   }
 
+  private static String joinSortedNames(List<Stripe> stripes) {
+    return stripes.stream().map(Stripe::getName).sorted().collect(Collectors.joining(", "));
+  }
+
   private DisasterRecoveryMode checkAndGetDRMode(Node node) {
-    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node, cluster);
-    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node, cluster);
+    boolean relayMode = DisasterRecoveryMode.RELAY.isEnabled(node);
+    boolean replicaMode = DisasterRecoveryMode.REPLICA.isEnabled(node);
     if (relayMode && replicaMode) {
       throw new MalformedClusterException("Node with name: " + node.getName() + " has both relay and replica settings enabled");
     }
     validateRequiredDRProperties(node, DisasterRecoveryMode.RELAY);
     validateRequiredDRProperties(node, DisasterRecoveryMode.REPLICA);
-    return DisasterRecoveryMode.from(node, cluster);
+    return DisasterRecoveryMode.from(node);
   }
 
   private void validateRequiredDRProperties(Node node, DisasterRecoveryMode mode) {
@@ -239,7 +260,7 @@ public class ClusterValidator {
       .filter(OptionalConfig::isConfigured)
       .count();
 
-    if (mode.isEnabled(node, cluster)) {
+    if (mode.isEnabled(node)) {
       if (configuredCount != requiredProps.size()) {
         Map<String, Object> inconsistent = new LinkedHashMap<>();
         requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));

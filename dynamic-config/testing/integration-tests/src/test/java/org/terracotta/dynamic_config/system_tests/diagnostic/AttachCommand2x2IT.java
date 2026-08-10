@@ -111,7 +111,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
-      allOf(not(successful()), containsOutput("has 2 nodes with names: node-1-1, node-1-2. A replica cluster can have at most 1 replica node per stripe")));
+      allOf(not(successful()), containsOutput("A replica stripe can have at most 1 node")));
   }
 
   @Test
@@ -122,9 +122,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-      allOf(not(successful()), containsOutput("The replica setting is enabled for node with name: node-2-1, " +
-        "replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed, " +
-        "[relay-hostname, relay-port, relay-group-port] need to be set together")));
+      allOf(not(successful()), containsOutput("If any stripe has a replica node, all stripes must have exactly 1 replica node")));
   }
 
   @Test
