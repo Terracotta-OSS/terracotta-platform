@@ -32,9 +32,9 @@ public class DetachStripeWithReplicaIT extends DynamicConfigIT {
   @Test
   public void test_detach_stripe_from_activated_cluster_with_replica() throws Exception {
     startNode(1, 1);
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9411", "-c", "stripe.1.node.1.relay-group-port=" + "9511"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9411", "-c", "stripe.1.node.1.relay-group-port=" + "9511"), is(successful()));
     startNode(2, 1);
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9412", "-c", "stripe.1.node.1.relay-group-port=" + "9512"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.1.node.1.replica=true", "-c", "stripe.1.node.1.relay-hostname=" + "localhost", "-c", "stripe.1.node.1.relay-port=" + "9412", "-c", "stripe.1.node.1.relay-group-port=" + "9512"), is(successful()));
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     activateCluster();
     waitForPassiveReplicaStart(1, 1);
