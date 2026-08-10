@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA;
 import static org.terracotta.diagnostic.model.LogicalServerState.REPLICA_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
@@ -64,7 +63,10 @@ public class ReplicaFailoverAction extends RemoteAction {
         " unset on these nodes, please restart them, and if they fail to transition to ACTIVE, please seek support.", toString(replicaSuspendedNodes));
     }
     unsetAction.setNodes(nodes);
-    unsetAction.setConfigurationInputs(singletonList(new ConfigurationInput(SettingName.REPLICA)));
+    List<ConfigurationInput> inputs = allNodes.keySet().stream()
+      .map(endpoint -> new ConfigurationInput(endpoint.getNodeName() + ":" + SettingName.REPLICA))
+      .toList();
+    unsetAction.setConfigurationInputs(inputs);
     unsetAction.run();
   }
 

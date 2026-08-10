@@ -198,15 +198,4 @@ public class ClusterTest {
     workingCluster.setSecurityAuthc("availability");
     assertTrue(cluster.equals(workingCluster));
   }
-
-  @Test
-  public void test_replica() {
-    Cluster cluster = this.cluster.clone();
-    assertThat(cluster.getReplica().isConfigured(), is(false));
-    assertThat(cluster.getReplica().orDefault(), is(false));
-    Cluster replica = cluster.setReplica(true).clone();
-    assertThat(replica.getReplica().isConfigured(), is(true));
-    assertThat(cluster, is(equalTo(replica)));
-    assertThat(cluster.hashCode(), is(equalTo(replica.hashCode())));
-  }
 }
