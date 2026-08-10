@@ -41,7 +41,8 @@ public class ReplicaSetUnset2x1IT extends DynamicConfigIT {
     String node2 = getNodeName(2, 1);
 
     // replica properties missing on one node
-    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true",
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
         "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411"),
       allOf(
         is(not(successful())),
@@ -49,7 +50,8 @@ public class ReplicaSetUnset2x1IT extends DynamicConfigIT {
     );
 
     // all nodes will need set together at once
-    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true",
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
         "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411",
         "-setting", node2 + ":relay-hostname=" + "localhost1", "-setting", node2 + ":relay-port=" + "9411", "-setting", node2 + ":relay-group-port=" + "9411"
       ),
@@ -58,7 +60,8 @@ public class ReplicaSetUnset2x1IT extends DynamicConfigIT {
     // export
     assertThat(configTool("export", "-s", "localhost:" + getNodePort()),
       allOf(is(successful()),
-        containsOutput("replica=true"),
+        containsOutput("node-1-1:replica=true"),
+        containsOutput("node-2-1:replica=true"),
         containsOutput("node-1-1:relay-hostname=localhost"),
         containsOutput("node-1-1:relay-port=9411"),
         containsOutput("node-1-1:relay-group-port=9411"),
@@ -72,57 +75,63 @@ public class ReplicaSetUnset2x1IT extends DynamicConfigIT {
   public void setUnsetReplica() {
     String node1 = getNodeName(1, 1);
     String node2 = getNodeName(2, 1);
-    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true",
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
         "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411",
         "-setting", node2 + ":relay-hostname=" + "localhost1", "-setting", node2 + ":relay-port=" + "9411", "-setting", node2 + ":relay-group-port=" + "9411"
       ),
       is(successful()));
 
     // unset replica flag
-    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica"), is((successful())));
+    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica", "-setting", node2 + ":replica"), is((successful())));
     // replica dependent properties are still set
     assertThat(
       configTool("export", "-s", "localhost:" + getNodePort()),
       allOf(
         // doesn't output the property if explicitly unset
-        not(containsOutput("replica=false")),
+        not(containsOutput("node-1-1:replica=false")),
+        not(containsOutput("node-2-1:replica=false")),
         containsOutput("node-1-1:relay-hostname=localhost"), containsOutput("node-1-1:relay-port=9411"), containsOutput("node-1-1:relay-group-port=9411"),
         containsOutput("node-2-1:relay-hostname=localhost"), containsOutput("node-2-1:relay-port=9411"), containsOutput("node-2-1:relay-group-port=9411")
       ));
 
     // set replica again
-    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "replica=" + "true"), is(successful()));
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true"), is(successful()));
 
-    // unset partial dependent properties on a node
+    // unset partial dependent properties on a node while replica is still enabled: relay-hostname removed but relay-port/group-port remain
     assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
-        "-setting", "replica",
         "-setting", node1 + ":relay-hostname"),
       allOf(is(not(successful())),
-        containsOutput("The replica setting is disabled for node with name: node-1-1, properties: {relay-hostname=null, relay-port=9411, relay-group-port=9411} are partially configured. Either remove all properties or set all required properties"))
+        containsOutput("The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=null, relay-port=9411, relay-group-port=9411} aren't well-formed"))
     );
 
-    // unset dependent properties on a single node
+    // unsetting replica on only one stripe is rejected — all stripes must have a replica node, or none
     assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
-        "-setting", "replica",
-        "-setting", node1 + ":relay-hostname", "-setting", node1 + ":relay-port", "-setting", node1 + ":relay-group-port"),
-      allOf(is(successful())));
-    assertThat(
-      configTool("export", "-s", "localhost:" + getNodePort()),
-      allOf(
-        not(containsOutput("node-1-1:relay-hostname=localhost")),
-        containsOutput("node-2-1:relay-hostname=localhost")
-      ));
+        "-setting", node1 + ":replica"),
+      allOf(is(not(successful())),
+        containsOutput("If any stripe has a replica node, all stripes must have exactly 1 replica node."),
+        containsOutput("Stripes with a replica: ["),
+        containsOutput("Stripes missing a replica: ["))
+    );
 
-    // unset dependent properties on 2nd node
+    // unset replica and all dependent properties on both nodes together
     assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica", "-setting", node2 + ":replica",
+        "-setting", node1 + ":relay-hostname", "-setting", node1 + ":relay-port", "-setting", node1 + ":relay-group-port",
         "-setting", node2 + ":relay-hostname", "-setting", node2 + ":relay-port", "-setting", node2 + ":relay-group-port"),
       allOf(is(successful())));
-    // no replica properties
+    // no replica or relay properties remain
     assertThat(
       configTool("export", "-s", "localhost:" + getNodePort()),
       allOf(
-        not(containsOutput("node-1-1:relay-hostname=localhost")),
-        not(containsOutput("node-2-1:relay-hostname=localhost")), not(containsOutput("node-2-1:relay-port=9411")), not(containsOutput("node-2-1:relay-group-port=9411"))
+        not(containsOutput("node-1-1:relay-hostname")),
+        not(containsOutput("node-1-1:relay-port")),
+        not(containsOutput("node-1-1:relay-group-port")),
+        not(containsOutput("node-2-1:relay-hostname")),
+        not(containsOutput("node-2-1:relay-port")),
+        not(containsOutput("node-2-1:relay-group-port"))
       ));
   }
 }

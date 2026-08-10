@@ -130,7 +130,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     if (isPartialConfiguration()) {
       return false;
     }
-    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get());
+    return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
   }
 
   @Override
@@ -138,7 +138,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     if (isPartialConfiguration()) {
       return false;
     }
-    return DisasterRecoveryMode.isReplica(nodeContextSupplier.get());
+    return DisasterRecoveryMode.isReplica(nodeContextSupplier.get().getNode());
   }
 
   @Override
@@ -147,14 +147,13 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     if (isPartialConfiguration()) {
       return null;
     }
-    NodeContext nodeContext = nodeContextSupplier.get();
-    Node node = nodeContext.getNode();
+    Node node = nodeContextSupplier.get().getNode();
     // activated and replica
-    if (DisasterRecoveryMode.isReplica(nodeContext)) {
+    if (DisasterRecoveryMode.isReplica(node)) {
       return DisasterRecoveryMode.REPLICA.getPeer(node).orElseThrow(AssertionError::new);
     }
     // activated and relay
-    if (DisasterRecoveryMode.isRelay(nodeContext)) {
+    if (DisasterRecoveryMode.isRelay(node)) {
       return DisasterRecoveryMode.RELAY.getPeer(node).orElseThrow(AssertionError::new);
     }
     // activated but without DR
@@ -167,7 +166,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
       return null;
     }
     NodeContext nodeContext = nodeContextSupplier.get();
-    if (DisasterRecoveryMode.isReplica(nodeContext)) {
+    if (DisasterRecoveryMode.isReplica(nodeContext.getNode())) {
       return DisasterRecoveryMode.REPLICA.getPeerGroupPort(nodeContext.getNode()).orElseThrow(AssertionError::new);
     }
     return null;
