@@ -99,9 +99,8 @@ public abstract class TopologyAction extends RemoteAction {
       throw new IllegalArgumentException("Wrong destination endpoint: " + destination + ". It does not match any node in destination cluster: " + destinationCluster.toShapeString());
     }
 
-    if (destinationClusterActivated && !isReplicaCluster(destinationOnlineNodes)) {
-      ensureNodesAreEitherActiveOrPassive(filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()));
-      ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
+    if (destinationClusterActivated) {
+      ensureClusterIsReadyForChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()), false);
     }
   }
 
@@ -150,11 +149,7 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {
-        if (isReplicaCluster(destinationOnlineNodes)) {
-          runConfigurationChangeViaDiagnostic(destinationOnlineNodes, nomadChange);
-        } else {
-          runTopologyChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()), nomadChange);
-        }
+        runTopologyChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()), nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }
