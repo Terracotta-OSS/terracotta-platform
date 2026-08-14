@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
  */
 package org.terracotta.lease.connection;
 
-import org.terracotta.common.struct.TimeBudget;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
@@ -25,7 +24,6 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 public class LeasedConnectionServiceImpl implements LeasedConnectionService {
 
@@ -55,14 +53,7 @@ public class LeasedConnectionServiceImpl implements LeasedConnectionService {
   }
 
   private LeasedConnection createLeasedConnection(Properties properties, Connection connection) throws ConnectionException {
-    TimeBudget timeBudget = createTimeBudget(properties);
-    return BasicLeasedConnection.create(connection, timeBudget);
-  }
-
-  private static TimeBudget createTimeBudget(Properties properties) {
-    String timeoutString = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT,
-            DEFAULT_LEASED_CONNECTION_TIMEOUT);
-    long timeout = Long.parseLong(timeoutString);
-    return new TimeBudget(timeout, TimeUnit.MILLISECONDS);
+    long timeoutMillis = Long.parseLong(properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, DEFAULT_LEASED_CONNECTION_TIMEOUT));
+    return BasicLeasedConnection.create(connection, timeoutMillis);
   }
 }

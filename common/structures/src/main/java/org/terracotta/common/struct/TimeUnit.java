@@ -77,21 +77,19 @@ public enum TimeUnit implements Unit<TimeUnit> {
   }
 
   public java.util.concurrent.TimeUnit toTimeUnit() {
-    return switch (this) {
-      case MILLISECONDS -> java.util.concurrent.TimeUnit.MILLISECONDS;
-      case SECONDS -> java.util.concurrent.TimeUnit.SECONDS;
-      case MINUTES -> java.util.concurrent.TimeUnit.MINUTES;
-      case HOURS -> java.util.concurrent.TimeUnit.HOURS;
-    };
+    if (this == MILLISECONDS) return java.util.concurrent.TimeUnit.MILLISECONDS;
+    if (this == SECONDS) return java.util.concurrent.TimeUnit.SECONDS;
+    if (this == MINUTES) return java.util.concurrent.TimeUnit.MINUTES;
+    if (this == HOURS) return java.util.concurrent.TimeUnit.HOURS;
+    throw new AssertionError();
   }
 
   public ChronoUnit toChronoUnit() {
-    return switch (this) {
-      case MILLISECONDS -> ChronoUnit.MILLIS;
-      case SECONDS -> ChronoUnit.SECONDS;
-      case MINUTES -> ChronoUnit.MINUTES;
-      case HOURS -> ChronoUnit.HOURS;
-    };
+    if (this == MILLISECONDS) return ChronoUnit.MILLIS;
+    if (this == SECONDS) return ChronoUnit.SECONDS;
+    if (this == MINUTES) return ChronoUnit.MINUTES;
+    if (this == HOURS) return ChronoUnit.HOURS;
+    throw new AssertionError();
   }
 
   public static Optional<TimeUnit> from(String shortName) {
