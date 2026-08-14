@@ -165,28 +165,9 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
       // cluster is active, we need to run a nomad change and eventually a restart
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
-      if (isReplicaCluster(onlineNodes)) {
-        ensureReplicasAreAllOnline(originalCluster, onlineNodes);
-        output.info("Applying new configuration change(s) to replica nodes: {}", toString(onlineNodes.keySet()));
-        if (!changes.getChanges().isEmpty()) {
-          runConfigurationChangeViaDiagnostic(onlineNodes, changes);
-        }
-      } else {
-
-        // validate that all the online nodes are either actives or passives
-        ensureNodesAreEitherActiveOrPassive(onlineNodes);
-
-        if (requiresAllNodesAlive()) {
-          // Check passive nodes as well if the setting requires all nodes to be online
-          ensurePassivesAreAllOnline(originalCluster, onlineNodes);
-        }
-
-        ensureActivesAreAllOnline(originalCluster, onlineNodes);
-        output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
-        if (!changes.getChanges().isEmpty()) {
-          runConfigurationChange(updatedCluster, onlineNodes, changes);
-        }
-      }
+      ensureClusterIsReadyForChange(originalCluster, onlineNodes, requiresAllNodesAlive());
+      output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
+      runConfigurationChange(updatedCluster, onlineNodes, changes);
 
       // display unreachable nodes
       final Set<String> unreachableRelayNodes = originalCluster.getNodes()
