@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,20 @@ import java.util.Optional;
 public interface ConfigChangeHandlerManager {
   /**
    * Register a {@code org.terracotta.dynamic_config.handler.ConfigChangeHandler} for a
-   * {@code org.terracotta.dynamic_config.model.Setting}.
+   * {@code org.terracotta.dynamic_config.model.Setting} but only if no mapping already exist.
    *
-   * @return the previous handler already associated or null if there was no association yet
-   * {@code org.terracotta.dynamic_config.model.Setting} si already associated
+   * @return the handler already associated or null if there was no association
    */
   ConfigChangeHandler set(Setting setting, ConfigChangeHandler configChangeHandler);
+
+  /**
+   * Register a {@code org.terracotta.dynamic_config.handler.ConfigChangeHandler} for a
+   * {@code org.terracotta.dynamic_config.model.Setting}, overriding an existing one.
+   *
+   * @return the previous handler already associated or null if there was no association yet
+   * {@code org.terracotta.dynamic_config.model.Setting} already associated
+   */
+  ConfigChangeHandler override(Setting setting, ConfigChangeHandler configChangeHandler);
 
   /**
    * Removes any {@code org.terracotta.dynamic_config.handler.ConfigChangeHandler} associated

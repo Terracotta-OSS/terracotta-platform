@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.api.server.NomadChangeProcessor;
 import org.terracotta.dynamic_config.api.server.PathResolver;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.server.Server;
 
-import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -42,7 +42,6 @@ import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher
 
 public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
-  private static final String PLATFORM_MBEAN_OPERATION_NAME = "removePassive";
   private static final String failAtPrepare = "prepareDeletion-failure";
   private static final String killAtPrepare = "killDeletion-prepare";
   private static final String killAtCommit = "killDeletion-commit";
@@ -52,18 +51,23 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
-  private final MBeanServer mbeanServer;
+  private final Server server;
 
-  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, MBeanServer mbeanServer) {
-    this.mbeanServer = mbeanServer;
+  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Server server) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
+    this.server = server;
   }
 
   @Override
   public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(detachStatusKey))) {
       throw new NomadException("Invalid addition fail at prepare");
     }
@@ -85,6 +89,11 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
 
   @Override
   public void apply(NodeRemovalNomadChange change) throws NomadException {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
     Node node = change.getNode();
     if (!runtime.containsNode(node.getUID())) {

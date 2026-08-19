@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,17 @@ public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManage
 
   @Override
   public ConfigChangeHandler set(Setting setting, ConfigChangeHandler configChangeHandler) {
+    ConfigChangeHandler prev = changeHandlers.putIfAbsent(setting, configChangeHandler);
+    if (prev == null) {
+      LOGGER.info("Registered dynamic configuration change handler for setting {}: {}", setting, configChangeHandler);
+    } else {
+      LOGGER.warn("Dynamic configuration change handler already registered for setting {}: {}", setting, prev);
+    }
+    return prev;
+  }
+
+  @Override
+  public ConfigChangeHandler override(Setting setting, ConfigChangeHandler configChangeHandler) {
     LOGGER.info("Registered dynamic configuration change handler for setting {}: {}", setting, configChangeHandler);
     return changeHandlers.put(setting, configChangeHandler);
   }

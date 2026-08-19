@@ -28,8 +28,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.api.server.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.api.server.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
-
-import javax.management.MBeanServer;
+import org.terracotta.server.Server;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;
@@ -43,16 +42,21 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
   private static final String attachStatusKey = "attachStatus";
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer;
+  private final Server server;
 
-  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, MBeanServer mbeanServer) {
-    this.mbeanServer = mbeanServer;
+  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, Server server) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
+    this.server = server;
   }
 
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(attachStatusKey))) {
       throw new NomadException("Invalid addition fail at prepare");
     }
@@ -76,6 +80,11 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
 
   @Override
   public void apply(NodeAdditionNomadChange change) throws NomadException {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
     if (runtime.containsNode(change.getNode().getUID())) {
       return;
