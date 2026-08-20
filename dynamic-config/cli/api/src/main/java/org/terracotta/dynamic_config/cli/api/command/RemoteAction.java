@@ -178,11 +178,16 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile) {
+    activateNodes(newNodes, cluster, licenseFile, true);
+  }
+  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile, boolean restart) {
     activateNomadSystem(newNodes, cluster, read(licenseFile));
 
     runClusterActivation(newNodes, cluster);
 
-    restartNodes(newNodes);
+    if (restart) {
+      restartNodes(newNodes);
+    }
   }
 
   protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination) {
