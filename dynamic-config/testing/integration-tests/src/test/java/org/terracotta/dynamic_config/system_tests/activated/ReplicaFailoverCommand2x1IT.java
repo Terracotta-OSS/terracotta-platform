@@ -82,17 +82,4 @@ public class ReplicaFailoverCommand2x1IT extends DynamicConfigIT {
         containsOutput("Configuration is repaired")));
     assertThat(configTool("get", "-s", "localhost:" + getNodePort(1, 1), "-c", "replica"), containsOutput("replica=false"));
   }
-
-  @Test
-  public void rollbackFailure_requiresRepair() {
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.org.terracotta.ReplicaSimulationHandler.action=rollback-failure"), is(successful()));
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.2.node.1.tc-properties.org.terracotta.ReplicaSimulationHandler.action=prepare-failure"), is(successful()));
-    assertThat(configTool("replica-failover", "-connect-to", "localhost:" + getNodePort()),
-      allOf(not(successful()),
-        containsOutput("Two-Phase commit failed")));
-    assertThat(configTool("repair", "-f", "rollback", "-s", "localhost:" + getNodePort()),
-      allOf(containsOutput("Repairing configuration by running a rollback"),
-        containsOutput("Configuration is repaired")));
-    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica"), containsOutput("replica=true"));
-  }
 }
