@@ -31,6 +31,8 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.LoggerOverrideConfigChangeHandler;
+import org.terracotta.dynamic_config.test_support.handler.ReplicaChangeHandler;
+import org.terracotta.dynamic_config.test_support.handler.ReplicaSimulationHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
 import org.terracotta.dynamic_config.test_support.processor.MyDummyNomadAdditionChangeProcessor;
 import org.terracotta.dynamic_config.test_support.processor.MyDummyNomadRemovalChangeProcessor;
@@ -45,6 +47,8 @@ import java.util.Collections;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
+import static org.terracotta.dynamic_config.api.model.Setting.REPLICA;
+import static org.terracotta.dynamic_config.test_support.handler.ReplicaSimulationHandler.SIMULATE_ACTION_TC_PROP;
 
 @BuiltinService
 public class TestServiceProvider implements ServiceProvider {
@@ -90,6 +94,24 @@ public class TestServiceProvider implements ServiceProvider {
       });
     // install our new handler
     manager.override(NODE_LOGGER_OVERRIDES, selectingConfigChangeHandler);
+
+    // override the replica handler by hooking into some special properties
+    // WARNING:
+    // 1. We cannot access the classpath of the service containing ReplicaChangeHandler
+    // 2. There is no ordering guarantee when service providers are loaded, so TestServiceProvider can be loaded before or after the DC service provide registering the real ReplicaChangeHandler.
+    //    So this is a best effort to use the wired one, otherwise we provide teh copy.
+    ConfigChangeHandler replicaHandler = manager.findConfigChangeHandler(REPLICA).orElseGet(() -> new ReplicaChangeHandler(server));
+    SelectingConfigChangeHandler<String> selectingHandler = new SelectingConfigChangeHandler<String>()
+      .add(SIMULATE_ACTION_TC_PROP, new ReplicaSimulationHandler(server, topologyService))
+      .fallback(replicaHandler)
+      .selector(configuration -> {
+        if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(SIMULATE_ACTION_TC_PROP) == null) {
+          return null;
+        } else {
+          return SIMULATE_ACTION_TC_PROP;
+        }
+      });
+    manager.override(REPLICA, selectingHandler);
     return true;
   }
 

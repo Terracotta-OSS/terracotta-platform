@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2026
+ * Copyright IBM Corp. 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,30 +25,15 @@ import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.server.Server;
 
-/**
- * Handler for <pre>org.terracotta.dynamic-config.simulate</pre>
- * <p>
- * <p>
- * Simulate a missing value with:
- * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=</pre>
- * <p>
- * Simulate a Nomad prepare failure with:
- * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE</pre>
- * <p>
- * Simulate a Nomad commit failure with:
- * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO</pre>
- *
- * @author Mathieu Carbou
- */
-public class SimulationHandler implements ConfigChangeHandler {
+public class ReplicaSimulationHandler implements ConfigChangeHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ReplicaSimulationHandler.class);
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SimulationHandler.class);
+  public static final String SIMULATE_ACTION_TC_PROP = "org.terracotta.ReplicaSimulationHandler.action";
   private final TopologyService topologyService;
   private final Server server;
+  private volatile boolean commitFailureFired;
 
-  private volatile String state = "";
-
-  public SimulationHandler(Server server, TopologyService topologyService) {
+  public ReplicaSimulationHandler(Server server, TopologyService topologyService) {
     this.server = server;
     this.topologyService = topologyService;
   }
@@ -59,19 +44,10 @@ public class SimulationHandler implements ConfigChangeHandler {
       // maybe syncing some append log ? we do not want to crash there ;-)
       return;
     }
-
     LOGGER.info("Received: {}", change);
 
-    if (!change.hasValue()) {
-      throw new InvalidConfigChangeException("Operation not supported: " + change);
-    }
-
-    if ("TRACE".equals(change.getValue().get())) {
-      throw new InvalidConfigChangeException("Simulate prepare failure");
-    }
-
-    if ("prepare-failure".equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get("org.terracotta.SimulationHandler.action"))) {
-      throw new InvalidConfigChangeException("Simulate prepare failure from tc property");
+    if ("prepare-failure".equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(SIMULATE_ACTION_TC_PROP))) {
+      throw new InvalidConfigChangeException("Replica Simulate prepare failure from tc property");
     }
   }
 
@@ -84,21 +60,11 @@ public class SimulationHandler implements ConfigChangeHandler {
 
     LOGGER.info("Received: {}", change);
 
-    switch (change.getValue().get()) {
-
-      case "DEBUG":
-        if (state.equals("failed") || state.equals("recovered")) {
-          state = "recovered";
-        } else {
-          state = "failed";
-          throw new IllegalStateException("Simulate temporary commit failure");
-        }
-        break;
-
-      case "INFO":
-        throw new IllegalStateException("Simulate permanent commit failure");
-
-      default:
+    if ("commit-failure".equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(SIMULATE_ACTION_TC_PROP))) {
+      if (!commitFailureFired) {
+        commitFailureFired = true;
+        throw new IllegalArgumentException("Replica Simulate commit failure from tc property");
+      }
     }
   }
 }
