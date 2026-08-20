@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.server.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.server.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.server.Server;
 
 /**
  * Handler for <pre>org.terracotta.dynamic-config.simulate</pre>
@@ -43,15 +44,22 @@ public class SimulationHandler implements ConfigChangeHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimulationHandler.class);
   private final TopologyService topologyService;
+  private final Server server;
 
   private volatile String state = "";
 
-  public SimulationHandler(TopologyService topologyService) {
+  public SimulationHandler(Server server, TopologyService topologyService) {
+    this.server = server;
     this.topologyService = topologyService;
   }
 
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     LOGGER.info("Received: {}", change);
 
     if (!change.hasValue()) {
@@ -69,6 +77,11 @@ public class SimulationHandler implements ConfigChangeHandler {
 
   @Override
   public void apply(Configuration change) {
+    if (!server.isActive() && !server.isPassiveStandby()) {
+      // maybe syncing some append log ? we do not want to crash there ;-)
+      return;
+    }
+
     LOGGER.info("Received: {}", change);
 
     switch (change.getValue().get()) {

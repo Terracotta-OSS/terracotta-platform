@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -523,7 +523,7 @@ public class DesynchronizedNomadConfigTest {
       NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, jsonFactory, server);
 
       // add an off-heap change handler
-      configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {
+      configChangeHandlerManager.override(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {
         @Override
         public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
           if (!change.hasValue()) {
