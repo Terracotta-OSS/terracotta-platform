@@ -34,7 +34,7 @@ public enum DisasterRecoveryMode {
   /**
    * When in RELAY mode, a node acts as a data relay in disaster recovery scenarios.
    * <p>
-   * A node in RELAY mode operates in the {@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_RELAY PASSIVE_RELAY} state
+   * A node in RELAY mode operates in the PASSIVE_RELAY state
    * and is responsible for sending data to its peer REPLICA node. There is a one-to-one mapping between
    * a RELAY node and a REPLICA node.
    * <p>
@@ -71,9 +71,9 @@ public enum DisasterRecoveryMode {
    * <p>
    * A node in REPLICA mode operates in one of two states:
    * <ul>
-   *   <li>{@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_REPLICA_START PASSIVE_REPLICA_START}:
+   *   <li>PASSIVE_REPLICA_START:
    *       Initial state where the replica is requesting to receive data from its relay node</li>
-   *   <li>{@link org.terracotta.diagnostic.model.LogicalServerState#PASSIVE_REPLICA PASSIVE_REPLICA}:
+   *   <li>PASSIVE_REPLICA:
    *       Final state where the replica is actively receiving and storing replicated data from its relay node</li>
    * </ul>
    * <p>
@@ -140,6 +140,19 @@ public enum DisasterRecoveryMode {
     return label;
   }
 
+  /**
+   * Check if this disaster recovery mode is enabled for the given node
+   * <p>
+   * Implementation notes:
+   * <ul>
+   *   <li>RELAY: checks node-level property relay</li>
+   *   <li>REPLICA: checks node-level property replica</li>
+   *   <li>NONE: checks that neither relay nor replica is enabled</li>
+   * </ul>
+   *
+   * @param node the node to check
+   * @return true if this mode is enabled
+   */
   public abstract boolean isEnabled(Node node);
 
   public abstract Map<String, OptionalConfig<?>> getRequiredProperties(Node node);
@@ -152,7 +165,7 @@ public enum DisasterRecoveryMode {
     return Optional.empty();
   }
 
-  public static DisasterRecoveryMode fromNode(Node node) {
+  public static DisasterRecoveryMode from(Node node) {
     boolean relayMode = RELAY.isEnabled(node);
     boolean replicaMode = REPLICA.isEnabled(node);
 
@@ -165,11 +178,11 @@ public enum DisasterRecoveryMode {
     return NONE;
   }
 
-  public static boolean isReplica(Node node) {
-    return fromNode(node) == REPLICA;
+  public static boolean isRelay(Node node) {
+    return from(node) == RELAY;
   }
 
-  public static boolean isRelay(Node node) {
-    return fromNode(node) == RELAY;
+  public static boolean isReplica(Node node) {
+    return from(node) == REPLICA;
   }
 }

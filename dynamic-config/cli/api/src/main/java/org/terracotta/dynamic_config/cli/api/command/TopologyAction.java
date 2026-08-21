@@ -100,8 +100,7 @@ public abstract class TopologyAction extends RemoteAction {
     }
 
     if (destinationClusterActivated) {
-      ensureNodesAreEitherActiveOrPassive(filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()));
-      ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
+      ensureClusterIsReadyForChange(destinationCluster, filter(destinationOnlineNodes, (endpoint, state) -> !state.isRelay()), false);
     }
   }
 

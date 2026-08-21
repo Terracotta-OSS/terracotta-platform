@@ -52,15 +52,8 @@ public abstract class LockUnlockConfigAction extends RemoteAction {
     // Remove Relay nodes from the list: they do not take part of nomad tx
     removeRelayNodes(onlineNodes);
 
-    // validate that all the online nodes are either actives or passives
-    ensureNodesAreEitherActiveOrPassive(onlineNodes);
-
-    ensureActivesAreAllOnline(cluster, onlineNodes);
-
-    if (requiresAllNodesAlive()) {
-      // Check passive nodes as well if the setting requires all nodes to be online
-      ensurePassivesAreAllOnline(cluster, onlineNodes);
-    }
+    // validate whether all online nodes are in right states
+    ensureClusterIsReadyForChange(cluster, onlineNodes, requiresAllNodesAlive());
   }
 
   protected boolean requiresAllNodesAlive() {

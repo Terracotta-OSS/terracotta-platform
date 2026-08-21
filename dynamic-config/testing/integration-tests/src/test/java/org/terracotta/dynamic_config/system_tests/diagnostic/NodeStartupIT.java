@@ -293,14 +293,14 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testSuccessfulStartupReplica() {
     startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(1, 1);
+    waitForDiagnostic(1, 1);
   }
 
   @Test
   public void testSuccessfulStartReplicaWithConfigFile() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
     startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
-    waitForPassiveReplicaStart(1, 1);
+    waitForDiagnostic(1, 1);
   }
 
   @Test
@@ -310,21 +310,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     startNode(1, 1, "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
     waitForStopped(1, 1);
     waitUntilServerStdOut(getNode(1, 1), "The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=localhost, relay-port=null, relay-group-port=null} aren't well-formed");
-  }
-
-  @Test
-  public void testFailedStartupReplicaWithAutoActivate() {
-    startNode(1, 1, getNewOptions(getNode(1, 1), "-auto-activate", "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForStopped(1, 1);
-    waitUntilServerStdOut(getNode(1, 1), "The '-auto-activate' parameter cannot be used when '-replica' parameter is set to true.");
-  }
-
-  @Test
-  public void testFailedStartReplicaWithConfigFileAutoActivate() {
-    Path configurationFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
-    startNode(1, 1, "-auto-activate", "-config-file", configurationFile.toString(), "-name", "node-1-1", "-config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
-    waitForStopped(1, 1);
-    waitUntilServerStdOut(getNode(1, 1), "Nodes with names: [node-1-1] have the replica setting enabled. The '-auto-activate' parameter cannot be used when replica setting is enabled on any node.");
   }
 
   @Test

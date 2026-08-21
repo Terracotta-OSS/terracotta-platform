@@ -340,39 +340,4 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     waitForPassiveRelay(1, 1);
   }
-
-  @Test
-  public void setReplicaProperties() {
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.replica=" + "true")
-      , allOf(
-        not(successful()),
-        containsOutput("Invalid input"),
-        containsOutput("'replica' cannot be set")
-      ));
-
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.relay-hostname=" + "localhost")
-      , allOf(
-        not(successful()),
-        containsOutput("Invalid input"),
-        containsOutput("'relay-hostname' cannot be set")
-      ));
-
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.relay-port=" + "9410")
-      , allOf(
-        not(successful()),
-        containsOutput("Invalid input"),
-        containsOutput("'relay-port' cannot be set")
-      ));
-
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.relay-group-port=" + "9430")
-      , allOf(
-        not(successful()),
-        containsOutput("Invalid input"),
-        containsOutput("'relay-group-port' cannot be set")
-      ));
-  }
 }
