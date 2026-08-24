@@ -1,0 +1,1197 @@
+= Server Logged Statistics
+{docdate}
+ifndef::top[]
+:top: ../..
+:stylesdir: {top}/stylesheets
+endif::[]
+:toc:
+:toc-title: Table of Contents
+:toclevels: 3
+
+== Implementation Plan
+
+=== Design Principles
+
+* **Isolated Implementation**: Minimize modifications to existing code
+* **Registry Pattern**: Components register metrics with a central registry
+* **Event-Driven**: Log on schedule AND on topology/failover events
+* **Thread-Safe**: Atomic operations for metric updates
+* **Single Module**: All statistics code in `com.tc.stats.logged` package
+* **Non-Fixed Rate Scheduling**: Execute → Collect → Reset → Log → Schedule Next
+* **Counter Wrapping**: Long counters wrap from Long.MAX_VALUE to 0
+
+=== Architecture Overview
+
+The implementation uses a registry-based architecture where:
+
+* Components own their metric objects
+* Metrics are registered with a central registry
+* Registry defines display order for the formatter
+* Formatter queries registry for metrics in the correct order
+* All statistics code is isolated in `com.tc.stats.logged` package
+
+=== Package Structure
+
+[source]
+----
+com.tc.stats.logged/
+├── StatisticsService.java           # Main entry point & coordinator
+├── StatisticsLogger.java             # Logging scheduler & executor
+├── StatisticsFormatter.java          # Output formatting
+├── TopologyCollector.java            # Topology information
+├── MetricNames.java                  # Metric name constants
+│
+├── metric/
+│   ├── MetricsRegistry.java          # Central metric registry
+│   ├── Metric.java                   # Base interface for all metrics
+│   ├── Gauge.java                    # Gauge (current value, can be +/-)
+│   ├── Counter.java                  # Counter (monotonic, only increases)
+│   └── MeteredCounter.java           # Counter with delta tracking & overflow handling
+│
+└── providers/
+    ├── ClientMetricProvider.java     # Tracks virtual client connections (ClientID)
+    ├── ConnectionMetricProvider.java # Tracks physical TCP/IP connections
+    ├── EntityMetricProvider.java     # Tracks entity fetches
+    ├── ServerMetricProvider.java     # Tracks server connections
+    ├── VoterMetricProvider.java      # Tracks voter connections (optional)
+    └── EntityInvocationInterceptor.java # Intercepts entity invocations
+----
+
+NOTE: The codebase already has a `com.tc.stats` package. We use `com.tc.stats.logged` as a sub-package to keep the logged statistics feature isolated while allowing for potential future integration.
+
+=== Metric Types
+
+**Gauge**::
+Tracks current value (can be positive or negative). Reports: current, +delta, -delta.
+Components can use a Supplier to get the current value dynamically.
+
+**Counter**::
+Monotonically increasing value (only goes up). Can be used standalone or as a parent for MeteredCounter.
+Handles overflow by wrapping from Long.MAX_VALUE to 0.
+
+**MeteredCounter**::
+Acts as a view on an existing Counter (parent-child relationship), reporting delta since last reset.
+Does not have its own increment methods - increments happen on the parent Counter.
+Handles counter overflow automatically when calculating deltas.
+When counter wraps, calculates: `delta = (Long.MAX_VALUE - lastValue) + currentValue + 1`
+
+=== Key Components
+
+**MetricsRegistry**::
+* Defines display order for formatter
+* Provides atomic snapshot and reset of all metrics
+* Maps metric names (V, P, C, F, S, EIC, CIC, SIC, QIC) to metric instances
+
+**StatisticsLogger**::
+* Non-fixed-rate scheduling: Execute → Collect → Reset → Log → Schedule Next
+* Listens for topology/failover events
+* Triggers immediate logging on events
+* Configurable period via system property
+
+**StatisticsFormatter**::
+* Queries registry for metrics in display order
+* Formats metrics in fixed-width format with dynamic expansion
+* Handles missing metrics gracefully (GC'd components)
+
+**Metric Providers**::
+* Each provider owns its metric objects
+* Updates metrics directly within the component
+* Isolated - only depends on MetricsRegistry for registration
+
+=== Integration Points
+
+Only **3 places** need modification in existing code:
+
+1. **DistributedObjectServer** - Initialize `StatisticsService` and wire state change listener
+2. **ManagedEntityImpl.invoke()** - Add invocation tracking for entity invocations
+3. **EntityManagerImpl** - Add interceptor field and pass to ManagedEntityImpl
+
+All other functionality is self-contained in the `com.tc.stats.logged` package.
+
+**Note**: The actual implementation integrated the interceptor in `ManagedEntityImpl.invoke()` method (around line 370), not in `processInvokeRequest()` as originally planned. This ensures invocations are tracked at the right point in the entity lifecycle.
+
+=== Configuration
+
+System property: `org.terracotta.statistics.logging.period`
+
+Default: 300 seconds (5 minutes)
+
+Can be changed via config-tool:
+[source,bash]
+----
+config-tool set -connect-to localhost:9410 \
+  -setting tc-properties:org.terracotta.statistics.logging.period=120
+----
+
+== Detailed Component Design
+
+=== 1. MetricsRegistry (Central Registry)
+
+**Location**: `com.tc.stats.logged.metric.MetricsRegistry.java`
+
+**Responsibilities**:
+
+* Hold separate maps for gauge and meter metrics
+* Provide thread-safe access to metrics by name
+* Simple registry pattern - no business logic
+
+NOTE: Metric name constants (V, P, C, F, S, EIC, CIC, SIC, QIC) should be defined in `StatisticsService` or a separate `MetricNames` constants class, not in the registry.
+
+[source,java]
+----
+public class MetricsRegistry {
+  // Separate maps for different metric types (using concrete types)
+  private final Map<String, Gauge> gauges;
+  private final Map<String, Counter> counters;
+  private final Map<String, MeteredCounter> meteredCounters;
+
+  public MetricsRegistry() {
+    this.gauges = new ConcurrentHashMap<>();
+    this.counters = new ConcurrentHashMap<>();
+    this.meteredCounters = new ConcurrentHashMap<>();
+  }
+
+  /**
+   * Get or create and register a gauge.
+   * @param name the metric name
+   * @param valueSupplier supplier that provides the current value
+   * @return the Gauge instance (newly created or existing)
+   */
+  public Gauge getOrCreateGauge(String name, LongSupplier valueSupplier) {
+    return gauges.computeIfAbsent(name, k -> new Gauge(valueSupplier));
+  }
+
+  /**
+   * Get or create and register a counter.
+   * @param name the metric name
+   * @return the Counter instance (newly created or existing)
+   */
+  public Counter getOrCreateCounter(String name) {
+    return counters.computeIfAbsent(name, k -> new Counter());
+  }
+
+  /**
+   * Get or create and register a metered counter.
+   * @param meteredCounterName the name for the metered counter
+   * @param parentCounterName the name of the parent counter to track
+   * @return the MeteredCounter instance (newly created or existing)
+   */
+  public MeteredCounter getOrCreateMeteredCounter(String meteredCounterName, String parentCounterName) {
+    return meteredCounters.computeIfAbsent(meteredCounterName, k -> {
+      Counter parentCounter = getOrCreateCounter(parentCounterName);
+      return new MeteredCounter(parentCounter);
+    });
+  }
+
+  /**
+   * Get a gauge by name.
+   * @return Optional containing the gauge, or empty if not found
+   */
+  public Optional<Gauge> getGauge(String name) {
+    return Optional.ofNullable(gauges.get(name));
+  }
+
+  /**
+   * Get a counter by name.
+   * @return Optional containing the counter, or empty if not found
+   */
+  public Optional<Counter> getCounter(String name) {
+    return Optional.ofNullable(counters.get(name));
+  }
+
+  /**
+   * Get a metered counter by name.
+   * @return Optional containing the metered counter, or empty if not found
+   */
+  public Optional<MeteredCounter> getMeteredCounter(String name) {
+    return Optional.ofNullable(meteredCounters.get(name));
+  }
+
+  /**
+   * Get all gauges.
+   */
+  public Map<String, Gauge> getAllGauges() {
+    return Collections.unmodifiableMap(gauges);
+  }
+
+  /**
+   * Get all counters.
+   */
+  public Map<String, Counter> getAllCounters() {
+    return Collections.unmodifiableMap(counters);
+  }
+
+  /**
+   * Get all metered counters.
+   */
+  public Map<String, MeteredCounter> getAllMeteredCounters() {
+    return Collections.unmodifiableMap(meteredCounters);
+  }
+
+  /**
+   * Create a snapshot of all metrics.
+   * Reads current values from gauges, counters, and resets metered counters.
+   * @return Map of metric names to their current values
+   */
+  public Map<String, Long> snapshot() {
+    Map<String, Long> snapshot = new HashMap<>();
+
+    // Snapshot gauges (current values)
+    gauges.forEach((name, gauge) -> snapshot.put(name, gauge.get()));
+
+    // Snapshot counters (current values)
+    counters.forEach((name, counter) -> snapshot.put(name, counter.get()));
+
+    // Snapshot and reset metered counters
+    meteredCounters.forEach((name, counter) -> snapshot.put(name, counter.getAndReset()));
+
+    return snapshot;
+  }
+}
+----
+
+==== MetricNames Constants
+
+Metric name constants should be defined in a separate class:
+
+[source,java]
+----
+public final class MetricNames {
+  // Gauge metrics (current values)
+  public static final String VOTERS = "V";
+  public static final String PHYSICAL_CONNECTIONS = "P";
+  public static final String CLIENTS = "C";
+  public static final String ENTITY_FETCHES = "F";
+  public static final String SERVERS = "S";
+
+  // Delta counters for gauges
+  public static final String VOTERS_PLUS = "+V";
+  public static final String VOTERS_MINUS = "-V";
+  public static final String PHYSICAL_CONNECTIONS_PLUS = "+P";
+  public static final String PHYSICAL_CONNECTIONS_MINUS = "-P";
+  public static final String CLIENTS_PLUS = "+C";
+  public static final String CLIENTS_MINUS = "-C";
+  public static final String ENTITY_FETCHES_PLUS = "+F";
+  public static final String ENTITY_FETCHES_MINUS = "-F";
+  public static final String SERVERS_PLUS = "+S";
+  public static final String SERVERS_MINUS = "-S";
+
+  // Metered counters (invocations)
+  public static final String TOTAL_ENTITY_INVOCATIONS = "EIC";
+  public static final String CACHE_ENTITY_INVOCATIONS = "CIC";
+  public static final String STORE_ENTITY_INVOCATIONS = "SIC";
+  public static final String SEQUENCE_ENTITY_INVOCATIONS = "QIC";
+
+  private MetricNames() {
+    // Prevent instantiation
+  }
+}
+----
+
+==== Usage Example
+
+[source,java]
+----
+// In StatisticsService initialization:
+MetricsRegistry registry = new MetricsRegistry();
+
+// Get or create gauges with suppliers
+registry.getOrCreateGauge(MetricNames.VOTERS, () -> voterManager.getConnectedVoterCount());
+registry.getOrCreateGauge(MetricNames.PHYSICAL_CONNECTIONS, () -> connectionManager.getConnectionCount());
+registry.getOrCreateGauge(MetricNames.CLIENTS, () -> clientManager.getClientCount());
+registry.getOrCreateGauge(MetricNames.ENTITY_FETCHES, () -> entityManager.getFetchCount());
+registry.getOrCreateGauge(MetricNames.SERVERS, () -> serverManager.getServerCount());
+
+// Get or create delta counters for gauges (with internal parent counters)
+registry.getOrCreateMeteredCounter(MetricNames.VOTERS_PLUS);
+registry.getOrCreateMeteredCounter(MetricNames.VOTERS_MINUS);
+registry.getOrCreateMeteredCounter(MetricNames.PHYSICAL_CONNECTIONS_PLUS);
+registry.getOrCreateMeteredCounter(MetricNames.PHYSICAL_CONNECTIONS_MINUS);
+registry.getOrCreateMeteredCounter(MetricNames.CLIENTS_PLUS);
+registry.getOrCreateMeteredCounter(MetricNames.CLIENTS_MINUS);
+registry.getOrCreateMeteredCounter(MetricNames.ENTITY_FETCHES_PLUS);
+registry.getOrCreateMeteredCounter(MetricNames.ENTITY_FETCHES_MINUS);
+registry.getOrCreateMeteredCounter(MetricNames.SERVERS_PLUS);
+registry.getOrCreateMeteredCounter(MetricNames.SERVERS_MINUS);
+
+// Get or create metered counters for invocations (with internal parent counters)
+registry.getOrCreateMeteredCounter(MetricNames.TOTAL_ENTITY_INVOCATIONS);
+registry.getOrCreateMeteredCounter(MetricNames.CACHE_ENTITY_INVOCATIONS);
+registry.getOrCreateMeteredCounter(MetricNames.STORE_ENTITY_INVOCATIONS);
+registry.getOrCreateMeteredCounter(MetricNames.SEQUENCE_ENTITY_INVOCATIONS);
+
+// In providers - when a voter connects, use convenience increment method:
+registry.getMeteredCounter(MetricNames.VOTERS_PLUS)
+  .ifPresent(MeteredCounter::increment);
+
+// In providers - when a voter disconnects, use convenience increment method:
+registry.getMeteredCounter(MetricNames.VOTERS_MINUS)
+  .ifPresent(MeteredCounter::increment);
+
+// In StatisticsLogger - snapshot all metrics:
+Map<String, Long> metrics = registry.snapshot();
+----
+
+=== 2. Metric Classes
+
+==== Metric Interface
+
+Common interface for all metric types:
+
+[source,java]
+----
+public interface Metric {
+  /**
+   * Get the current metric value.
+   */
+  long get();
+}
+----
+
+==== Gauge
+
+A gauge provides the current value via a supplier:
+
+[source,java]
+----
+public class Gauge implements Metric {
+  private final LongSupplier valueSupplier;
+
+  public Gauge(LongSupplier valueSupplier) {
+    this.valueSupplier = valueSupplier;
+  }
+
+  @Override
+  public long get() {
+    return valueSupplier.getAsLong();
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":" + get();
+  }
+}
+----
+
+==== Counter
+
+Monotonically increasing counter with overflow handling:
+
+[source,java]
+----
+public class Counter implements Metric {
+  private final AtomicLong value;
+
+  public Counter() {
+    this.value = new AtomicLong(0);
+  }
+
+  /**
+   * Increment the counter by 1.
+   * Handles Long.MAX_VALUE wrap to 0.
+   */
+  public void increment() {
+    increment(1);
+  }
+
+  /**
+   * Increment the counter by n.
+   * Handles Long.MAX_VALUE wrap to 0.
+   * @param n positive value to add (must be > 0)
+   */
+  public void increment(long n) {
+  if (n == 0) {
+      return;
+    }
+    if (n < 0) {
+      throw new IllegalArgumentException("Increment value must be positive: " + n);
+    }
+    long current;
+    long next;
+    do {
+      current = value.get();
+      // Check if adding n would overflow
+      if (current > Long.MAX_VALUE - n) {
+        // Overflow: wrap around
+        next = n - (Long.MAX_VALUE - current) - 1;
+      } else {
+        next = current + n;
+      }
+    } while (!value.compareAndSet(current, next));
+  }
+
+  @Override
+  public long get() {
+    return value.get();
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":" + get();
+  }
+}
+----
+
+==== MeteredCounter
+
+Tracks delta since last reset, handling counter overflow:
+
+[source,java]
+----
+public class MeteredCounter implements Metric {
+  private final Counter counter;
+  private final AtomicLong lastSnapshot;
+
+  /**
+   * Create a new metered counter that wraps an existing counter.
+   * @param parent the parent counter to track deltas for
+   */
+  public MeteredCounter(Counter parent) {
+    this.counter = parent;
+    this.lastSnapshot = new AtomicLong(0);
+  }
+
+  /**
+   * Increment the parent counter by 1.
+   * Convenience method that delegates to the parent counter.
+   */
+  public void increment() {
+    counter.increment();
+  }
+
+  /**
+   * Increment the parent counter by n.
+   * Convenience method that delegates to the parent counter.
+   * @param n positive value to add (must be > 0)
+   */
+  public void increment(long n) {
+    counter.increment(n);
+  }
+
+  /**
+   * Get current delta since last snapshot.
+   * Handles counter overflow.
+   */
+  @Override
+  public long get() {
+    long current = counter.get();
+    long last = lastSnapshot.get();
+
+    if (current >= last) {
+      // No overflow
+      return current - last;
+    } else {
+      // Overflow occurred: counter wrapped from MAX_VALUE to 0
+      return (Long.MAX_VALUE - last) + current + 1;
+    }
+  }
+
+  /**
+   * Get current delta and reset.
+   * Returns delta since last snapshot.
+   */
+  public long getAndReset() {
+    long current = counter.get();
+    long last = lastSnapshot.getAndSet(current);
+
+    if (current >= last) {
+      // No overflow
+      return current - last;
+    } else {
+      // Overflow occurred
+      return (Long.MAX_VALUE - last) + current + 1;
+    }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + ":" + get();
+  }
+}
+----
+
+
+
+=== 3. Metric Providers (Isolated Components)
+
+Each provider is responsible for tracking one type of metric by listening to events and updating the registry.
+
+==== ClientMetricProvider
+
+Tracks logical client connections (ClientID lifecycle), not physical connections.
+
+[source,java]
+----
+public class ClientMetricProvider {
+  private final MeteredCounter clientsPlusCounter;
+  private final MeteredCounter clientsMinusCounter;
+
+  public ClientMetricProvider(MetricsRegistry registry) {
+    this.clientsPlusCounter = registry.getOrCreateMeteredCounter(MetricNames.CLIENTS_PLUS);
+    this.clientsMinusCounter = registry.getOrCreateMeteredCounter(MetricNames.CLIENTS_MINUS);
+  }
+
+  /**
+   * Called when a new ClientID is added (first connection).
+   * @param clientID the client identifier
+   */
+  public void onClientAdded(ClientID clientID) {
+    clientsPlusCounter.increment();
+  }
+
+  /**
+   * Called when a ClientID is removed (final disconnection).
+   * @param clientID the client identifier
+   */
+  public void onClientRemoved(ClientID clientID) {
+    clientsMinusCounter.increment();
+  }
+}
+----
+
+==== Integration with ClientChannelLifeCycleHandler
+
+To track client metrics, ClientChannelLifeCycleHandler needs to be modified:
+
+[source,java]
+----
+public class ClientChannelLifeCycleHandler implements ChannelManagerEventListener {
+  // ... existing fields ...
+
+  private final ClientMetricProvider clientMetricProvider;
+
+  public ClientChannelLifeCycleHandler(CommunicationsManager commsManager,
+                                 StageManager stageManager,
+                                 DSOChannelManager channelManager,
+                                 ClientEntityStateManager chain,
+                                 ProcessTransactionHandler handler,
+                                 ManagementTopologyEventCollector collector,
+                                 ClientMetricProvider clientMetricProvider) {
+    // ... existing initialization ...
+    this.clientMetricProvider = clientMetricProvider;
+  }
+
+  private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
+    synchronized (knownClients) {
+      collector.clientDidConnect(channel, clientID);
+      knownClients.add(clientID);
+
+      // Track client metric
+      if (clientMetricProvider != null) {
+        clientMetricProvider.onClientAdded(clientID);
+      }
+    }
+  }
+
+  private void notifyClientRemoved(ClientID clientID) {
+    synchronized (knownClients) {
+      if (knownClients.contains(clientID)) {
+        GuardianContext.clientRemoved(clientID);
+        knownClients.remove(clientID);
+
+        // Track client metric
+        if (clientMetricProvider != null) {
+          clientMetricProvider.onClientRemoved(clientID);
+        }
+      }
+    }
+  }
+}
+----
+
+==== ConnectionMetricProvider
+
+Tracks physical TCP/IP connections (all channels, including reconnections).
+
+[source,java]
+----
+public class ConnectionMetricProvider implements ChannelManagerEventListener {
+  private final MeteredCounter connectionsPlusCounter;
+  private final MeteredCounter connectionsMinusCounter;
+
+  public ConnectionMetricProvider(MetricsRegistry registry) {
+    // Get or create metered counters (with internal parent counters)
+    this.connectionsPlusCounter = registry.getOrCreateMeteredCounter(MetricNames.PHYSICAL_CONNECTIONS_PLUS);
+    this.connectionsMinusCounter = registry.getOrCreateMeteredCounter(MetricNames.PHYSICAL_CONNECTIONS_MINUS);
+  }
+
+  @Override
+  public void channelCreated(MessageChannel channel) {
+    connectionsPlusCounter.increment();
+  }
+
+  @Override
+  public void channelRemoved(MessageChannel channel) {
+    connectionsMinusCounter.increment();
+  }
+}
+----
+
+**Key Differences:**
+
+* **ClientMetricProvider**: Tracks ClientID lifecycle (logical clients)
+- Called from `ClientChannelLifeCycleHandler.notifyClientAdded/Removed()`
+- Tracks when a ClientID first appears and finally disappears
+- A ClientID persists across reconnections
+
+* **ConnectionMetricProvider**: Tracks physical connections (all channels)
+- Implements `ChannelManagerEventListener`
+- Tracks every TCP/IP connection creation/removal
+- Same ClientID can have multiple connections over time
+
+==== ServerMetricProvider
+
+[source,java]
+----
+public class ServerMetricProvider implements GroupEventsListener {
+  private final MeteredCounter serversPlusCounter;
+  private final MeteredCounter serversMinusCounter;
+
+  public ServerMetricProvider(MetricsRegistry registry) {
+    // Get or create metered counters (with internal parent counters)
+    this.serversPlusCounter = registry.getOrCreateMeteredCounter(MetricNames.SERVERS_PLUS);
+    this.serversMinusCounter = registry.getOrCreateMeteredCounter(MetricNames.SERVERS_MINUS);
+  }
+
+  @Override
+  public void nodeJoined(NodeID nodeID) {
+    serversPlusCounter.increment();
+  }
+
+  @Override
+  public void nodeLeft(NodeID nodeID) {
+    serversMinusCounter.increment();
+  }
+}
+----
+
+==== EntityMetricProvider
+
+[source,java]
+----
+public class EntityMetricProvider {
+  private final MeteredCounter fetchesPlusCounter;
+  private final MeteredCounter fetchesMinusCounter;
+
+  public EntityMetricProvider(MetricsRegistry registry) {
+    this.fetchesPlusCounter = registry.getOrCreateMeteredCounter(MetricNames.ENTITY_FETCHES_PLUS);
+    this.fetchesMinusCounter = registry.getOrCreateMeteredCounter(MetricNames.ENTITY_FETCHES_MINUS);
+  }
+
+  /**
+   * Called when entity is fetched by a client.
+   */
+  public void onEntityFetch() {
+    fetchesPlusCounter.increment();
+  }
+
+  /**
+   * Called when entity is unfetched by a client.
+   */
+  public void onEntityUnfetch() {
+    fetchesMinusCounter.increment();
+  }
+}
+----
+
+==== VoterMetricProvider
+
+[source,java]
+----
+public class VoterMetricProvider {
+  private final MeteredCounter votersPlusCounter;
+  private final MeteredCounter votersMinusCounter;
+
+  public VoterMetricProvider(MetricsRegistry registry) {
+    this.votersPlusCounter = registry.getOrCreateMeteredCounter(MetricNames.VOTERS_PLUS);
+    this.votersMinusCounter = registry.getOrCreateMeteredCounter(MetricNames.VOTERS_MINUS);
+  }
+
+  /**
+   * Called when a voter successfully registers.
+   * @param voterId the voter identifier
+   */
+  public void onVoterJoin(String voterId) {
+    votersPlusCounter.increment();
+  }
+
+  /**
+   * Called when a voter deregisters or times out.
+   * @param voterId the voter identifier
+   */
+  public void onVoterLeave(String voterId) {
+    votersMinusCounter.increment();
+  }
+}
+----
+
+==== Integration with ServerVoterManagerImpl
+
+To track voter metrics, ServerVoterManagerImpl needs to be modified to call the provider directly:
+
+[source,java]
+----
+public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements ServerVoterManager {
+  // ... existing fields ...
+
+  private final VoterMetricProvider voterMetricProvider;
+
+  public ServerVoterManagerImpl(Supplier<ServerMode> mode,
+                               Supplier<Integer> voterLimit,
+                               VoterMetricProvider voterMetricProvider) throws Exception {
+    this(mode, voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true, voterMetricProvider);
+  }
+
+  ServerVoterManagerImpl(Supplier<ServerMode> mode,
+                        Supplier<Integer> voterLimit,
+                        TimeSource timeSource,
+                        boolean initMBean,
+                        VoterMetricProvider voterMetricProvider) throws Exception {
+    super(ServerVoterManager.class, false);
+    // ... existing initialization ...
+    this.voterMetricProvider = voterMetricProvider;
+  }
+
+  @Override
+  public synchronized long registerVoter(String id) {
+    if (voters.containsKey(id)) {
+      return HEARTBEAT_RESPONSE;
+    }
+
+    if (!canAcceptVoter()) {
+      logger.info("Voter id: " + id + " could not be registered as there is no voter vacancy available");
+      return INVALID_VOTER_RESPONSE;
+    }
+
+    voters.put(id, timeSource.currentTimeMillis());
+    logger.info("Registration of voter id: " + id + " confirmed.");
+
+    // Track metric
+    if (voterMetricProvider != null) {
+      voterMetricProvider.onVoterJoin(id);
+    }
+
+    return electionTerm;
+  }
+
+  @Override
+  public boolean deregisterVoter(String id) {
+    logger.info("Deregister " + id);
+    boolean removed = !votingInProgress ? voters.remove(id) != null : false;
+
+    if (removed && voterMetricProvider != null) {
+      voterMetricProvider.onVoterLeave(id);
+    }
+
+    return removed;
+  }
+
+  @Override
+  public long heartbeat(String id) {
+    logger.debug("received heartbeat {}", id);
+    Long val = voters.computeIfPresent(id, (key, timeStamp) -> {
+      long currentTime = timeSource.currentTimeMillis();
+      if (currentTime - timeStamp < VOTEBEAT_TIMEOUT) {
+        return currentTime;
+      } else {
+        votes.remove(key);
+        voters.remove(key);
+
+        // Track metric on timeout
+        if (voterMetricProvider != null) {
+          voterMetricProvider.onVoterLeave(key);
+        }
+
+        return null;
+      }
+    });
+
+    // ... rest of method ...
+  }
+
+  @Override
+  public int getRegisteredVoters() {
+    return (int)voters.entrySet().stream()
+        .filter((entry) -> {
+          if (timeSource.currentTimeMillis() - entry.getValue() < VOTEBEAT_TIMEOUT) {
+            return true;
+          } else {
+            String id = entry.getKey();
+            votes.remove(id);
+            voters.remove(id);
+
+            // Track metric on timeout
+            if (voterMetricProvider != null) {
+              voterMetricProvider.onVoterLeave(id);
+            }
+
+            return false;
+          }
+        })
+        .count();
+  }
+}
+----
+
+==== EntityInvocationInterceptor
+
+[source,java]
+----
+public class EntityInvocationInterceptor {
+  private final MeteredCounter totalInvocations;
+  private final MeteredCounter cacheInvocations;
+  private final MeteredCounter storeInvocations;
+  private final MeteredCounter sequenceInvocations;
+
+  // TODO: Make entity type classification configurable instead of hardcoded
+  // Future improvement: Load from configuration file or service registry
+  // This would allow tracking custom entity types without code changes
+  // NOTE: These static entity type constants need to be refactored to come from
+  // a configuration source (e.g., config file, service registry, or plugin system)
+  // rather than being hardcoded here. This will enable dynamic entity type tracking
+  // without requiring code changes.
+  private static final Set<String> CACHE_ENTITIES = Set.of(
+    "org.ehcache.clustered.client.internal.store.InternalClusterTierClientEntity"
+  );
+
+  private static final Set<String> STORE_ENTITIES = Set.of(
+    "com.terracottatech.store.client.DatasetEntity"
+  );
+
+  private static final Set<String> SEQUENCE_ENTITIES = Set.of(
+    "com.terracottatech.sequence.client.entity.SequenceEntity"
+  );
+
+  public EntityInvocationInterceptor(MetricsRegistry registry) {
+    this.totalInvocations = registry.createMeteredCounter(MetricNames.TOTAL_ENTITY_INVOCATIONS);
+    this.cacheInvocations = registry.createMeteredCounter(MetricNames.CACHE_ENTITY_INVOCATIONS);
+    this.storeInvocations = registry.createMeteredCounter(MetricNames.STORE_ENTITY_INVOCATIONS);
+    this.sequenceInvocations = registry.createMeteredCounter(MetricNames.SEQUENCE_ENTITY_INVOCATIONS);
+  }
+
+  /**
+   * Called when an entity invocation occurs.
+   * @param entityClassName the fully qualified class name of the entity
+   */
+  public void recordInvocation(String entityClassName) {
+    totalInvocations.increment();
+
+    if (CACHE_ENTITIES.contains(entityClassName)) {
+      cacheInvocations.increment();
+    } else if (STORE_ENTITIES.contains(entityClassName)) {
+      storeInvocations.increment();
+    } else if (SEQUENCE_ENTITIES.contains(entityClassName)) {
+      sequenceInvocations.increment();
+    }
+  }
+}
+----
+
+==== Integration with ManagedEntityImpl
+
+To track entity invocations, ManagedEntityImpl was modified to call the interceptor in the `invoke()` method:
+
+[source,java]
+----
+public class ManagedEntityImpl implements ManagedEntity {
+  // ... existing fields ...
+
+  private final EntityInvocationInterceptor invocationInterceptor;
+
+  ManagedEntityImpl(EntityID id, long version, long consumerID,
+                    ManagementKeyCallback flushLocalPipeline,
+                    InternalServiceRegistry registry,
+                    ClientEntityStateManager clientEntityStateManager,
+                    ManagementTopologyEventCollector eventCollector,
+                    Sink<VoltronEntityMessage> msg,
+                    RequestProcessor process,
+                    EntityServerService<EntityMessage, EntityResponse> factory,
+                    boolean isInActiveState,
+                    boolean canDelete,
+                    EntityInvocationInterceptor invocationInterceptor) {
+    // ... existing initialization ...
+    this.invocationInterceptor = invocationInterceptor;
+  }
+
+  private void invoke(ServerEntityRequest request, ResultCapture response,
+                     MessagePayload message, int concurrency) {
+    // Track entity invocation for statistics
+    if (invocationInterceptor != null && activeServerEntity != null) {
+      String entityClassName = activeServerEntity.getClass().getName();
+      invocationInterceptor.recordInvocation(entityClassName);
+    }
+
+    // ... rest of existing method ...
+  }
+}
+----
+
+**Note**: The actual implementation tracks invocations in the `invoke()` method (around line 370) rather than `processInvokeRequest()`. This ensures we track the actual entity class name from `activeServerEntity`, not the factory class.
+
+**Integration in StatisticsService:**
+
+[source,java]
+----
+public class StatisticsService {
+  private EntityInvocationInterceptor invocationInterceptor;
+
+  public void initialize() {
+    // ... other initialization ...
+
+    // Create invocation interceptor
+    invocationInterceptor = new EntityInvocationInterceptor(registry);
+  }
+
+  /**
+   * Get the invocation interceptor to be passed to ManagedEntityImpl.
+   */
+  public EntityInvocationInterceptor getInvocationInterceptor() {
+    return invocationInterceptor;
+  }
+}
+----
+
+**Note:** The entity class name should be obtained from the entity's server service, not the factory class. The actual implementation should use:
+```java
+String entityClassName = activeServerEntity.getClass().getName();
+```
+This ensures we track the actual entity implementation class, not the factory.
+
+=== 4. StatisticsLogger
+
+**Location**: `com.tc.stats.logged.StatisticsLogger.java`
+
+**Responsibilities**:
+
+* Schedule next execution (NOT fixed rate)
+* Atomically collect and reset metrics
+* Format and log output
+* Listen for topology/failover events
+
+[source,java]
+----
+public class StatisticsLogger implements StateChangeListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger("com.tc.stats.logged");
+  private static final String PERIOD_PROPERTY = "org.terracotta.statistics.logging.period";
+  private static final int DEFAULT_PERIOD_SECONDS = 300;
+
+  private final ScheduledExecutorService scheduler;
+  private final MetricsRegistry registry;
+  private final StatisticsFormatter formatter;
+  private final TopologyCollector topologyCollector;
+  private final int periodSeconds;
+
+  private volatile long lastLogTime;
+  private volatile ScheduledFuture<?> nextExecution;
+  private volatile boolean running;
+
+  public StatisticsLogger(MetricsRegistry registry, TopologyCollector topologyCollector) {
+    this.registry = registry;
+    this.topologyCollector = topologyCollector;
+    this.formatter = new StatisticsFormatter();
+    this.periodSeconds = getPeriodFromProperty();
+    this.scheduler = Executors.newSingleThreadScheduledExecutor(
+      new DaemonThreadFactory("statistics-logger"));
+    this.running = false;
+  }
+
+  public synchronized void start() {
+    if (running) {
+      return;
+    }
+    running = true;
+    lastLogTime = System.currentTimeMillis() / 1000;
+    scheduleNext();
+    LOGGER.info("Statistics logging started with period: {} seconds", periodSeconds);
+  }
+
+  public synchronized void stop() {
+    running = false;
+    if (nextExecution != null) {
+      nextExecution.cancel(false);
+    }
+    scheduler.shutdown();
+    LOGGER.info("Statistics logging stopped");
+  }
+
+  /**
+   * Schedule the next execution (not fixed rate).
+   */
+  private void scheduleNext() {
+    if (!running) {
+      return;
+    }
+    nextExecution = scheduler.schedule(
+      () -> {
+        try {
+          logStatistics(LoggingTrigger.PERIODIC);
+        } finally {
+          scheduleNext();
+        }
+      },
+      periodSeconds,
+      TimeUnit.SECONDS
+    );
+  }
+
+  /**
+   * Log statistics immediately (for events).
+   */
+  public synchronized void logNow(LoggingTrigger trigger) {
+    if (!running) {
+      return;
+    }
+    logStatistics(trigger);
+  }
+
+  /**
+   * Atomically collect metrics, reset deltas, and log.
+   */
+  private synchronized void logStatistics(LoggingTrigger trigger) {
+    try {
+      long currentTime = System.currentTimeMillis() / 1000;
+      long secondsSinceLast = currentTime - lastLogTime;
+
+      // Snapshot all metrics (reads gauges, resets metered counters)
+      Map<String, Long> metrics = registry.snapshot();
+
+      // Collect topology
+      String topology = topologyCollector.collectTopology();
+
+      // Format and log
+      String logLine = formatter.format(currentTime, metrics, topology, secondsSinceLast);
+      LOGGER.info(logLine);
+
+      lastLogTime = currentTime;
+
+      if (trigger != LoggingTrigger.PERIODIC) {
+        LOGGER.debug("Statistics logged due to: {}", trigger);
+      }
+    } catch (Exception e) {
+      LOGGER.error("Error logging statistics", e);
+    }
+  }
+
+  /**
+   * StateChangeListener implementation - log on topology changes.
+   */
+  @Override
+  public void l2StateChanged(StateChangedEvent sce) {
+    // Log on state changes (active/passive transitions, failover, etc.)
+    logNow(LoggingTrigger.TOPOLOGY_CHANGE);
+  }
+
+  private int getPeriodFromProperty() {
+    String value = TCPropertiesImpl.getProperties()
+      .getProperty(PERIOD_PROPERTY, String.valueOf(DEFAULT_PERIOD_SECONDS));
+    try {
+      int period = Integer.parseInt(value);
+      if (period <= 0) {
+        LOGGER.warn("Invalid period value: {}, using default: {}",
+          value, DEFAULT_PERIOD_SECONDS);
+        return DEFAULT_PERIOD_SECONDS;
+      }
+      return period;
+    } catch (NumberFormatException e) {
+      LOGGER.warn("Invalid period value: {}, using default: {}",
+        value, DEFAULT_PERIOD_SECONDS);
+      return DEFAULT_PERIOD_SECONDS;
+    }
+  }
+}
+
+enum LoggingTrigger {
+  PERIODIC,
+  TOPOLOGY_CHANGE,
+  FAILOVER,
+  // ...
+}
+----
+
+=== 5. StatisticsFormatter
+
+**Location**: `com.tc.stats.logged.StatisticsFormatter.java`
+
+[source,java]
+----
+public class StatisticsFormatter {
+  private static final int MIN_GAUGE_WIDTH = 4;
+  private static final int MIN_DELTA_WIDTH = 3;
+
+  public String format(long timestamp, Map<String, Long> metrics, String topology, long secondsSinceLast) {
+    StringBuilder sb = new StringBuilder();
+
+    // Header: STATS:<unix>:<seconds>
+    sb.append("STATS:").append(timestamp)
+      .append(":").append(secondsSinceLast);
+
+    // Topology
+    sb.append("|").append(topology);
+
+    // Metrics with dynamic width
+    appendMetric(sb, "V",
+      metrics.get(MetricNames.VOTERS),
+      metrics.get(MetricNames.VOTERS_PLUS),
+      metrics.get(MetricNames.VOTERS_MINUS));
+    appendMetric(sb, "P",
+      metrics.get(MetricNames.PHYSICAL_CONNECTIONS),
+      metrics.get(MetricNames.PHYSICAL_CONNECTIONS_PLUS),
+      metrics.get(MetricNames.PHYSICAL_CONNECTIONS_MINUS));
+    appendMetric(sb, "C",
+      metrics.get(MetricNames.CLIENTS),
+      metrics.get(MetricNames.CLIENTS_PLUS),
+      metrics.get(MetricNames.CLIENTS_MINUS));
+    appendMetric(sb, "F",
+      metrics.get(MetricNames.ENTITY_FETCHES),
+      metrics.get(MetricNames.ENTITY_FETCHES_PLUS),
+      metrics.get(MetricNames.ENTITY_FETCHES_MINUS));
+    appendMetric(sb, "S",
+      metrics.get(MetricNames.SERVERS),
+      metrics.get(MetricNames.SERVERS_PLUS),
+      metrics.get(MetricNames.SERVERS_MINUS));
+
+    // Meter-only metrics
+    appendMeter(sb, "EIC", metrics.get(MetricNames.TOTAL_ENTITY_INVOCATIONS));
+    appendMeter(sb, "CIC", metrics.get(MetricNames.CACHE_ENTITY_INVOCATIONS));
+    appendMeter(sb, "SIC", metrics.get(MetricNames.STORE_ENTITY_INVOCATIONS));
+    appendMeter(sb, "QIC", metrics.get(MetricNames.SEQUENCE_ENTITY_INVOCATIONS));
+
+    return sb.toString();
+  }
+
+  private void appendMetric(StringBuilder sb, String label, long current, long plus, long minus) {
+    sb.append("|").append(label).append(":");
+
+    // Determine width based on largest value
+    int width = Math.max(MIN_GAUGE_WIDTH, String.valueOf(current).length());
+    int deltaWidth = Math.max(MIN_DELTA_WIDTH,
+      Math.max(String.valueOf(plus).length() + 1, String.valueOf(minus).length() + 1));
+
+    sb.append(formatNumber(current, width, false))
+      .append(",")
+      .append(formatNumber(plus, deltaWidth, true))
+      .append(",")
+      .append(formatNumber(minus, deltaWidth, true, true));
+  }
+
+  private void appendMeter(StringBuilder sb, String label, long value) {
+    sb.append("|").append(label).append(":");
+    int width = Math.max(MIN_DELTA_WIDTH, String.valueOf(value).length() + 1);
+    sb.append(formatNumber(value, width, true));
+  }
+
+  private String formatNumber(long value, int width, boolean withSign) {
+    return formatNumber(value, width, withSign, false);
+  }
+
+  private String formatNumber(long value, int width, boolean withSign, boolean negative) {
+    String sign = "";
+    if (withSign) {
+      sign = negative ? "-" : "+";
+    }
+    String numStr = String.valueOf(value);
+    int padding = width - sign.length() - numStr.length();
+    return sign + "0".repeat(Math.max(0, padding)) + numStr;
+  }
+}
+----

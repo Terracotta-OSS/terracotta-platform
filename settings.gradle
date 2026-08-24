@@ -43,7 +43,7 @@ include ':common:test-utilities',
     ':diagnostic:model',
     ':diagnostic:common',
     ':diagnostic:client',
-    
+
     // lease API
     ':lease:common',
     ':lease:client',
@@ -101,7 +101,7 @@ include ':common:test-utilities',
     ':voter',
 
     // doc
-    ':docs',  
+    ':docs',
 
     // kit layout
     ':platform-layout',
@@ -124,6 +124,3 @@ include ':common:test-utilities',
     // long-running dynamic-config tests
     ':dynamic-config:testing:entity',
     ':dynamic-config:testing:integration-tests'
-    
-File core = file("terracotta-core")
-
