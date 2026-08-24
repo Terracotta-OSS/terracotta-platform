@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -95,19 +96,26 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
 
-    if (unConfiguredMode || repairMode || replicaMode) {
+    Supplier<NodeContext> nodeContextSupplier = () -> {
       // in diagnostic / unconfigured / repair mode, make sure we make platform think that the node is alone...
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, replicaMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
-    } else {
-      // configured mode
-      return new StartupConfiguration(
-          () -> nomadServerManager.getConfiguration()
-              .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-        false, false, false, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
-    }
+      // in replicaMode:
+      // - the node is started like in diag mode except that isPartialConfiguration will be false, like an active node
+      // - this node cannot be part of any DC tx (nomad system is not active and there is no config folder on disk)
+      // - so "nomadServerManager.getConfiguration()" is empty => nodeContext.alone() is returned
+      // - when the replica is "activated", Nomad is activated at runtime with an initial config folder written on disk (with an activation change)
+      // - so "nomadServerManager.getConfiguration()" is not empty anymore and will return a config without relay peer.
+      Optional<NodeContext> config = nomadServerManager.getConfiguration();
+      if (unConfiguredMode || repairMode || (replicaMode && config.isEmpty())) {
+        return nodeContext.alone();
+      } else {
+        return nomadServerManager.getConfiguration().orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again."));
+      }
+    };
+
+    return new StartupConfiguration(nodeContextSupplier, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
