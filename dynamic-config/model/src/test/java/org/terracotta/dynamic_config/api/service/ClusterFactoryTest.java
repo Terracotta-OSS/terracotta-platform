@@ -113,7 +113,7 @@ public class ClusterFactoryTest {
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"))
           .setRelay(false)
           .setReplica(false),
-      Testing.newTestNode("node-2", "localhost2")
+    Testing.newTestNode("node-2", "localhost2")
           .setUID(Testing.N_UIDS[2])
           .setPort(9410)
           .setGroupPort(9430)

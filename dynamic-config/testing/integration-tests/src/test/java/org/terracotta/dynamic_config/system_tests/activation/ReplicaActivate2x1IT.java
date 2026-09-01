@@ -17,7 +17,7 @@
 package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Test;
-import org.terracotta.angela.common.ToolExecutionResult;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -26,108 +26,90 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, autoStart = false)
 public class ReplicaActivate2x1IT extends DynamicConfigIT {
   @Test
-  public void test_replica_activation_without_relay_link() {
+  public void test_replica_cli_activation_without_relay_link() {
     startNode(1, 1, getNewOptions(getNode(1, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(1, 1);
-
     startNode(2, 1, getNewOptions(getNode(2, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    assertThat(configTool("attach", "-to-cluster", "localhost:" + getNodePort(1, 1), "-stripe", "localhost:" + getNodePort(2, 1)), is(successful()));
+
+    waitForDiagnostic(1, 1);
+    waitForDiagnostic(2, 1);
+
+    activateCluster();
+
+    waitForPassiveReplicaStart(1, 1);
     waitForPassiveReplicaStart(2, 1);
-
-    String config = copyConfigProperty("/config-property-files/import2x1.properties").toString();
-    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-
-    waitForActive(1);
-    waitForActive(2);
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(2, 1)).getStripeCount(), is(equalTo(2)));
   }
 
   @Test
-  public void test_successful_restricted_activation_both_at_same_time() {
-    // both are replicas
-    startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(1, 1);
-    startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(2, 1);
-
-    String config = copyConfigProperty("/config-property-files/import2x1.properties").toString();
-
-    // activate both replicas with restrict flag
-    ToolExecutionResult activate = configTool("activate", "-connect-to", getNodeHostPort(1, 1) + "," + getNodeHostPort(2, 1), "-restrict", "-cluster-name", "my-cluster", "-config-file", config);
-
-    assertThat(activate, allOf(successful()));
-  }
-
-  @Test
-  public void test_failed_activation_missing_replica_in_one_stripe() {
-    //stripe 2 has a replica node, stripe 1 has none
+  public void test_2x1_replica_activation_with_config_file_without_relay_link() {
     startNode(1, 1);
-    startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(2, 1);
+    startNode(2, 1);
 
-    String config = copyConfigProperty("/config-property-files/import2x1.properties").toString();
-    ToolExecutionResult activate = configTool("activate", "-cluster-name", "my-cluster", "-config-file", config);
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/2x1-replica.properties").toString(), "-n", "my-cluster"),
+      allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
-    assertThat(activate, allOf(
-      is(not(successful())),
-      containsOutput("Cluster activation failed, each stripe must have at least one replica node"),
-      containsOutput("Provided cluster topology:"),
-      containsOutput("Replica distribution:"),
-      containsOutput("( node-1@" + getNodeHostPort(1, 1) + " ): " + "No replica nodes found"),
-      containsOutput("Replicas(node-2@" + getNodeHostPort(2, 1) + ")")
-    ));
-  }
-
-  @Test
-  public void test_failed_restricted_activation_activate_non_replica_first() {
-    // activate non-replica node first with restrict flag, activating restricted replica in 2nd stripe should fail
-    startNode(1, 1);
-    startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(2, 1);
-
-    String config = copyConfigProperty("/config-property-files/import2x1.properties").toString();
-    ToolExecutionResult activate = configTool("activate", "-connect-to", getNodeHostPort(1, 1).toString(), "-restrict", "-cluster-name", "my-cluster", "-config-file", config);
-
-    assertThat(activate, allOf(successful()));
-
-    activate = configTool("activate", "-connect-to", getNodeHostPort(2, 1).toString(), "-restrict", "-cluster-name", "my-cluster", "-config-file", config);
-    assertThat(activate, allOf(
-      is(not(successful())),
-      containsOutput("( node-1@" + getNodeHostPort(1, 1) + " ): " + "No replica nodes found"),
-      containsOutput("Replicas(node-2@" + getNodeHostPort(2, 1) + ")")
-    ));
-  }
-
-  @Test
-  public void test_failed_restricted_activation_activate_replicas_at_different_times() {
-    // both are replicas
-    startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForPassiveReplicaStart(1, 1);
-    startNode(2, 1, getNewOptions(getNode(2, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForPassiveReplicaStart(2, 1);
 
-    String config = copyConfigProperty("/config-property-files/import2x1.properties").toString();
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    });
 
-    // activate one replica with restrict flag
-    ToolExecutionResult activate = configTool("activate", "-connect-to", getNodeHostPort(1, 1).toString(), "-restrict", "-cluster-name", "my-cluster", "-config-file", config);
+    assertThat(getUpcomingCluster(1, 1).getStripeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster(1, 1).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster(2, 1).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster(2, 1).getNodeCount(), is(equalTo(2)));
+  }
 
-    assertThat(activate, allOf(
-      is(not(successful())),
-      containsOutput("Replicas(node-1@" + getNodeHostPort(1, 1) + ")"),
-      containsOutput("( node-2@" + getNodeHostPort(2, 1) + " ): " + "No replica nodes found")
-    ));
+  @Test
+  public void test_2x1_failed_replica_activation_with_config_file_without_relay_link() {
+    startNode(1, 1);
+    startNode(2, 1);
+
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/2x1-replica-invalid1.properties").toString(), "-n", "my-cluster"),
+      allOf(is(not(successful())), containsOutput("The replica setting is enabled for node with name: node-2-1, " +
+        "replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed, " +
+        "[relay-hostname, relay-port, relay-group-port] need to be set together")));
+  }
+
+  @Test
+  public void test_restricted_activation_with_replica() {
+    startNode(1, 1);
+    startNode(2, 1);
+
+    String config = copyConfigProperty("/config-property-files/2x1-replica.properties").toString();
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config,
+      "-connect-to", getNodeHostPort(1, 1).toString(), "-restrict"), is(successful()));
+
+    waitForPassiveReplicaStart(1, 1);
+    waitForDiagnostic(2, 1);
+
+    String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
+    assertThat(configTool("export", "-connect-to", "localhost:" + getNodePort(1, 1), "-output-file", exportPath, "-output-format", "properties"), is(successful()));
+
+    // activate 2nd replica
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", exportPath,
+      "-connect-to", getNodeHostPort(2, 1).toString(), "-restrict"), is(successful()));
+
+    waitForPassiveReplicaStart(2, 1);
+
+    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(2, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(2, 1)).getStripeCount(), is(equalTo(2)));
   }
 }

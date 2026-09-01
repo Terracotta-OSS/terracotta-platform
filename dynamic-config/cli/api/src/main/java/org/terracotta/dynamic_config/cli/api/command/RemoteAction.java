@@ -220,6 +220,10 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
+  protected final boolean isReplicaCluster(Map<Endpoint, LogicalServerState> onlineNodes) {
+    return !onlineNodes.isEmpty() && onlineNodes.values().stream().allMatch(s -> s == REPLICA || s == REPLICA_SUSPENDED);
+  }
+
   protected final boolean mustBeRestarted(Endpoint endpoint) {
     return mustBeRestarted(endpoint.getHostPort());
   }
@@ -267,9 +271,20 @@ public abstract class RemoteAction implements Runnable {
    * Nodes are expected to be online.
    */
   protected final void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange change) {
-    LOGGER.trace("runConfigurationChange({}, {})", onlineNodes, change);
+    if (isReplicaCluster(onlineNodes)) {
+      runConfigurationChangeViaDiagnostic(onlineNodes, change);
+    } else {
+      LOGGER.trace("runConfigurationChange({}, {})", onlineNodes, change);
+      NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
+      nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
+      failures.reThrowReasons();
+    }
+  }
+
+  private void runConfigurationChangeViaDiagnostic(Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange change) {
+    LOGGER.trace("runConfigurationChangeViaDiagnostic({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
+    nomadManager.runConfigurationChangeViaDiagnostic(onlineNodes, change, failures);
     failures.reThrowReasons();
   }
 
@@ -388,9 +403,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final void runTopologyChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, TopologyNomadChange change) {
     LOGGER.trace("runTopologyChange({}, {})", onlineNodes, change);
-    NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
-    failures.reThrowReasons();
+    runConfigurationChange(destinationCluster, onlineNodes, change);
   }
 
   /**
@@ -699,6 +712,22 @@ public abstract class RemoteAction implements Runnable {
             LinkedHashMap::new));
   }
 
+  protected final void ensureClusterIsReadyForChange(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean requireAllNodesAlive) {
+    if (isReplicaCluster(onlineNodes)) {
+      // check if each stripe has either one server either in replica_suspended or passive-replica
+      ensureReplicasAreAllOnline(cluster, onlineNodes);
+    } else {
+      // validate that all the online nodes are either actives or passives
+      ensureNodesAreEitherActiveOrPassive(onlineNodes);
+      if (requireAllNodesAlive) {
+        // Check passive nodes as well if the setting requires all nodes to be online
+        ensurePassivesAreAllOnline(cluster, onlineNodes);
+      }
+      // Check if every stripe has one active.
+      ensureActivesAreAllOnline(cluster, onlineNodes);
+    }
+  }
+
   /**
    * IMPORTANT NOTE:
    * - onlineNodes comes from the runtime topology
@@ -708,7 +737,7 @@ public abstract class RemoteAction implements Runnable {
    * in the stripes.
    * we filter out relay nodes from the cluster, they are not contacted to apply configuration changes at runtime
    */
-  protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+  private void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     // current actives
     Collection<String> actives = onlineNodes.entrySet()
         .stream()
@@ -737,7 +766,7 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  protected final void ensureActivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+  private void ensureActivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     if (onlineNodes.isEmpty()) {
       throw new IllegalStateException("Expected 1 active per stripe, but found no online node.");
     }
@@ -750,7 +779,20 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  protected final void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
+  private void ensureReplicasAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    if (onlineNodes.isEmpty()) {
+      throw new IllegalStateException("Expected 1 replica per stripe, but found no online node.");
+    }
+    // replicas == list of current replica nodes in the runtime topology
+    List<String> replicas = onlineNodes.entrySet().stream().filter(e -> e.getValue().isReplica() || e.getValue().isReplicaSuspended()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toList());
+    // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
+    // The stripe count only changes in case of a runtime topology change, which is another case.
+    if (cluster.getStripeCount() != replicas.size()) {
+      throw new IllegalStateException("Expected 1 replica per stripe, but only these nodes are in replica state: " + toString(replicas));
+    }
+  }
+
+  private void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
     for (Map.Entry<Endpoint, LogicalServerState> entry : onlineNodes.entrySet()) {
       if (entry.getValue().isStarting() || entry.getValue().isSynchronizing()) {
         // this node will become passive in a few... Just wait instead of failing...
@@ -783,11 +825,6 @@ public abstract class RemoteAction implements Runnable {
   protected final boolean isActivated(HostPort expectedOnlineNode) {
     LOGGER.trace("isActivated({})", expectedOnlineNode);
     return withTopologyService(expectedOnlineNode, TopologyService::isActivated);
-  }
-
-  protected final boolean isReplica(HostPort expectedOnlineNode) {
-    LOGGER.trace("isReplica({})", expectedOnlineNode);
-    return withTopologyService(expectedOnlineNode, TopologyService::isReplica);
   }
 
   protected final Endpoint findAnyOnlineNode(Collection<HostPort> nodes) {

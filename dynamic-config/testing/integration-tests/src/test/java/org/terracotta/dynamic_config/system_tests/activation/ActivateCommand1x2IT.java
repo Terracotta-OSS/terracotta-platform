@@ -248,72 +248,56 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedActivationWithReplicaNode() {
+  public void testSingleNodeReplicaActivationWithConfigFile() {
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/1x1-replica.properties").toString(), "-n", "my-cluster"),
+      allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForPassiveReplicaStart(1, 1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    });
+  }
+
+  @Test
+  public void test_1x1_replica_activation_without_relay_link() {
+    stopNode(1, 1);
+    waitForStopped(1, 1);
+    startNode(1, 1, getNewOptions(getNode(1, 1),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+
+    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-connect-to", getNodeHostPort(1, 1).toString()), is(successful()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
+
+    waitForPassiveReplicaStart(1, 1);
+  }
+
+  @Test
+  public void test_fast_activation_with_replica() {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
 
     assertThat(
-      configTool("activate", "-cluster-name", "my-cluster", "-connect-to", getNodeHostPort(1, 1) + ""),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")));
+      configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1).toString()),
+      allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
-    String config = copyConfigProperty("/config-property-files/1x1-replica.properties").toString();
-    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. A cluster cannot be in activated state if replica setting is enabled on any node")));
-  }
-
-  @Test
-  public void test_replica_activation_without_relay_link() {
-    stopNode(1, 1);
-    waitForStopped(1, 1);
-    startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
     waitForPassiveReplicaStart(1, 1);
 
-    String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
-
-    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-
-    waitForActive(1);
-    waitForPassives(1);
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(1)));
+    });
   }
 
   @Test
-  public void test_1x1_replica_activation_without_relay_link() {
-    // activation with single replica node
-    stopNode(1, 2);
-    waitForStopped(1, 2);
-    stopNode(1, 1);
-    waitForStopped(1, 1);
-    startNode(1, 1, getNewOptions(getNode(1, 1),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(1, 1);
-
-    // with 1x1 cluster
-    String config = copyConfigProperty("/config-property-files/1x1.properties").toString();
-
-    assertThat(configTool("activate", "-cluster-name", "my-cluster", "-config-file", config), is(successful()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
-    waitForActive(1);
-  }
-
-  @Test
-  public void test_failed_fast_activation_with_replica() {
-    stopNode(1, 2);
-    waitForStopped(1, 2);
-    startNode(1, 2, getNewOptions(getNode(1, 2),
-      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
-    waitForPassiveReplicaStart(1, 2);
-
-    ToolExecutionResult activate = configTool("activate", "-cluster-name", "my-cluster",
-      "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2));
-
-    assertThat(activate, allOf(
-      not(successful()),
-      containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")
-    ));
+  public void test_failed_activation_with_replica() {
+    assertThat(
+      configTool("activate", "-f", copyConfigProperty("/config-property-files/1x2-replica-invalid1.properties").toString(), "-n", "my-cluster"),
+      allOf(is(not(successful())), containsOutput("A replica stripe can have at most 1 node")));
   }
 }

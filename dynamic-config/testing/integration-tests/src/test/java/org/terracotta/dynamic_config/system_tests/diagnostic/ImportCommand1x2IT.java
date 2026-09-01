@@ -58,26 +58,26 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void test_relay_invalid_mutual_exclusion() throws Exception {
-    Path configFile = copyConfigProperty("/config-property-files/1x2-relay-invalid2.properties");
+    Path configFile = copyConfigProperty("/config-property-files/1x1-relay-replica-invalid.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
       allOf(is(not(successful())),
-        containsOutput("Node with name: node-1-2 has the replica setting enabled and cannot coexist with other nodes with names: [node-1-1]")));
+        containsOutput("Node with name: node-1-1 has both relay and replica settings enabled")));
   }
 
   @Test
-  public void test_failed_import_with_replica_properties_on_normal_node() throws Exception {
-    Path configFile = copyConfigProperty("/config-property-files/1x1-replica.properties");
+  public void test_failed_import_with_multiple_nodes_per_stripe_replica_cluster() throws Exception {
+    // test cluster validation flow
+    Path configFile = copyConfigProperty("/config-property-files/1x2-replica-invalid1.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node with name: node-1-1 has the replica setting enabled. IMPORT operation is not supported on replica node")));
+      allOf(not(successful()), containsOutput("A replica stripe can have at most 1 node")));
   }
 
   @Test
-  public void test_failed_import_on_replica_node() throws Exception {
+  public void test_relay_import_on_replica_node() throws Exception {
     stopNode(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1), "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "1234", "-relay-group-port", "5678"));
-    waitForPassiveReplicaStart(1, 1);
     Path configFile = copyConfigProperty("/config-property-files/1x1-relay.properties");
-    assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("Node: " + getNodeHostPort(1, 1) +  " has the replica setting enabled")));
+    assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
+    assertThat(configTool("export", "-s", getNode(1, 1).getHostPort()), allOf(is(successful()), containsOutput("relay=true")));
   }
 }

@@ -23,7 +23,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -80,7 +79,7 @@ public class ImportAction extends RemoteAction {
     }
 
     // validate the topology
-    new ClusterValidator(cluster).validate(ClusterState.CONFIGURING, Operation.IMPORT);
+    new ClusterValidator(cluster).validate(ClusterState.CONFIGURING);
 
     if (nodes.isEmpty()) {
       // import the cluster config to the nodes read from the config
@@ -91,9 +90,6 @@ public class ImportAction extends RemoteAction {
     for (HostPort node : nodes) {
       if (isActivated(node)) {
         throw new IllegalStateException("Node: " + node + " is already activated");
-      }
-      if (isReplica(node)) {
-        throw new IllegalStateException("Node: " + node + " has the replica setting enabled");
       }
     }
 

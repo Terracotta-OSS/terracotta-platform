@@ -524,14 +524,9 @@ public class ConfigurationTest {
       // get allowed for all scopes
       // empty value not allowed
       // set allowed for scope node
+      // RELAY is node-scoped and requires a value (does not support empty value for UNSET)
       Stream.of(
-        tuple2(RELAY, "true"),
-        tuple2(REPLICA_HOSTNAME, "foo"),
-        tuple2(REPLICA_PORT, "9410"),
-        tuple2(REPLICA, "true"),
-        tuple2(RELAY_HOSTNAME, "foo"),
-        tuple2(RELAY_PORT, "9410"),
-        tuple2(RELAY_GROUP_PORT, "9430")
+        tuple2(RELAY, "true")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
         rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
@@ -543,6 +538,44 @@ public class ConfigurationTest {
 
         allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
         rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
+      });
+
+      // REPLICA_HOSTNAME, REPLICA_PORT, RELAY_HOSTNAME, RELAY_PORT, RELAY_GROUP_PORT are node-scoped and support UNSET (allow empty value)
+      Stream.of(
+        tuple2(REPLICA_HOSTNAME, "foo"),
+        tuple2(REPLICA_PORT, "9410"),
+        tuple2(RELAY_HOSTNAME, "foo"),
+        tuple2(RELAY_PORT, "9410"),
+        tuple2(RELAY_GROUP_PORT, "9430")
+      ).forEach(tuple -> {
+        allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
+        allowInput(tuple.t1 + "=", tuple.t1, CLUSTER, null, null, null, null); // empty value allowed for UNSET
+        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at cluster level");
+
+        allowInput("stripe.1" + ns + tuple.t1, tuple.t1, STRIPE, 1, null, null, null);
+        allowInput("stripe.1" + ns + tuple.t1 + "=", tuple.t1, STRIPE, null, null, null, null); // empty value allowed for UNSET
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at stripe level");
+
+        allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
+        allowInput("stripe.1.node.1" + ns + tuple.t1 + "=", tuple.t1, NODE, 1, 1, null, null); // empty value allowed for UNSET
+        allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
+      });
+
+      // REPLICA is node-scoped (GET at any level, SET/IMPORT/UNSET at node level only)
+      Stream.of(
+        tuple2(REPLICA, "true")
+      ).forEach(tuple -> {
+        allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at cluster level");
+
+        allowInput("stripe.1" + ns + tuple.t1, tuple.t1, STRIPE, 1, null, null, null);
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at stripe level");
+
+        allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
       });
     });
@@ -847,11 +880,15 @@ public class ConfigurationTest {
       }));
     });
 
-    // replica-hostname, replica-port: GET at any levels, SET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
+    // replica-hostname, replica-port: GET at any levels, SET/UNSET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
     Stream.of("replica-hostname", "replica-port").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
 
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+        reject(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        allow(state, op, "stripe.1.node.1." + setting);
+      }));
 
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
         reject(state, op, setting + "=1234");
@@ -860,7 +897,7 @@ public class ConfigurationTest {
         if (setting.contains("port")) {
           reject(state, op, "stripe.1.node.1." + setting + "=123456");
         }
-        reject(state, op, "stripe.1.node.1." + setting + "=");
+        reject(state, op, "stripe.1.node.1." + setting + "="); // SET requires a value
       }));
 
       Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
@@ -870,17 +907,32 @@ public class ConfigurationTest {
         if (setting.contains("port")) {
           reject(state, op, "stripe.1.node.1." + setting + "=123456");
         }
-        reject(state, op, "stripe.1.node.1." + setting + "=");
+        allow(state, op, "stripe.1.node.1." + setting + "=");
       }));
     });
 
-    // replica: GET at any levels, IMPORT at NODE level, NO SET/UNSET
+    // replica: GET at any level, SET/IMPORT at NODE level (CONFIGURING only), UNSET at NODE level (CONFIGURING, ACTIVATED)
     Stream.of("replica").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
 
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+        reject(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        allow(state, op, "stripe.1.node.1." + setting);
+      }));
 
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=true"))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> {
+        reject(state, op, setting + "=true");
+        reject(state, op, "stripe.1." + setting + "=true");
+        allow(state, op, "stripe.1.node.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        reject(state, op, setting + "=true");
+        reject(state, op, "stripe.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=true");
+      }));
 
       Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
         reject(state, op, setting + "=true");
@@ -890,13 +942,25 @@ public class ConfigurationTest {
       }));
     });
 
-    // relay-hostname, relay-port, relay-group-port: GET at any levels, IMPORT at NODE level, NO SET/UNSET
+    // relay-hostname, relay-port, relay-group-port: GET at any levels, SET/UNSET at NODE level (CONFIGURING, ACTIVATED), IMPORT at NODE level (CONFIGURING)
     Stream.of("relay-hostname", "relay-port", "relay-group-port").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
 
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+        reject(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        allow(state, op, "stripe.1.node.1." + setting);
+      }));
 
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=1234"))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        if (setting.contains("port")) {
+          reject(state, op, "stripe.1.node.1." + setting + "=123456");
+        }
+        reject(state, op, "stripe.1.node.1." + setting + "="); // SET requires a value
+      }));
 
       Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
         reject(state, op, setting + "=1234");
@@ -905,7 +969,7 @@ public class ConfigurationTest {
         if (setting.contains("port")) {
           reject(state, op, "stripe.1.node.1." + setting + "=123456");
         }
-        reject(state, op, "stripe.1.node.1." + setting + "=");
+        allow(state, op, "stripe.1.node.1." + setting + "="); // IMPORT allows empty value for unset
       }));
     });
   }

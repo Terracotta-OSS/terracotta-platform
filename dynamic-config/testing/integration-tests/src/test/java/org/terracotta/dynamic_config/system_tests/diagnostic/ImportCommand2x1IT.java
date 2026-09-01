@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ import java.util.Properties;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, failoverPriority = "")
@@ -51,5 +53,16 @@ public class ImportCommand2x1IT extends DynamicConfigIT {
     ).forEach(prop -> expected.put(prop, after.get(prop)));
 
     assertThat("EXPECTED:\n" + Props.toString(expected) + "\nAFTER\n" + Props.toString(after), after, is(equalTo(expected)));
+  }
+
+  @Test
+  public void test_replica_import() throws Exception {
+    Path configFile = copyConfigProperty("/config-property-files/2x1-replica.properties");
+    assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "replica", "-c", "relay-hostname", "-c", "relay-port", "-c", "relay-group-port", "-t", "index"),
+      allOf(is(successful()),
+        containsOutput("stripe.1.node.1.replica=true"), containsOutput("stripe.2.node.1.replica=true"),
+        containsOutput("stripe.1.node.1.relay-hostname=localhost"), containsOutput("stripe.1.node.1.relay-port=1234"), containsOutput("stripe.1.node.1.relay-group-port=5678"),
+        containsOutput("stripe.2.node.1.relay-hostname=localhost"), containsOutput("stripe.2.node.1.relay-port=1234"), containsOutput("stripe.2.node.1.relay-group-port=5678")));
   }
 }

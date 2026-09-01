@@ -1,0 +1,137 @@
+/*
+ * Copyright Terracotta, Inc.
+ * Copyright IBM Corp. 2026
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.terracotta.dynamic_config.system_tests.diagnostic;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+
+@ClusterDefinition(stripes = 2)
+public class ReplicaSetUnset2x1IT extends DynamicConfigIT {
+  @Before
+  public void setup() throws Exception {
+    assertThat(configTool("attach", "-to-cluster", "localhost:" + getNodePort(1, 1), "-stripe", "localhost:" + getNodePort(2, 1)), is(successful()));
+  }
+
+  @Test
+  public void setReplica() {
+    String node1 = getNodeName(1, 1);
+    String node2 = getNodeName(2, 1);
+
+    // replica properties missing on one node
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
+        "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411"),
+      allOf(
+        is(not(successful())),
+        containsOutput("The replica setting is enabled for node with name: node-2-1, replica properties: {relay-hostname=null, relay-port=null, relay-group-port=null} aren't well-formed, [relay-hostname, relay-port, relay-group-port] need to be set together"))
+    );
+
+    // all nodes will need set together at once
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
+        "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411",
+        "-setting", node2 + ":relay-hostname=" + "localhost1", "-setting", node2 + ":relay-port=" + "9411", "-setting", node2 + ":relay-group-port=" + "9411"
+      ),
+      is(successful()));
+
+    // export
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort()),
+      allOf(is(successful()),
+        containsOutput("node-1-1:replica=true"),
+        containsOutput("node-2-1:replica=true"),
+        containsOutput("node-1-1:relay-hostname=localhost"),
+        containsOutput("node-1-1:relay-port=9411"),
+        containsOutput("node-1-1:relay-group-port=9411"),
+        containsOutput("node-2-1:relay-hostname=localhost"),
+        containsOutput("node-2-1:relay-port=9411"),
+        containsOutput("node-2-1:relay-group-port=9411")
+      ));
+  }
+
+  @Test
+  public void setUnsetReplica() {
+    String node1 = getNodeName(1, 1);
+    String node2 = getNodeName(2, 1);
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true",
+        "-setting", node1 + ":relay-hostname=" + "localhost1", "-setting", node1 + ":relay-port=" + "9411", "-setting", node1 + ":relay-group-port=" + "9411",
+        "-setting", node2 + ":relay-hostname=" + "localhost1", "-setting", node2 + ":relay-port=" + "9411", "-setting", node2 + ":relay-group-port=" + "9411"
+      ),
+      is(successful()));
+
+    // unset replica flag
+    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica", "-setting", node2 + ":replica"), is((successful())));
+    // replica dependent properties are still set
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort()),
+      allOf(
+        // doesn't output the property if explicitly unset
+        not(containsOutput("node-1-1:replica=false")),
+        not(containsOutput("node-2-1:replica=false")),
+        containsOutput("node-1-1:relay-hostname=localhost"), containsOutput("node-1-1:relay-port=9411"), containsOutput("node-1-1:relay-group-port=9411"),
+        containsOutput("node-2-1:relay-hostname=localhost"), containsOutput("node-2-1:relay-port=9411"), containsOutput("node-2-1:relay-group-port=9411")
+      ));
+
+    // set replica again
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica=" + "true", "-setting", node2 + ":replica=" + "true"), is(successful()));
+
+    // unset partial dependent properties on a node while replica is still enabled: relay-hostname removed but relay-port/group-port remain
+    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":relay-hostname"),
+      allOf(is(not(successful())),
+        containsOutput("The replica setting is enabled for node with name: node-1-1, replica properties: {relay-hostname=null, relay-port=9411, relay-group-port=9411} aren't well-formed"))
+    );
+
+    // unsetting replica on only one stripe is rejected — all stripes must have a replica node, or none
+    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica"),
+      allOf(is(not(successful())),
+        containsOutput("If any stripe has a replica node, all stripes must have exactly 1 replica node."),
+        containsOutput("Stripes with a replica: ["),
+        containsOutput("Stripes missing a replica: ["))
+    );
+
+    // unset replica and all dependent properties on both nodes together
+    assertThat(configTool("unset", "-connect-to", "localhost:" + getNodePort(),
+        "-setting", node1 + ":replica", "-setting", node2 + ":replica",
+        "-setting", node1 + ":relay-hostname", "-setting", node1 + ":relay-port", "-setting", node1 + ":relay-group-port",
+        "-setting", node2 + ":relay-hostname", "-setting", node2 + ":relay-port", "-setting", node2 + ":relay-group-port"),
+      allOf(is(successful())));
+    // no replica or relay properties remain
+    assertThat(
+      configTool("export", "-s", "localhost:" + getNodePort()),
+      allOf(
+        not(containsOutput("node-1-1:relay-hostname")),
+        not(containsOutput("node-1-1:relay-port")),
+        not(containsOutput("node-1-1:relay-group-port")),
+        not(containsOutput("node-2-1:relay-hostname")),
+        not(containsOutput("node-2-1:relay-port")),
+        not(containsOutput("node-2-1:relay-group-port"))
+      ));
+  }
+}

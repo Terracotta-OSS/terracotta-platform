@@ -17,24 +17,18 @@
 package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Test;
-import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 4, autoStart = false)
@@ -94,6 +88,11 @@ public class ReplicaActivate2x1WithRelayLinkIT extends DynamicConfigIT {
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", relay1Port + "", "-relay-group-port", relay1GroupPort + ""));
     startNode(2, 1, getNewOptions(getNode(2, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", relay2Port + "", "-relay-group-port", relay2GroupPort + ""));
+
+    // attach and activate replica cluster
+    assertThat(configTool("attach", "-to-cluster", "localhost:" + getNodePort(1, 1), "-stripe", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("activate", "-s", "localhost:" + getNodePort(1, 1), "-n", "replica-cluster"), is(successful()));
+
     waitForPassiveReplicaStart(1, 1);
     waitForPassiveReplicaStart(2, 1);
 
@@ -126,39 +125,18 @@ public class ReplicaActivate2x1WithRelayLinkIT extends DynamicConfigIT {
     );
 
     // activate DR cluster
-    String config = copyConfigProperty("/config-property-files/replica2x1.properties", List.of(new int[]{1, 1}, new int[]{2, 1})).toString();
-    ToolExecutionResult activateReplica = configTool("activate", "-cluster-name", "replica-cluster1", "-config-file", config);
-    assertThat(activateReplica, is(successful()));
+    assertThat(configTool("replica-failover", "-connect-to", "localhost:" + getNodePort(1, 1)), is(successful()));
+
+    // replica flag is unset
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(1, 1)), allOf(is(successful()), containsOutput("unset replica")));
+    waitUntil(() -> configTool("log", "-s", "localhost:" + getNodePort(2, 1)), allOf(is(successful()), containsOutput("unset replica")));
 
     // replicas should transition to active state
+    waitUntilServerLogs(getNode(1, 1), "Successfully transitioned Replica to Active state");
+    waitUntilServerLogs(getNode(2, 1), "Successfully transitioned Replica to Active state");
+
     waitForActive(1, 1);
     waitForActive(2, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(2)));
-  }
-
-  private Path copyConfigProperty(String configFile, List<int[]> stripeNodePairs) throws IOException, URISyntaxException {
-      Path src = Paths.get(getClass().getResource(configFile).toURI());
-      Path dest = getBaseDir().resolve(src.getFileName());
-      Files.createDirectories(getBaseDir());
-
-      Map<String, String> replacements = stripeNodePairs.stream()
-        .flatMap(pair -> {
-          int stripeId = pair[0];
-          int nodeId = pair[1];
-          return Map.of(
-            "${PORT-" + stripeId + "-" + nodeId + "}", String.valueOf(angela.getNodePort(stripeId, nodeId)),
-            "${GROUP-PORT-" + stripeId + "-" + nodeId + "}", String.valueOf(angela.getNodeGroupPort(stripeId, nodeId))
-          ).entrySet().stream();
-        })
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-      String updated = Files.readString(src, StandardCharsets.UTF_8);
-      for (Map.Entry<String, String> entry : replacements.entrySet()) {
-        updated = updated.replace(entry.getKey(), entry.getValue());
-      }
-      Files.writeString(dest, updated, StandardCharsets.UTF_8);
-      return dest;
   }
 
   private void waitForRelayChangeToSync() {

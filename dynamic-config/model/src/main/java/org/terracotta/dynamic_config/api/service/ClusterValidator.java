@@ -20,7 +20,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.DisasterRecoveryMode;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -28,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -47,7 +47,6 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
@@ -73,7 +72,6 @@ public class ClusterValidator {
   private static final String[] FORBIDDEN_NAMES_NO_EXT = new String[]{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
   // special chars in DC
   private static final char[] FORBIDDEN_DC_CHARS = new char[]{' ', ',', ':', '=', '%', '{', '}'};
-  private static final EnumSet<Operation> UNSUPPORTED_REPLICA_OPERATIONS = EnumSet.of(Operation.SET, Operation.UNSET, Operation.IMPORT);
 
   static {
     // sorting because using binary search after
@@ -95,14 +93,6 @@ public class ClusterValidator {
   }
 
   public void validate(ClusterState clusterState, Version version) throws MalformedClusterException {
-    validate(clusterState, version, null);
-  }
-
-  public void validate(ClusterState clusterState, Operation operation) throws MalformedClusterException {
-    validate(clusterState, Version.CURRENT, operation);
-  }
-
-  public void validate(ClusterState clusterState, Version version, Operation operation) throws MalformedClusterException {
     validateNodeNames();
     validateNames(clusterState);
     validateAddresses();
@@ -110,7 +100,7 @@ public class ClusterValidator {
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting(clusterState);
-    validateDRSetting(clusterState, operation);
+    validateDRSetting();
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
@@ -208,38 +198,45 @@ public class ClusterValidator {
     }
   }
 
-  private void validateDRSetting(ClusterState clusterState, Operation operation) {
-    Map<DisasterRecoveryMode, List<String>> nodesByMode = cluster.getNodes().stream()
-      .collect(Collectors.groupingBy(this::checkAndGetDRMode,
-        Collectors.mapping(Node::getName, Collectors.toList())));
+  private void validateDRSetting() {
+    List<Stripe> stripes = cluster.getStripes();
 
-    List<String> replicaNodes = nodesByMode.getOrDefault(DisasterRecoveryMode.REPLICA, Collections.emptyList()).stream().sorted().toList();
+    Map<Boolean, List<Stripe>> partitionedStripes = stripes.stream().collect(
+      Collectors.partitioningBy(stripe -> stripe.getNodes().stream().anyMatch(DisasterRecoveryMode.REPLICA::isEnabled))
+    );
 
-    if (!replicaNodes.isEmpty()) {
-      // allowed single replica node
-      if (replicaNodes.size() > 1) {
-        throw new MalformedClusterException("Only a single node can have the replica setting enabled. Nodes with replica: " + replicaNodes);
-      }
+    List<Stripe> stripesWithReplica = partitionedStripes.get(true);
+    List<Stripe> stripesMissingReplica = partitionedStripes.get(false);
 
-      List<String> nonReplicaNodes = nodesByMode.entrySet().stream()
-        .filter(entry -> entry.getKey() != DisasterRecoveryMode.REPLICA)
-        .map(Map.Entry::getValue).flatMap(List::stream).sorted().toList();
-
-      // no other nodes allowed with replica node
-      if (!nonReplicaNodes.isEmpty()) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled and cannot coexist with other nodes with names: " + nonReplicaNodes);
-      }
-
-      if (UNSUPPORTED_REPLICA_OPERATIONS.contains(operation)) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. "
-          + operation.name() + " operation is not supported on replica node");
-      }
-
-      if (clusterState == ClusterState.ACTIVATED) {
-        throw new MalformedClusterException("Node with name: " + replicaNodes.get(0) + " has the replica setting enabled. " +
-          "A cluster cannot be in activated state if replica setting is enabled on any node");
+    // a replica stripe can have at most 1 node total
+    for (Stripe stripe : stripesWithReplica) {
+      if (stripe.getNodeCount() > 1) {
+        String nodeDetails = stripe.getNodes().stream()
+          .map(n -> n.getName() + (DisasterRecoveryMode.REPLICA.isEnabled(n) ? " (replica)" : ""))
+          .sorted().collect(Collectors.joining(", "));
+        // Stripe with name: stripe-1 has 3 nodes [node-1 (replica), node-2, node-3]. A replica stripe can have at most 1 node.
+        throw new MalformedClusterException("Stripe with name: " + stripe.getName() + " has " + stripe.getNodeCount() + " nodes [" + nodeDetails + "]. " +
+          "A replica stripe can have at most 1 node.");
       }
     }
+
+    // all-or-nothing across stripes, if one stripe has a replica then all should have
+    if (!stripesWithReplica.isEmpty() && !stripesMissingReplica.isEmpty()) {
+      throw new MalformedClusterException("If any stripe has a replica node, all stripes must have exactly 1 replica node. " +
+        "Stripes with a replica: [" + joinSortedNames(stripesWithReplica) + "]. " +
+        "Stripes missing a replica: [" + joinSortedNames(stripesMissingReplica) + "]");
+    }
+
+    // Validate each node's disaster recovery settings
+    // - No node can have both relay and replica enabled
+    // - when no relay or replica is configured, all-or-nothing validation for required properties
+    // - When node.replica=true, node must have replica properties configured
+    // - When node.relay=true, node must have relay properties configured
+    cluster.getNodes().forEach(this::checkAndGetDRMode);
+  }
+
+  private static String joinSortedNames(List<Stripe> stripes) {
+    return stripes.stream().map(Stripe::getName).sorted().collect(Collectors.joining(", "));
   }
 
   private DisasterRecoveryMode checkAndGetDRMode(Node node) {
@@ -250,7 +247,7 @@ public class ClusterValidator {
     }
     validateRequiredDRProperties(node, DisasterRecoveryMode.RELAY);
     validateRequiredDRProperties(node, DisasterRecoveryMode.REPLICA);
-    return DisasterRecoveryMode.fromNode(node);
+    return DisasterRecoveryMode.from(node);
   }
 
   private void validateRequiredDRProperties(Node node, DisasterRecoveryMode mode) {
@@ -268,7 +265,7 @@ public class ClusterValidator {
         Map<String, Object> inconsistent = new LinkedHashMap<>();
         requiredProps.forEach((key, value) -> inconsistent.put(key, String.valueOf(value.orDefault())));
         throw new MalformedClusterException("The " + mode.getLabel() + " setting is enabled for node with name: " + node.getName() +
-          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed");
+          ", " + mode.getLabel() + " properties: " + inconsistent + " aren't well-formed, " + requiredProps.keySet() + " need to be set together");
       }
     } else {
       // when mode is disabled and the user sets partial configuration for a node
