@@ -1,10 +1,24 @@
 version: 2
 updates:
-  - package-ecosystem: "gradle"
+  # master
+  - package-ecosystem: "github-actions"
+    target-branch: "master"
     directory: "/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "gradle"
+    target-branch: "master"
+    directory: "/"
+    schedule:
+      interval: "daily"
+  # release/5.10
   - package-ecosystem: "github-actions"
+    target-branch: "release/5.10"
+    directory: "/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    target-branch: "release/5.10"
     directory: "/"
     schedule:
       interval: "daily"
