@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyMap;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServiceProvider {
@@ -136,24 +135,21 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
 
   private class Fetcher<K> implements AutoCloseable {
     private final Map<K, InetSocketAddress> addresses;
-    private final TimeBudget timeBudget;
+    private final Duration timeout;
     private final ExecutorService executor;
 
-    Fetcher(Map<K, InetSocketAddress> addresses, Duration overriddenConnectionTimeout) {
+    Fetcher(Map<K, InetSocketAddress> addresses, Duration timeout) {
       this.addresses = addresses;
-      this.timeBudget = overriddenConnectionTimeout == null ? null : new TimeBudget(overriddenConnectionTimeout.toMillis(), MILLISECONDS);
+      this.timeout = timeout; // cam be null
       this.executor = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, "diagnostics-connect"));
     }
 
-    Duration getRemainingTimeout() {
-      return timeBudget == null ? null : Duration.ofMillis(timeBudget.remaining());
-    }
-
     void fetch(BiConsumer<K, DiagnosticService> onSuccess, BiConsumer<K, DiagnosticServiceProviderException> onFailure) throws InterruptedException {
+      TimeBudget timeBudget = timeout == null ? TimeBudget.EMPTY : TimeBudget.parse(timeout);
       // start all the fetches and record success and errors
       addresses.forEach((k, address) -> executor.execute(() -> {
         try {
-          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, getRemainingTimeout());
+          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, timeBudget.remaining().toVoltronDuration());
           onSuccess.accept(k, diagnosticService);
         } catch (DiagnosticServiceProviderException e) {
           onFailure.accept(k, e);
