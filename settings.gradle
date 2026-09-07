@@ -2,7 +2,7 @@ pluginManagement {
   plugins {
     id 'org.asciidoctor.jvm.convert' version '4.0.5'
     id 'org.asciidoctor.jvm.gems' version '4.0.5'
-    id 'org.owasp.dependencycheck' version '8.4.3'
+    id 'org.owasp.dependencycheck' version '10.0.4'
   }
   includeBuild 'build-logic'
 }
