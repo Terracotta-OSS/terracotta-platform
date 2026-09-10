@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.terracotta.common.struct;
 
 import java.math.BigInteger;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -73,6 +74,22 @@ public enum TimeUnit implements Unit<TimeUnit> {
 
   public long toHours(long quantity) {
     return HOURS.convert(quantity, this);
+  }
+
+  public java.util.concurrent.TimeUnit toTimeUnit() {
+    if (this == MILLISECONDS) return java.util.concurrent.TimeUnit.MILLISECONDS;
+    if (this == SECONDS) return java.util.concurrent.TimeUnit.SECONDS;
+    if (this == MINUTES) return java.util.concurrent.TimeUnit.MINUTES;
+    if (this == HOURS) return java.util.concurrent.TimeUnit.HOURS;
+    throw new AssertionError();
+  }
+
+  public ChronoUnit toChronoUnit() {
+    if (this == MILLISECONDS) return ChronoUnit.MILLIS;
+    if (this == SECONDS) return ChronoUnit.SECONDS;
+    if (this == MINUTES) return ChronoUnit.MINUTES;
+    if (this == HOURS) return ChronoUnit.HOURS;
+    throw new AssertionError();
   }
 
   public static Optional<TimeUnit> from(String shortName) {

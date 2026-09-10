@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,8 @@ public class DynamicConfigIT {
   // can be modified by subclasses to update the timeouts
 
   // We intentionally set a huge timeout for connection
-  protected Duration connectionTimeout = Duration.ofDays(1);
+  // 0 is the voltron meaning for "infinite"
+  protected Duration connectionTimeout = Duration.ZERO;
 
   // time given for a diagnostic operation to complete
   protected Duration diagnosticOperationTimeout = Duration.ofDays(1);

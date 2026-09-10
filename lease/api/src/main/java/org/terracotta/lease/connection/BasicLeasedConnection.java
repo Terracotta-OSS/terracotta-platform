@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.terracotta.lease.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.TimeBudget;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.entity.Entity;
@@ -26,6 +25,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.lease.LeaseMaintainer;
 import org.terracotta.lease.LeaseMaintainerFactory;
+import org.terracotta.lease.TimeSource;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -37,12 +37,12 @@ public class BasicLeasedConnection implements LeasedConnection {
   private final Connection base;
   private final LeaseMaintainer leaseMaintainer;
 
-  public static BasicLeasedConnection create(Connection connection, TimeBudget timeBudget) throws ConnectionException {
+  public static BasicLeasedConnection create(Connection connection, long timeoutMillis) throws ConnectionException {
     LeaseMaintainer leaseMaintainer = LeaseMaintainerFactory.createLeaseMaintainer(connection);
 
     Exception exception = null;
     try {
-      boolean leased = leaseMaintainer.waitForLease(timeBudget.remaining(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+      boolean leased = leaseMaintainer.waitForLease(timeoutMillis, TimeUnit.MILLISECONDS);
       if (!leased) {
         exception = new IOException("Unable to acquire lease for connection before connection timeout");
       }
@@ -83,7 +83,7 @@ public class BasicLeasedConnection implements LeasedConnection {
      */
     leaseMaintainer.destroy();
   }
-  
+
   @Override
   public boolean isValid() {
     return base.isValid();
