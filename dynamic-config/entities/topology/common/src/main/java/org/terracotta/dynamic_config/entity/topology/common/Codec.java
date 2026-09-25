@@ -27,7 +27,6 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.encoding.StructEncoder;
@@ -122,126 +121,113 @@ public class Codec implements MessageCodec<Message, Response> {
       .build();
 
   @Override
-  public byte[] encodeMessage(Message message) throws MessageCodecException {
+  public byte[] encodeMessage(Message message) {
     LOGGER.trace("encodeMessage({})", message);
-    try {
-      return struct.encoder()
-          .enm("type", message.getType())
-          .encode()
-          .array();
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
+    return struct.encoder()
+        .enm("type", message.getType())
+        .encode()
+        .array();
   }
 
   @Override
-  public Message decodeMessage(byte[] bytes) throws MessageCodecException {
-    try {
-      final Message message = new Message(struct.decoder(ByteBuffer.wrap(bytes)).<Type>enm("type").get());
-      LOGGER.trace("decodeMessage(): {}", message);
-      return message;
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
+  public Message decodeMessage(byte[] bytes) {
+    final Message message = new Message(struct.decoder(ByteBuffer.wrap(bytes)).<Type>enm("type").get());
+    LOGGER.trace("decodeMessage(): {}", message);
+    return message;
   }
 
   @Override
-  public byte[] encodeResponse(Response response) throws MessageCodecException {
+  public byte[] encodeResponse(Response response) {
     LOGGER.trace("encodeResponse({})", response);
-    try {
-      Type type = response.getType();
-      StructEncoder<Void> encoder = struct.encoder();
-      encoder.enm("type", type);
-      switch (type) {
-        case REQ_LICENSE: {
-          License license = response.getPayload();
-          if (license != null) {
-            encoder.struct(type.name())
-                .string("date", license.getExpiryDate().format(DT_FORMATTER))
-                .structs("limits", license.getCapabilities().entrySet(), (entryEncoder, entry) -> entryEncoder
-                    .string("name", entry.getKey())
-                    .int64("value", entry.getValue()))
-                .structs("flags", license.getFlags().entrySet(), (entryEncoder, entry) -> entryEncoder
-                    .string("name", entry.getKey())
-                    .bool("value", entry.getValue()));
-          }
-          break;
-        }
-        case REQ_HAS_INCOMPLETE_CHANGE:
-        case REQ_MUST_BE_RESTARTED: {
-          encoder.bool(type.name(), response.getPayload());
-          break;
-        }
-        case REQ_RUNTIME_CLUSTER:
-        case REQ_UPCOMING_CLUSTER: {
-          encoder.string(type.name(), encodeCluster(response.getPayload()));
-          break;
-        }
-        case EVENT_NODE_ADDITION: {
-          List<Object> oo = response.getPayload();
-          Cluster cluster = (Cluster) oo.get(0);
-          UID addedNodeUID = (UID) oo.get(1);
+    Type type = response.getType();
+    StructEncoder<Void> encoder = struct.encoder();
+    encoder.enm("type", type);
+    switch (type) {
+      case REQ_LICENSE: {
+        License license = response.getPayload();
+        if (license != null) {
           encoder.struct(type.name())
-              .string("stripeUID", cluster.getStripeByNode(addedNodeUID).get().getUID().toString()) // V1 (deprecated)
-              .string("node", encodeNode(cluster.getNode(addedNodeUID).get())) // V1 (deprecated)
-              .string("nodeUID", addedNodeUID.toString()) // since V2
-              .string("cluster", encodeCluster(cluster)); // since V2
-          break;
+              .string("date", license.getExpiryDate().format(DT_FORMATTER))
+              .structs("limits", license.getCapabilities().entrySet(), (entryEncoder, entry) -> entryEncoder
+                  .string("name", entry.getKey())
+                  .int64("value", entry.getValue()))
+              .structs("flags", license.getFlags().entrySet(), (entryEncoder, entry) -> entryEncoder
+                  .string("name", entry.getKey())
+                  .bool("value", entry.getValue()));
         }
-        case EVENT_NODE_REMOVAL: {
-          List<Object> oo = response.getPayload();
-          Cluster cluster = (Cluster) oo.get(0);
-          UID stripeUID = (UID) oo.get(1);
-          Node node = (Node) oo.get(2);
-          encoder.struct(type.name())
-              .string("stripeUID", stripeUID.toString())
-              .string("node", encodeNode(node))
-              .string("cluster", encodeCluster(cluster)); // since V2
-          break;
-        }
-        case EVENT_SETTING_CHANGED: {
-          List<Object> oo = response.getPayload();
-          encoder.struct(type.name())
-              .string("configuration", encodeConfiguration((Configuration) oo.get(1)))
-              .string("cluster", encodeCluster((Cluster) oo.get(0)));
-          break;
-        }
-        case EVENT_STRIPE_ADDITION: {
-          List<Object> oo = response.getPayload();
-          Cluster cluster = (Cluster) oo.get(0);
-          UID stripeUID = (UID) oo.get(1);
-          // V1 (deprecated)
-          encoder.string(type.name(), encodeStripe(cluster.getStripe(stripeUID).get()));
-          // since V2
-          encoder.struct("EVENT_STRIPE_ADDITION_V2")
-              .string("stripeUID", stripeUID.toString())
-              .string("cluster", encodeCluster(cluster));
-          break;
-        }
-        case EVENT_STRIPE_REMOVAL: {
-          List<Object> oo = response.getPayload();
-          Cluster cluster = (Cluster) oo.get(0);
-          Stripe stripe = (Stripe) oo.get(1);
-          // V1 (deprecated)
-          encoder.string(type.name(), encodeStripe(stripe));
-          // since V2
-          encoder.struct("EVENT_STRIPE_REMOVAL_V2")
-              .string("stripe", encodeStripe(stripe))
-              .string("cluster", encodeCluster(cluster));
-          break;
-        }
-        default:
-          throw new UnsupportedOperationException(type.name());
+        break;
       }
-      return encoder.encode().array();
-    } catch (RuntimeException e) {
-      LOGGER.error("encodeResponse({}): {}", response, e.getMessage(), e);
-      throw new MessageCodecException(e.getMessage(), e);
+      case REQ_HAS_INCOMPLETE_CHANGE:
+      case REQ_MUST_BE_RESTARTED: {
+        encoder.bool(type.name(), response.getPayload());
+        break;
+      }
+      case REQ_RUNTIME_CLUSTER:
+      case REQ_UPCOMING_CLUSTER: {
+        encoder.string(type.name(), encodeCluster(response.getPayload()));
+        break;
+      }
+      case EVENT_NODE_ADDITION: {
+        List<Object> oo = response.getPayload();
+        Cluster cluster = (Cluster) oo.get(0);
+        UID addedNodeUID = (UID) oo.get(1);
+        encoder.struct(type.name())
+            .string("stripeUID", cluster.getStripeByNode(addedNodeUID).get().getUID().toString()) // V1 (deprecated)
+            .string("node", encodeNode(cluster.getNode(addedNodeUID).get())) // V1 (deprecated)
+            .string("nodeUID", addedNodeUID.toString()) // since V2
+            .string("cluster", encodeCluster(cluster)); // since V2
+        break;
+      }
+      case EVENT_NODE_REMOVAL: {
+        List<Object> oo = response.getPayload();
+        Cluster cluster = (Cluster) oo.get(0);
+        UID stripeUID = (UID) oo.get(1);
+        Node node = (Node) oo.get(2);
+        encoder.struct(type.name())
+            .string("stripeUID", stripeUID.toString())
+            .string("node", encodeNode(node))
+            .string("cluster", encodeCluster(cluster)); // since V2
+        break;
+      }
+      case EVENT_SETTING_CHANGED: {
+        List<Object> oo = response.getPayload();
+        encoder.struct(type.name())
+            .string("configuration", encodeConfiguration((Configuration) oo.get(1)))
+            .string("cluster", encodeCluster((Cluster) oo.get(0)));
+        break;
+      }
+      case EVENT_STRIPE_ADDITION: {
+        List<Object> oo = response.getPayload();
+        Cluster cluster = (Cluster) oo.get(0);
+        UID stripeUID = (UID) oo.get(1);
+        // V1 (deprecated)
+        encoder.string(type.name(), encodeStripe(cluster.getStripe(stripeUID).get()));
+        // since V2
+        encoder.struct("EVENT_STRIPE_ADDITION_V2")
+            .string("stripeUID", stripeUID.toString())
+            .string("cluster", encodeCluster(cluster));
+        break;
+      }
+      case EVENT_STRIPE_REMOVAL: {
+        List<Object> oo = response.getPayload();
+        Cluster cluster = (Cluster) oo.get(0);
+        Stripe stripe = (Stripe) oo.get(1);
+        // V1 (deprecated)
+        encoder.string(type.name(), encodeStripe(stripe));
+        // since V2
+        encoder.struct("EVENT_STRIPE_REMOVAL_V2")
+            .string("stripe", encodeStripe(stripe))
+            .string("cluster", encodeCluster(cluster));
+        break;
+      }
+      default:
+        throw new UnsupportedOperationException(type.name());
     }
+    return encoder.encode().array();
   }
 
   @Override
-  public Response decodeResponse(byte[] bytes) throws MessageCodecException {
+  public Response decodeResponse(byte[] bytes) {
     try {
       StructDecoder<?> decoder = struct.decoder(ByteBuffer.wrap(bytes));
       Type type = decoder.<Type>enm("type").get();
@@ -305,7 +291,7 @@ public class Codec implements MessageCodec<Message, Response> {
       }
     } catch (RuntimeException e) {
       LOGGER.error("decodeResponse(): {}", e.getMessage(), e);
-      throw new MessageCodecException(e.getMessage(), e);
+      throw new IllegalStateException(e.getMessage(), e);
     }
   }
 

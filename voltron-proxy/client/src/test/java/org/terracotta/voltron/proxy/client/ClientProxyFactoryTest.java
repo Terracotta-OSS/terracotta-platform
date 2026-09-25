@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.mockito.ArgumentMatchers;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.Invocation;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.Async;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.SerializationCodec;
@@ -57,7 +56,7 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testFakeOutboundCall() throws ExecutionException, InterruptedException, MessageCodecException {
+  public void testFakeOutboundCall() throws ExecutionException, InterruptedException {
     final SerializationCodec codec = new SerializationCodec();
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final Invocation builder = mock(Invocation.class);
@@ -71,7 +70,7 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException, MessageCodecException {
+  public void testPassFutureThrough() throws ExecutionException, InterruptedException, TimeoutException {
     final SerializationCodec codec = new SerializationCodec() {
       @Override
       public <T> T decode(final Class<T> type, final byte[] buffer) {
@@ -100,7 +99,7 @@ public class ClientProxyFactoryTest {
   }
 
   @Test
-  public void testRegistersListeners() throws ExecutionException, InterruptedException, MessageCodecException {
+  public void testRegistersListeners() throws ExecutionException, InterruptedException {
     final SerializationCodec codec = new SerializationCodec();
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final Invocation builder = mock(Invocation.class);
