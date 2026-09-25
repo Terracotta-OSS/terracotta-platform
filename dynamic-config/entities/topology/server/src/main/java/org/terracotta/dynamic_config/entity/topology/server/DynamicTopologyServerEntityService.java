@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ExecutionStrategy;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
@@ -72,12 +71,12 @@ public class DynamicTopologyServerEntityService implements EntityServerService<M
   public SyncMessageCodec<Message> getSyncMessageCodec() {
     return new SyncMessageCodec<Message>() {
       @Override
-      public byte[] encode(int concurrencyKey, Message response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, Message response) {
         return getMessageCodec().encodeMessage(response);
       }
 
       @Override
-      public Message decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public Message decode(int concurrencyKey, byte[] payload) {
         return getMessageCodec().decodeMessage(payload);
       }
     };
