@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.terracotta.clientcommunicator.support;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 
 import java.util.Set;
 
@@ -47,29 +46,26 @@ public interface ClientCommunicatorServerManager<M extends EntityMessage, R exte
      * @param message   the message to be sent
      * @param source    the client which initiated current Entity request
      * @return a {@link EntityResponse}
-     * @throws MessageCodecException
      *
      * See ClientCommunicatorClientManager
      */
-    R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source) throws MessageCodecException;
+    R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source);
 
     /**
      * Sends a message to given set of clients
      *
      * @param toClients Set of clients to which given message will be sent
      * @param message  the message to be sent
-     * @throws MessageCodecException
      */
-    void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message) throws MessageCodecException;
+    void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message);
 
     /**
      * Handles client acks for messages that were sent using {@link #sendWithAck(Set, byte[], ClientDescriptor)}
      *
      * @param client
      * @param ackMessage
-     * @throws MessageCodecException
      */
-    void handleClientAck(ClientDescriptor client, M ackMessage) throws MessageCodecException;
+    void handleClientAck(ClientDescriptor client, M ackMessage);
 
     /**
      * Handles client disconnects

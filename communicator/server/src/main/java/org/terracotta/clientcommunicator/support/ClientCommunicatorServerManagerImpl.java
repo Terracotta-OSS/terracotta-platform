@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -46,7 +45,7 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
     }
 
     @Override
-    public R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source) throws MessageCodecException {
+    public R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source) {
         int requestSequenceNumber = requestSequence.getAndIncrement();
         pendingRequests.putIfAbsent(requestSequenceNumber, new ClientRequestInfo(source, toClients));
         for (ClientDescriptor connectedClient : toClients) {
@@ -59,7 +58,7 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
     }
 
     @Override
-    public void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message) throws MessageCodecException {
+    public void sendWithNoAck(Set<ClientDescriptor> toClients, byte[] message) {
         for (ClientDescriptor connectedClient : toClients) {
             clientCommunicator.sendNoResponse(connectedClient,
                     clientCommunicatorMessageFactory.createEntityResponse(ClientCommunicatorRequestCodec.serialize(new ClientCommunicatorRequest(ClientCommunicatorRequestType.NO_ACK, -1, message))));
@@ -67,7 +66,7 @@ public class ClientCommunicatorServerManagerImpl<M extends EntityMessage, R exte
     }
 
     @Override
-    public void handleClientAck(ClientDescriptor client, M ackMessage) throws MessageCodecException {
+    public void handleClientAck(ClientDescriptor client, M ackMessage) {
         ByteBuffer buffer = ByteBuffer.wrap(clientCommunicatorMessageFactory.extractBytesFromMessage(ackMessage));
         int requestSequenceNumber = buffer.getInt();
         ClientRequestInfo clientRequestInfo = pendingRequests.get(requestSequenceNumber);

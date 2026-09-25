@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,14 @@ package org.terracotta.dynamic_config.entity.topology.server;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
 import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.entity.ConfigurationException;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
 
 public class DynamicTopologyPassiveServerEntity implements PassiveServerEntity<Message, Response> {
+  @Override
+  public void invokePassive(InvokeContext context, Message message) {
+  }
+
   @Override
   public void startSyncEntity() {
   }

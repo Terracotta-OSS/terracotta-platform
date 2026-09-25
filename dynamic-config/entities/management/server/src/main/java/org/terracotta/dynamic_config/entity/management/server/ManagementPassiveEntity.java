@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
@@ -27,6 +28,10 @@ public class ManagementPassiveEntity extends ManagementCommonEntity implements P
 
   ManagementPassiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
     super(managementRegistry, dynamicConfigEventService, topologyService);
+  }
+
+  @Override
+  public void invokePassive(InvokeContext context, EntityMessage message) {
   }
 
   @Override

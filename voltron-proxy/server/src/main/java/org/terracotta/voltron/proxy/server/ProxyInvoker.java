@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
 import org.terracotta.voltron.proxy.ProxyEntityResponse;
 
@@ -98,11 +97,7 @@ class ProxyInvoker<T> implements MessageFiring {
     final ClientDescriptor caller = invocationContext == null ? null : invocationContext.caller;
     for (ClientDescriptor client : clients) {
       if (echo || !client.equals(caller)) {
-        try {
-          clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
-        } catch (MessageCodecException ex) {
-          handleExceptionOnSend(ex);
-        }
+        clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
       }
     }
   }
@@ -113,11 +108,7 @@ class ProxyInvoker<T> implements MessageFiring {
       throw new IllegalArgumentException("Event type '" + type + "' isn't supported");
     }
     for (ClientDescriptor client : clients) {
-      try {
-        clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
-      } catch (MessageCodecException ex) {
-        handleExceptionOnSend(ex);
-      }
+      clientCommunicator.sendNoResponse(client, ProxyEntityResponse.messageResponse(type, message));
     }
   }
 
@@ -131,10 +122,6 @@ class ProxyInvoker<T> implements MessageFiring {
 
   public Collection<ClientDescriptor> getClients() {
     return new ArrayList<>(clients);
-  }
-
-  private void handleExceptionOnSend(MessageCodecException ex) {
-    throw new RuntimeException(ex);
   }
 
   ProxyInvoker<T> activateEvents(ClientCommunicator clientCommunicator, Class<?>[] messageTypes) {

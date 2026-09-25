@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.terracotta.clientcommunicator.support;
 
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 
 /**
  * @author vmad
@@ -29,26 +28,26 @@ public interface ClientCommunicatorMessageFactory<M extends EntityMessage, R ext
      * @param message
      * @return
      */
-    M createEntityMessage(byte[] message) throws MessageCodecException;
+    M createEntityMessage(byte[] message);
 
     /**
      *
      * @param entityMessage
      * @return
      */
-    byte[] extractBytesFromMessage(M entityMessage) throws MessageCodecException;
+    byte[] extractBytesFromMessage(M entityMessage);
 
     /**
      *
      * @param message
      * @return
      */
-    R createEntityResponse(byte[] message) throws MessageCodecException;
+    R createEntityResponse(byte[] message);
 
     /**
      *
      * @param entityResponse
      * @return
      */
-    byte[] extractBytesFromResponse(R entityResponse) throws MessageCodecException;
+    byte[] extractBytesFromResponse(R entityResponse);
 }

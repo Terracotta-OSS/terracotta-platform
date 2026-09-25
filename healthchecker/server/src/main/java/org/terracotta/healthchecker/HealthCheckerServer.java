@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,9 @@ public class HealthCheckerServer implements ActiveServerEntity<HealthCheckReq, H
     return new HealthCheckRsp(message.toString());
   }
 
+  @Override
   public ActiveServerEntity.ReconnectHandler startReconnect() {
-    return (ClientDescriptor clientDescriptor, byte[] extendedReconnectData)->{
+    return (clientConnection, extendedReconnectData) -> {
 
     };
   }
