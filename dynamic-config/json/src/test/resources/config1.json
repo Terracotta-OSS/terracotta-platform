@@ -45,6 +45,7 @@
     }
   },
   "securitySslTls": false,
+  "cryptoComplianceLevel": "pqc-preferred",
   "securityWhitelist": false,
   "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

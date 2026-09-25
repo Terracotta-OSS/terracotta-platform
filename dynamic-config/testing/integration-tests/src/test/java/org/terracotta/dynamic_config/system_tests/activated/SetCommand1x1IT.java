@@ -123,6 +123,38 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setAndUnsetCryptoComplianceLevel() {
+    // set to a non-default value on the activated cluster
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "crypto-compliance=pqc-strict"),
+        allOf(is(successful()), containsOutput("Restart required for cluster")));
+
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "crypto-compliance"),
+        containsOutput("crypto-compliance=pqc-strict"));
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        containsOutput("crypto-compliance=pqc-strict"));
+
+    // unset: the user-defined value is removed (reverts to the default)
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "crypto-compliance"),
+        is(successful()));
+
+    assertThat(
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        not(containsOutput("crypto-compliance=")));
+  }
+
+  @Test
+  public void setInvalidCryptoComplianceLevel() {
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "crypto-compliance=foo"),
+        containsOutput("crypto-compliance should be one of: [legacy, pqc-preferred, pqc-strict]"));
+  }
+
+  @Test
   public void setClusterAndNodeRestartRequiringChangesInOneCommand() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2", "-c", "log-dir=new-logs"),
