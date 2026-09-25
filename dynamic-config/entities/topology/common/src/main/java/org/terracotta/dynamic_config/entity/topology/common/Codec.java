@@ -27,7 +27,6 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
@@ -176,37 +175,29 @@ public class Codec implements MessageCodec<Message, Response> {
   private static final StringField STRIPE_REMOVAL_V2_CLUSTER_FIELD = STRIPE_REMOVAL_V2_STRUCT.field("cluster", StringField.class);
 
   @Override
-  public byte[] encodeMessage(Message message) throws MessageCodecException {
+  public byte[] encodeMessage(Message message) {
     LOGGER.trace("encodeMessage({})", message);
-    try {
-      return STRUCT.encoder()
-          .enm(TYPE_FIELD, message.getType())
-          .encode()
-          .array();
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
+    return STRUCT.encoder()
+        .enm(TYPE_FIELD, message.getType())
+        .encode()
+        .array();
   }
 
   @Override
-  public Message decodeMessage(byte[] bytes) throws MessageCodecException {
-    try {
-      // unknown or absent types (e.g. from a future version) fail loudly via the null check,
-      // without allocating an Enm per decoded message
-      Type type = STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD, null);
-      if (type == null) {
-        throw new NoSuchElementException("Unknown or absent message type");
-      }
-      final Message message = new Message(type);
-      LOGGER.trace("decodeMessage(): {}", message);
-      return message;
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
+  public Message decodeMessage(byte[] bytes) {
+    // unknown or absent types (e.g. from a future version) fail loudly via the null check,
+    // without allocating an Enm per decoded message
+    Type type = STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD, null);
+    if (type == null) {
+      throw new NoSuchElementException("Unknown or absent message type");
     }
+    final Message message = new Message(type);
+    LOGGER.trace("decodeMessage(): {}", message);
+    return message;
   }
 
   @Override
-  public byte[] encodeResponse(Response response) throws MessageCodecException {
+  public byte[] encodeResponse(Response response) {
     LOGGER.trace("encodeResponse({})", response);
     try {
       Type type = response.getType();
@@ -307,7 +298,7 @@ public class Codec implements MessageCodec<Message, Response> {
   }
 
   @Override
-  public Response decodeResponse(byte[] bytes) throws MessageCodecException {
+  public Response decodeResponse(byte[] bytes) {
     try {
       StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
       // unknown or absent types (e.g. from a future version) fail loudly via the null check,
@@ -378,7 +369,7 @@ public class Codec implements MessageCodec<Message, Response> {
       }
     } catch (RuntimeException e) {
       LOGGER.error("decodeResponse(): {}", e.getMessage(), e);
-      throw new MessageCodecException(e.getMessage(), e);
+      throw new IllegalStateException(e.getMessage(), e);
     }
   }
 

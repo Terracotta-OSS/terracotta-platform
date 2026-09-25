@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ public class ActiveLeaseAcquirerTest {
   @Mock
   private LeaseResult leaseResult;
 
+  @Mock
+  private org.terracotta.entity.ActiveServerEntity.ReconnectChannel reconnectChannel;
+
   private ArgumentCaptor<LeaseMessage> selfMessageCaptor;
 
   @Before
@@ -70,6 +73,7 @@ public class ActiveLeaseAcquirerTest {
     selfMessageCaptor = ArgumentCaptor.forClass(LeaseMessage.class);
     doNothing().when(entityMessenger).messageSelf(selfMessageCaptor.capture());
     when(context.getClientDescriptor()).thenReturn(clientDescriptor);
+    when(reconnectChannel.getClientDescriptor()).thenReturn(clientDescriptor);
   }
 
   @Test
@@ -111,7 +115,7 @@ public class ActiveLeaseAcquirerTest {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
     leaseAcquirer.connected(clientDescriptor);
     try {
-      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+      leaseAcquirer.startReconnect().handleReconnect(reconnectChannel, new LeaseReconnectData(1).encode());
     } catch (ReconnectRejectedException reject) {
     }
 
@@ -126,7 +130,7 @@ public class ActiveLeaseAcquirerTest {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
     leaseAcquirer.connected(clientDescriptor);
     try {
-      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+      leaseAcquirer.startReconnect().handleReconnect(reconnectChannel, new LeaseReconnectData(1).encode());
     } catch (ReconnectRejectedException reject) {
     }
     verify(leaseService).reconnecting(clientDescriptor);
@@ -144,7 +148,7 @@ public class ActiveLeaseAcquirerTest {
   public void rejectsLeaseRequestsSentOnOldConnections() throws Exception {
     ActiveLeaseAcquirer leaseAcquirer = new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
     try {
-      leaseAcquirer.startReconnect().handleReconnect(clientDescriptor, new LeaseReconnectData(1).encode());
+      leaseAcquirer.startReconnect().handleReconnect(reconnectChannel, new LeaseReconnectData(1).encode());
     } catch (ReconnectRejectedException reject) {
     }
     LeaseRequestResult response = (LeaseRequestResult) leaseAcquirer.invokeActive(context, new LeaseRequest(0));

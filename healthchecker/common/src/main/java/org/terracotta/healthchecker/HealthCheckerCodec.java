@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.terracotta.healthchecker;
 
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -29,22 +28,22 @@ public class HealthCheckerCodec implements MessageCodec<HealthCheckReq, HealthCh
   private static final Charset CHARSET = StandardCharsets.US_ASCII;
 
   @Override
-  public byte[] encodeMessage(HealthCheckReq message) throws MessageCodecException {
+  public byte[] encodeMessage(HealthCheckReq message) {
     return message.toString().getBytes(CHARSET);
   }
 
   @Override
-  public HealthCheckReq decodeMessage(byte[] payload) throws MessageCodecException {
+  public HealthCheckReq decodeMessage(byte[] payload) {
     return new HealthCheckReq(new String(payload,CHARSET));
   }
 
   @Override
-  public byte[] encodeResponse(HealthCheckRsp response) throws MessageCodecException {
+  public byte[] encodeResponse(HealthCheckRsp response) {
     return response.toString().getBytes(CHARSET);
   }
 
   @Override
-  public HealthCheckRsp decodeResponse(byte[] payload) throws MessageCodecException {
+  public HealthCheckRsp decodeResponse(byte[] payload) {
     return new HealthCheckRsp(new String(payload, CHARSET));
   }
 }
