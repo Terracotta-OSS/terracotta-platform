@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.StateDumpCollector;
 
@@ -179,11 +178,7 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
     if (!clients.isEmpty()) {
       LOGGER.trace("fire({}): clients: {}", msg, clients);
       for (ClientDescriptor client : clients) {
-        try {
-          clientCommunicator.sendNoResponse(client, msg);
-        } catch (MessageCodecException e) {
-          throw new AssertionError(e); // should never occur
-        }
+        clientCommunicator.sendNoResponse(client, msg);
       }
     }
   }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
-import org.terracotta.entity.MessageCodecException;
-
 import java.time.LocalDate;
 
 import static java.util.Arrays.asList;
@@ -51,7 +49,7 @@ import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCO
  */
 public class CodecTest {
   @Test
-  public void test_encode_decode() throws MessageCodecException {
+  public void test_encode_decode() {
     Node node = newTestNode("foo", "localhost", 9410);
     Node node2 = newTestNode("foo2", "localhost", 9411);
     Stripe stripe = newTestStripe("stripe1").addNodes(node, node2);
@@ -78,7 +76,7 @@ public class CodecTest {
     test(EVENT_STRIPE_REMOVAL, asList(cluster, stripe));
   }
 
-  private static void test(Type type, Object payload) throws MessageCodecException {
+  private static void test(Type type, Object payload) {
     Codec codec = new Codec();
 
     Message message = new Message(type);
