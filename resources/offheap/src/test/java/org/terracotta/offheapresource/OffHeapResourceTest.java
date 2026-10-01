@@ -23,7 +23,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -395,5 +397,121 @@ public class OffHeapResourceTest {
 
     assertThat(ohr.available(), is(40_000L));
     assertThat(ohr.capacity(), is(40_000L));
+  }
+
+  @Test
+  public void testOverReleaseFloorsUsageAtZero() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 100L, onThresholdChange);
+    assertThat(ohr.reserve(10L), is(true));
+
+    // over-release cannot drive usage negative: it floors at zero. (The previous
+    // single-state implementation would have left used == -10 here.)
+    ohr.release(20L);
+
+    assertThat(ohr.available(), is(100L));
+    assertThat(ohr.reserve(100L), is(true));
+  }
+
+  @Test
+  public void testThrowingUsageConsumerDoesNotCorruptSubsequentEvents() {
+    OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 100L, onThresholdChange);
+    ohr.addUsageListener(UUID.randomUUID(), 0.5f, (event) -> {
+      throw new IllegalStateException("listener consumer failure");
+    });
+
+    // 60% crosses the throwing 0.5 listener: the event is dispatched, the
+    // consumer throws, and the failure propagates out of reserve() exactly as it
+    // did from the previous implementation's stateUpdated()
+    try {
+      ohr.reserve(60L);
+      fail("Expected IllegalStateException from throwing listener consumer");
+    } catch (IllegalStateException e) {
+      //expected;
+    }
+
+    // 80% crosses the built-in 0.75 listener: it must still fire despite the
+    // earlier failure - the firing flags and scan-gating watermarks were
+    // updated under the lock before any consumer ran
+    assertThat(ohr.reserve(20L), is(true));
+    verify(onThresholdChange, times(1)).accept(any());
+
+    // 30% falls below both thresholds: the built-in listener must receive its
+    // FALLING event even though the throwing listener's consumer fails again
+    // during the same dispatch batch
+    try {
+      ohr.release(50L);
+      fail("Expected IllegalStateException from throwing listener consumer");
+    } catch (IllegalStateException e) {
+      //expected;
+    }
+    verify(onThresholdChange, times(2)).accept(any());
+  }
+
+  @Test
+  public void testConcurrentCapacityChangesPreserveUsageInvariant() throws Exception {
+    final OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 10_000L, onThresholdChange);
+    final int numReservers = 8;
+    final int numAdmins = 2;
+    final int iterations = 2_000;
+    final Queue<Throwable> failures = new ConcurrentLinkedQueue<>();
+    ExecutorService executorService = Executors.newFixedThreadPool(numReservers + numAdmins);
+    final CountDownLatch start = new CountDownLatch(1);
+    final CountDownLatch done = new CountDownLatch(numReservers + numAdmins);
+    for (int i = 0; i < numReservers; i++) {
+      final int seed = i;
+      executorService.submit(() -> {
+        try {
+          start.await();
+          for (int j = 0; j < iterations; j++) {
+            long amount = 1L + ((seed + j) % 50L);
+            if (ohr.reserve(amount)) {
+              ohr.release(amount);
+            }
+            if (ohr.available() < 0) {
+              throw new AssertionError("negative availability observed: " + ohr.available());
+            }
+          }
+        } catch (Throwable t) {
+          failures.add(t);
+        } finally {
+          done.countDown();
+        }
+      });
+    }
+    for (int i = 0; i < numAdmins; i++) {
+      executorService.submit(() -> {
+        try {
+          start.await();
+          for (int j = 0; j < iterations; j++) {
+            if (j % 4 == 0) {
+              // usually refused: reservers hold up to 400 bytes concurrently
+              ohr.setCapacity(10L);
+            } else {
+              ohr.setCapacity(10_000L);
+            }
+            if (ohr.available() < 0) {
+              throw new AssertionError("negative availability observed: " + ohr.available());
+            }
+          }
+        } catch (Throwable t) {
+          failures.add(t);
+        } finally {
+          done.countDown();
+        }
+      });
+    }
+    start.countDown();
+    if (!done.await(120, TimeUnit.SECONDS)) {
+      fail("Timed out waiting for concurrent reservers and capacity changes");
+    }
+    executorService.shutdown();
+    if (!failures.isEmpty()) {
+      throw new AssertionError("concurrent task failed", failures.poll());
+    }
+
+    // every reservation was released, so the full (restored) capacity must be usable
+    assertThat(ohr.setCapacity(10_000L), is(true));
+    assertThat(ohr.capacity(), is(10_000L));
+    assertThat(ohr.available(), is(10_000L));
   }
 }

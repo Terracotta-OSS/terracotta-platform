@@ -24,11 +24,14 @@ import org.terracotta.tripwire.TripwireFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -73,27 +76,33 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
   private final AtomicLong used = new AtomicLong(0L);
 
   /**
-   * Capacity in bytes. Only setCapacity (a rare admin operation) modifies it.
+   * Capacity in bytes. Written only by {@link #setCapacity(long)}, which holds
+   * the {@link #capacityLock} write lock, excluding all usage changes while the
+   * capacity is replaced — the two-word analogue of the single-state CAS this
+   * class previously used. Readers take the read lock to observe a coherent
+   * (capacity, used) pair.
    */
   private volatile long capacity;
 
   /**
-   * Lowest threshold among listeners that have not yet fired. Occupancy strictly
-   * below this value means a rising transition can fire nothing. +Inf when no
-   * unfired listener exists.
+   * Coordinates capacity changes (rare admin operations, exclusive) with
+   * reservations/releases/reads (hot path, shared). Reserves and releases still
+   * race each other freely on {@link #used}; only capacity mutations exclude
+   * them. Fair, so a continuous stream of readers cannot starve the admin
+   * capacity change.
    */
-  private volatile float minUnfiredThreshold = Float.POSITIVE_INFINITY;
+  private final ReentrantReadWriteLock capacityLock = new ReentrantReadWriteLock(true);
 
   /**
-   * Highest threshold among listeners that are currently fired. Occupancy at or
-   * above this value means a falling transition can fire nothing. -Inf when no
-   * fired listener exists.
+   * Threshold watermarks used to skip listener scans that provably cannot fire
+   * an event. Published as a single immutable snapshot so readers always see a
+   * coherent pair. Only mutated under {@link #listenerLock}.
    */
-  private volatile float maxFiredThreshold = Float.NEGATIVE_INFINITY;
+  private volatile ThresholdWatermarks watermarks = ThresholdWatermarks.NONE;
 
   /**
    * Serializes listener flag changes / listener-set mutations with the watermark
-   * recomputation that depends on them. Never held on the reserve/release fast path.
+   * recomputation that depends on them. Never held while invoking user callbacks.
    */
   private final Object listenerLock = new Object();
 
@@ -172,14 +181,19 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
     long prevUsed;
     long newUsed;
     long currentCapacity;
-    do {
-      prevUsed = used.get();
-      newUsed = prevUsed + size;
+    capacityLock.readLock().lock();
+    try {
       currentCapacity = capacity;
-      if (newUsed > currentCapacity) {
-        return false;
-      }
-    } while (!used.compareAndSet(prevUsed, newUsed));
+      do {
+        prevUsed = used.get();
+        newUsed = prevUsed + size;
+        if (newUsed > currentCapacity) {
+          return false;
+        }
+      } while (!used.compareAndSet(prevUsed, newUsed));
+    } finally {
+      capacityLock.readLock().unlock();
+    }
 
     stateUpdated(prevUsed, newUsed, currentCapacity, currentCapacity);
     return true;
@@ -189,13 +203,15 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
     if (newUsed > prevUsed || newCapacity < prevCapacity) {
       // rising transition: used increased or capacity decreased
       float occupancy = (newUsed * 1.0f) / newCapacity;
-      if (occupancy >= minUnfiredThreshold) {
+      ThresholdWatermarks currentWatermarks = watermarks;
+      if (Float.compare(occupancy, currentWatermarks.minUnfiredThreshold) >= 0) {
         checkRisingThresholds(occupancy, newUsed, newCapacity);
       }
     } else if (newUsed < prevUsed || newCapacity > prevCapacity) {
       // falling transition: used decreased or capacity increased
       float occupancy = (newUsed * 1.0f) / newCapacity;
-      if (occupancy < maxFiredThreshold) {
+      ThresholdWatermarks currentWatermarks = watermarks;
+      if (Float.compare(occupancy, currentWatermarks.maxFiredThreshold) < 0) {
         checkFallingThresholds(occupancy, newUsed, newCapacity);
       }
     }
@@ -204,59 +220,94 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
   }
 
   private void checkRisingThresholds(float occupancy, long used, long capacity) {
+    List<OffHeapUsageListener> listenersToFire = null;
     synchronized (listenerLock) {
-      OffHeapUsageEvent offHeapUsageEvent = null;
       for (OffHeapUsageListener offHeapUsageListener : listenerMap.values()) {
         if (!offHeapUsageListener.isFired() && (Float.compare(offHeapUsageListener.getThreshold(), occupancy) <= 0)) {
-          if (offHeapUsageEvent == null) {
-            offHeapUsageEvent = new OffHeapUsageEventImpl(used, capacity - used, capacity, OffHeapUsageEventType.RISING);
-          }
-          if (Float.compare(offHeapUsageListener.getThreshold(), 0.9f) == 0) {
-            LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, (used * 100L) / capacity);
-          } else if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
-            LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
-          }
-          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
           offHeapUsageListener.setFiringStatus(true);
+          if (listenersToFire == null) {
+            listenersToFire = new ArrayList<>();
+          }
+          listenersToFire.add(offHeapUsageListener);
         }
       }
-      recomputeThresholdWatermarks();
+      if (listenersToFire != null) {
+        publishWatermarks();
+      }
+    }
+    if (listenersToFire != null) {
+      OffHeapUsageEvent offHeapUsageEvent = new OffHeapUsageEventImpl(used, capacity - used, capacity, OffHeapUsageEventType.RISING);
+      RuntimeException failure = null;
+      for (OffHeapUsageListener offHeapUsageListener : listenersToFire) {
+        if (Float.compare(offHeapUsageListener.getThreshold(), 0.9f) == 0) {
+          LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, (used * 100L) / capacity);
+        } else if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
+          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
+        }
+        try {
+          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
+        } catch (RuntimeException e) {
+          if (failure == null) {
+            failure = e;
+          }
+        }
+      }
+      if (failure != null) {
+        throw failure;
+      }
     }
   }
 
   private void checkFallingThresholds(float occupancy, long used, long capacity) {
+    List<OffHeapUsageListener> listenersToFire = null;
     synchronized (listenerLock) {
-      OffHeapUsageEvent offHeapUsageEvent = null;
       for (OffHeapUsageListener offHeapUsageListener : listenerMap.values()) {
         if (offHeapUsageListener.isFired() && (Float.compare(offHeapUsageListener.getThreshold(), occupancy) > 0)) {
-          if (offHeapUsageEvent == null) {
-            offHeapUsageEvent = new OffHeapUsageEventImpl(used, capacity - used, capacity, OffHeapUsageEventType.FALLING);
-          }
-          if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
-            LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
-          }
-          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
           offHeapUsageListener.setFiringStatus(false);
+          if (listenersToFire == null) {
+            listenersToFire = new ArrayList<>();
+          }
+          listenersToFire.add(offHeapUsageListener);
         }
       }
-      recomputeThresholdWatermarks();
+      if (listenersToFire != null) {
+        publishWatermarks();
+      }
+    }
+    if (listenersToFire != null) {
+      OffHeapUsageEvent offHeapUsageEvent = new OffHeapUsageEventImpl(used, capacity - used, capacity, OffHeapUsageEventType.FALLING);
+      RuntimeException failure = null;
+      for (OffHeapUsageListener offHeapUsageListener : listenersToFire) {
+        if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
+          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
+        }
+        try {
+          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
+        } catch (RuntimeException e) {
+          if (failure == null) {
+            failure = e;
+          }
+        }
+      }
+      if (failure != null) {
+        throw failure;
+      }
     }
   }
 
-  private void recomputeThresholdWatermarks() {
+  private void publishWatermarks() {
     float minUnfired = Float.POSITIVE_INFINITY;
     float maxFired = Float.NEGATIVE_INFINITY;
-    for (OffHeapUsageListener listener : listenerMap.values()) {
-      if (listener.isFired()) {
-        if (Float.compare(listener.getThreshold(), maxFired) > 0) {
-          maxFired = listener.getThreshold();
+    for (OffHeapUsageListener offHeapUsageListener : listenerMap.values()) {
+      if (offHeapUsageListener.isFired()) {
+        if (Float.compare(offHeapUsageListener.getThreshold(), maxFired) > 0) {
+          maxFired = offHeapUsageListener.getThreshold();
         }
-      } else if (Float.compare(listener.getThreshold(), minUnfired) < 0) {
-        minUnfired = listener.getThreshold();
+      } else if (Float.compare(offHeapUsageListener.getThreshold(), minUnfired) < 0) {
+        minUnfired = offHeapUsageListener.getThreshold();
       }
     }
-    minUnfiredThreshold = minUnfired;
-    maxFiredThreshold = maxFired;
+    watermarks = new ThresholdWatermarks(minUnfired, maxFired);
   }
 
   /**
@@ -269,9 +320,21 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
       throw new IllegalArgumentException("Released size cannot be negative");
     }
 
-    long prevUsed = used.getAndAdd(-size);
-    long currentCapacity = capacity;
-    stateUpdated(prevUsed, prevUsed - size, currentCapacity, currentCapacity);
+    long prevUsed;
+    long newUsed;
+    long currentCapacity;
+    capacityLock.readLock().lock();
+    try {
+      currentCapacity = capacity;
+      do {
+        prevUsed = used.get();
+        newUsed = prevUsed - Math.min(size, prevUsed);
+      } while (!used.compareAndSet(prevUsed, newUsed));
+    } finally {
+      capacityLock.readLock().unlock();
+    }
+
+    stateUpdated(prevUsed, newUsed, currentCapacity, currentCapacity);
   }
 
   /**
@@ -279,7 +342,12 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
    */
   @Override
   public long available() {
-    return capacity - used.get();
+    capacityLock.readLock().lock();
+    try {
+      return capacity - used.get();
+    } finally {
+      capacityLock.readLock().unlock();
+    }
   }
 
   @Override
@@ -293,32 +361,51 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
       throw new IllegalArgumentException("New capacity size cannot be negative");
     }
 
-    if (used.get() > size) {
-      return false;
+    long previousCapacity;
+    long currentUsed;
+    capacityLock.writeLock().lock();
+    try {
+      previousCapacity = capacity;
+      currentUsed = used.get();
+      if (currentUsed > size) {
+        // shrinking below current usage is refused, exactly as the previous
+        // single-state implementation refused it (withCapacity().isOverflowed())
+        return false;
+      }
+      capacity = size;
+    } finally {
+      capacityLock.writeLock().unlock();
     }
 
-    long previousCapacity = this.capacity;
-    this.capacity = size;
     onCapacityChanged.onCapacityChanged(this, previousCapacity, size);
-    stateUpdated(used.get(), used.get(), previousCapacity, size);
+    stateUpdated(currentUsed, currentUsed, previousCapacity, size);
     return true;
   }
 
   @Override
   public void addUsageListener(UUID listenerUUID, float threshold, Consumer<OffHeapUsageEvent> consumer) {
     OffHeapUsageListener offHeapUsageListener = new OffHeapUsageListener(threshold, consumer);
+    OffHeapUsageEvent immediateEvent = null;
     synchronized (listenerLock) {
+      // widen the unfired watermark before the listener becomes visible to
+      // concurrent scans, so a crossing that races this call cannot be skipped
+      ThresholdWatermarks currentWatermarks = watermarks;
+      if (Float.compare(threshold, currentWatermarks.minUnfiredThreshold) < 0) {
+        watermarks = new ThresholdWatermarks(threshold, currentWatermarks.maxFiredThreshold);
+      }
       listenerMap.put(listenerUUID, offHeapUsageListener);
       // check for rising event if current usage already is above threshold.
-      long used = this.used.get();
-      long capacity = this.capacity;
-      float occupancy = (used * 1.0f) / capacity;
+      long currentUsed = used.get();
+      long currentCapacity = capacity;
+      float occupancy = (currentUsed * 1.0f) / currentCapacity;
       if ((Float.compare(offHeapUsageListener.getThreshold(), occupancy) <= 0)) {
-        OffHeapUsageEvent offHeapUsageEvent = new OffHeapUsageEventImpl(used, capacity - used, capacity, OffHeapUsageEventType.RISING);
-        offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
         offHeapUsageListener.setFiringStatus(true);
+        immediateEvent = new OffHeapUsageEventImpl(currentUsed, currentCapacity - currentUsed, currentCapacity, OffHeapUsageEventType.RISING);
+        publishWatermarks();
       }
-      recomputeThresholdWatermarks();
+    }
+    if (immediateEvent != null) {
+      offHeapUsageListener.getConsumer().accept(immediateEvent);
     }
   }
 
@@ -328,7 +415,19 @@ final class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
       if (listenerMap.remove(listenerUUID) == null) {
         throw new IllegalArgumentException("Unknown listener: " + listenerUUID);
       }
-      recomputeThresholdWatermarks();
+      publishWatermarks();
+    }
+  }
+
+  private static final class ThresholdWatermarks {
+    static final ThresholdWatermarks NONE = new ThresholdWatermarks(Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+    private final float minUnfiredThreshold;
+    private final float maxFiredThreshold;
+
+    ThresholdWatermarks(float minUnfiredThreshold, float maxFiredThreshold) {
+      this.minUnfiredThreshold = minUnfiredThreshold;
+      this.maxFiredThreshold = maxFiredThreshold;
     }
   }
 }
