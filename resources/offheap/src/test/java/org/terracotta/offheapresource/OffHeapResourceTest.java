@@ -514,4 +514,33 @@ public class OffHeapResourceTest {
     assertThat(ohr.capacity(), is(10_000L));
     assertThat(ohr.available(), is(10_000L));
   }
+
+  @Test
+  public void testUsageListenerCallbackCanAddAnotherListenerWithoutDeadlocking() {
+    final OffHeapResourceImpl ohr = new OffHeapResourceImpl(identifier, 100L);
+    final CountDownLatch addListenerReturned = new CountDownLatch(1);
+    // a consumer that, while being dispatched an event, has another thread
+    // register a listener on the same resource: listener management must not
+    // be blocked by an in-flight callback, or that addUsageListener deadlocks
+    ohr.addUsageListener(UUID.randomUUID(), 0.5f, event -> {
+      Thread adder = new Thread(() -> {
+        ohr.addUsageListener(UUID.randomUUID(), 0.6f, nestedEvent -> {});
+        addListenerReturned.countDown();
+      });
+      adder.setDaemon(true); // must not wedge the test JVM if the add deadlocks
+      adder.start();
+      try {
+        if (!addListenerReturned.await(10, TimeUnit.SECONDS)) {
+          throw new AssertionError("addUsageListener deadlocked while a listener callback was in flight");
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new AssertionError("interrupted while waiting for addUsageListener", e);
+      }
+    });
+
+    assertThat(ohr.reserve(60L), is(true)); // crosses the 0.5 threshold, dispatching the consumer above
+
+    assertThat(ohr.available(), is(40L));
+  }
 }
