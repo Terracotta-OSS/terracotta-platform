@@ -53,6 +53,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
+import static org.terracotta.dynamic_config.api.model.Setting.CRYPTO_COMPLIANCE_LEVEL;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -296,6 +297,19 @@ public class SettingValidatorTest {
     );
     SECURITY_AUTHC.validate(null); // unset - switch back to default value
     SECURITY_AUTHC.validate("");
+  }
+
+  @Test
+  public void test_CRYPTO_COMPLIANCE() {
+    validateRequired(CRYPTO_COMPLIANCE_LEVEL);   // has a non-null default value "legacy"
+    CRYPTO_COMPLIANCE_LEVEL.validate("legacy");
+    CRYPTO_COMPLIANCE_LEVEL.validate("preferred");
+    CRYPTO_COMPLIANCE_LEVEL.validate("strict");
+    CRYPTO_COMPLIANCE_LEVEL.validate(null);      // unset - reverts to default "legacy"
+    assertThat(
+        () -> CRYPTO_COMPLIANCE_LEVEL.validate("foo"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("crypto-compliance should be one of: [legacy, preferred, strict]"))))
+    );
   }
 
   @Test
