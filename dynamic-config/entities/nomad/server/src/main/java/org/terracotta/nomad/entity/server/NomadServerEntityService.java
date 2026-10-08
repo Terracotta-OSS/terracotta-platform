@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ExecutionStrategy;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
@@ -68,12 +67,12 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   public SyncMessageCodec<NomadEntityMessage> getSyncMessageCodec() {
     return new SyncMessageCodec<NomadEntityMessage>() {
       @Override
-      public byte[] encode(int concurrencyKey, NomadEntityMessage response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, NomadEntityMessage response) {
         return getMessageCodec().encodeMessage(response);
       }
 
       @Override
-      public NomadEntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public NomadEntityMessage decode(int concurrencyKey, byte[] payload) {
         return getMessageCodec().decodeMessage(payload);
       }
     };

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,13 +63,13 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
 
   @Override
   public ReconnectHandler startReconnect() {
-    return (clientDescriptor, extendedReconnectData) -> {
+    return (clientConnection, extendedReconnectData) -> {
       if (reconnectDataType != null && codec != null) {
         R state = null;
         if (extendedReconnectData != null && extendedReconnectData.length > 0) {
           state = codec.decode(reconnectDataType, extendedReconnectData);
         }
-        onReconnect(clientDescriptor, state);
+        onReconnect(clientConnection.getClientDescriptor(), state);
       }
     };
   }

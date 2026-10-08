@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.IEntityMessenger;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.lease.service.LeaseResult;
 import org.terracotta.lease.service.LeaseService;
@@ -104,7 +103,8 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
 
   @Override
   public ActiveServerEntity.ReconnectHandler startReconnect() {
-    return (ClientDescriptor clientDescriptor, byte[] bytes) -> {
+    return (ReconnectChannel clientConnection, byte[] bytes) -> {
+      ClientDescriptor clientDescriptor = clientConnection.getClientDescriptor();
       LeaseReconnectData reconnectData = LeaseReconnectData.decode(bytes);
 
       long connectionSequenceNumber = reconnectData.getConnectionSequenceNumber();
@@ -116,11 +116,7 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
       UUID uuid = UUID.randomUUID();
       clientDescriptors.put(uuid, clientDescriptor);
 
-      try {
-        entityMessenger.messageSelf(new LeaseReconnectFinished(uuid));
-      } catch (MessageCodecException e) {
-        throw new RuntimeException("Failed to encode self message to indicate reconnect completion", e);
-      }
+      entityMessenger.messageSelf(new LeaseReconnectFinished(uuid));
     };
   }
 
@@ -130,11 +126,7 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
 
     leaseService.reconnected(clientDescriptor);
 
-    try {
-      clientCommunicator.sendNoResponse(clientDescriptor, new LeaseAcquirerAvailable());
-    } catch (MessageCodecException e) {
-      throw new RuntimeException("Failed to encode message to client to inform that reconnect has completed", e);
-    }
+    clientCommunicator.sendNoResponse(clientDescriptor, new LeaseAcquirerAvailable());
 
     // LeaseReconnectFinished is only sent via a self message
     return new IgnoredLeaseResponse();
