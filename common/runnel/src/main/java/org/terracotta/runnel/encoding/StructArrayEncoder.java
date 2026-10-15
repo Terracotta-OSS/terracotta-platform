@@ -37,14 +37,14 @@ public class StructArrayEncoder<P> {
     this.structField = structField;
     this.values = values;
     this.parent = parent;
-    this.currentData = new ArrayList<>();
+    this.currentData = new ArrayList<>(structField.getMetadata().fieldCount());
   }
 
   public StructEncoder<StructArrayEncoder<P>> add() {
     if (!currentData.isEmpty()) {
       values.add(new StructDataHolder(currentData, -1));
     }
-    return new StructEncoder<>(structField, currentData = new ArrayList<>(), this);
+    return new StructEncoder<>(structField, currentData = new ArrayList<>(structField.getMetadata().fieldCount()), this);
   }
 
   public P end() {
