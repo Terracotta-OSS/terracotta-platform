@@ -63,7 +63,7 @@ public class StructField extends AbstractField {
     out.append(" type: ").append(getClass().getSimpleName());
     out.append(" name: ").append(name());
 
-    Map<Integer, Field> fieldsByInteger = getMetadata().buildFieldsByIndexMap();
+    Map<Integer, Field> fieldsByInteger = getMetadata().fieldsByIndex();
     while (!readBuffer.limitReached()) {
       out.append("\n  "); for (int j = 0; j < depth; j++) out.append("  ");
       int index = readBuffer.getVlqInt();

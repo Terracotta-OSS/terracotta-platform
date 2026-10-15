@@ -30,11 +30,20 @@ public class Int64Field extends AbstractValueField<Long> {
 
   @Override
   public Long decode(ReadBuffer readBuffer) {
+    return decodeLong(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public long decodeLong(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 8) {
       throw new CorruptDataException("Expected field size of 8, read : " + size);
     }
-    return readBuffer.getLong();
+    return readBuffer.getLongValue();
   }
 
 }

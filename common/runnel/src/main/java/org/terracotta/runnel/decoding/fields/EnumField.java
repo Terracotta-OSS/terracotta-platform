@@ -46,6 +46,17 @@ public class EnumField<E> extends AbstractValueField<Enm<E>> {
     return new Enm<>(name(), intValue, e);
   }
 
+  /**
+   * Decode this enum field without allocating an {@link Enm} holder.
+   * @param readBuffer the buffer to read from
+   * @return the mapped enum value, or {@code null} if the raw value cannot be mapped
+   */
+  public E decodeEnum(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
+    int intValue = readBuffer.getVlqInt();
+    return enumMapping.toEnum(intValue);
+  }
+
   @Override
   public void dump(ReadBuffer readBuffer, PrintStream out, int depth) {
     out.append(" type: ").append(getClass().getSimpleName());

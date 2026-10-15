@@ -19,6 +19,7 @@ package org.terracotta.runnel.metadata;
 import org.junit.Test;
 import org.terracotta.runnel.decoding.fields.ArrayField;
 import org.terracotta.runnel.decoding.fields.Field;
+import org.terracotta.runnel.decoding.fields.Int32Field;
 import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.decoding.fields.StringField;
 import org.terracotta.runnel.decoding.fields.StructField;
@@ -132,5 +133,22 @@ public class MetadataTest {
     mapEntryStructField.addField(new StringField("key", 1));
     mapEntryStructField.init();
     mapEntryStructField.init();
+  }
+
+  @Test
+  public void testFieldsByIndexNotCachedBeforeInit() throws Exception {
+    Metadata m = new Metadata();
+    m.addField(new Int32Field("x", 1));
+
+    // before init() the by-index view is empty (fieldsByName is not populated yet) and,
+    // critically, must not be cached: init() must still be able to make it useful
+    assertThat(m.fieldsByIndex().size(), is(0));
+
+    m.init();
+
+    Map<Integer, Field> byIndex = m.fieldsByIndex();
+    assertThat(byIndex.size(), is(1));
+    assertThat(byIndex.get(1).name(), is("x"));
+    assertThat(m.buildFieldsByIndexMap().get(1).name(), is("x"));
   }
 }
