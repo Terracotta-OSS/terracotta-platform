@@ -57,4 +57,8 @@ public class WriteBuffer {
     byteBuffer.put(buffer);
   }
 
+  public void putBytes(byte[] bytes, int offset, int length) {
+    byteBuffer.put(bytes, offset, length);
+  }
+
 }
