@@ -24,13 +24,34 @@ import java.util.Map;
 public class EnumMapping<E> {
   private final Map<E, Integer> enumToInteger;
   private final Map<Integer, E> integerToEnum;
+  // Dense int->enum lookup table, present when the mapping's int values are small enough to be
+  // array-indexed cheaply; null for sparse/large id spaces.
+  private final E[] denseToEnum;
+  // Ordinal-indexed enum->int lookup tables, present for Java enum mappings; both null otherwise.
+  // ordinalConstants guards the lookup: callers can pass a constant of an unrelated enum type
+  // (the encoder API is unchecked), which must still be rejected as unmapped.
+  private final E[] ordinalConstants;
+  private final int[] ordinalToInt;
 
   EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum) {
+    this(enumToInteger, integerToEnum, null, null, null);
+  }
+
+  EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum, E[] denseToEnum, E[] ordinalConstants, int[] ordinalToInt) {
     this.enumToInteger = enumToInteger;
     this.integerToEnum = integerToEnum;
+    this.denseToEnum = denseToEnum;
+    this.ordinalConstants = ordinalConstants;
+    this.ordinalToInt = ordinalToInt;
   }
 
   public int toInt(E e) {
+    if (ordinalConstants != null && e instanceof Enum) {
+      int ordinal = ((Enum<?>) e).ordinal();
+      if (ordinal < ordinalConstants.length && ordinalConstants[ordinal] == e) {
+        return ordinalToInt[ordinal];
+      }
+    }
     Integer integer = enumToInteger.get(e);
     if (integer == null) {
       throw new IllegalArgumentException("Unmapped enum : " + e);
@@ -39,6 +60,9 @@ public class EnumMapping<E> {
   }
 
   public E toEnum(int intValue) {
+    if (denseToEnum != null && intValue >= 0 && intValue < denseToEnum.length) {
+      return denseToEnum[intValue];
+    }
     return integerToEnum.get(intValue);
   }
 }

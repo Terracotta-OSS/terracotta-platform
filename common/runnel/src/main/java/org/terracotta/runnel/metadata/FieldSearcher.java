@@ -42,17 +42,42 @@ public class FieldSearcher {
     }
     lastIndex = field.index();
 
+    checkType(field, fieldClazz, subFieldClazz);
+    return field;
+  }
+
+  /**
+   * Variant of {@link #findField(String, Class, Class)} keyed by a pre-resolved field handle,
+   * skipping the name lookup. The same ordering and type validations are enforced.
+   * @param field the field handle (must belong to this struct's metadata)
+   * @param fieldClazz the expected field class
+   * @param subFieldClazz the expected array sub-field class, or null for non-array fields
+   * @return the field
+   */
+  public <T extends Field, S extends Field> T findField(T field, Class<T> fieldClazz, Class<S> subFieldClazz) {
+    if (!metadata.hasField(field)) {
+      throw new IllegalArgumentException("Field '" + field.name() + "' does not belong to this struct");
+    }
+    if (field.index() <= lastIndex) {
+      throw new IllegalArgumentException("No such field left : '" + field.name() + "'");
+    }
+    lastIndex = field.index();
+
+    checkType(field, fieldClazz, subFieldClazz);
+    return field;
+  }
+
+  private <T extends Field, S extends Field> void checkType(T field, Class<T> fieldClazz, Class<S> subFieldClazz) {
     if (field.getClass() != fieldClazz) {
-      throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
+      throw new IllegalArgumentException("Invalid type for field '" + field.name() + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
     }
     if (subFieldClazz != null) {
       ArrayField arrayField = (ArrayField) field;
       Field nextSubField = arrayField.subField();
       if (!nextSubField.getClass().equals(subFieldClazz)) {
-        throw new IllegalArgumentException("Invalid subtype for field '" + name + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
+        throw new IllegalArgumentException("Invalid subtype for field '" + field.name() + "', expected : '" + subFieldClazz.getSimpleName() + "' but was '" + nextSubField.getClass().getSimpleName() + "'");
       }
     }
-    return field;
   }
 
 }

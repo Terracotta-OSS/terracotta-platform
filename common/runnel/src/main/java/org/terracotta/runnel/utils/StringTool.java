@@ -329,7 +329,6 @@ public final class StringTool {
                                 final int strLength) throws BufferOverflowException, ReadOnlyBufferException {
 
     final char[] slice = new char[MAX_SLICE_LENGTH];
-    int sz = 0;
     for (int offset = 0; offset < strLength; offset += MAX_SLICE_LENGTH) {
       final int sliceLength = Math.min(MAX_SLICE_LENGTH, strLength - offset);
       str.getChars(offset, offset + sliceLength, slice, 0);
@@ -337,13 +336,10 @@ public final class StringTool {
         final char c = slice[i];
         if (c <= '\u007F' && c != '\u0000') {
           buffer.put((byte) c);
-          sz++;
         } else if (c <= '\u07FF') {
           buffer.put((byte) (0xC0 | c >>> 6)).put((byte) (0x80 | (c & 0x3F)));
-          sz = sz + 2;
         } else {
           buffer.put((byte) (0xE0 | c >>> 12)).put((byte) (0x80 | ((c >>> 6) & 0x3F))).put((byte) (0x80 | (c & 0x3F)));
-          sz = sz + 3;
         }
       }
     }
@@ -502,7 +498,7 @@ public final class StringTool {
    * @return the byte length of the raw encoding
    */
   @SuppressWarnings( { "StatementWithEmptyBody", "UnnecessarySemicolon" })
-  private static long getEncodedLen(final String str) {
+  public static long getEncodedLen(final String str) {
     // Performing the "ASCII" checks with an "empty if" improves the performance of
     // ASCII counting by as much as 70%.
     final int strLength = str.length();
@@ -535,6 +531,18 @@ public final class StringTool {
     return str.length() * 4 + 8;
   }
 
+  /**
+   * Attempts to decode the given {@code ByteBuffer} as 7-bit ASCII.
+   *
+   * @param binary the {@code ByteBuffer} from which the string is decoded
+   * @return a new {@code String} constructed from the ASCII bytes, or {@code null} if any
+   *         byte has its high bit set
+   * @deprecated runnel's field codec no longer uses this method: it retains a
+   * {@code ThreadLocal} {@code CharsetDecoder} for the lifetime of every calling thread.
+   * New code should decode through {@link ReadBuffer#getString(int)}, which is free of that
+   * retention and faster. This method is kept only for backward compatibility.
+   */
+  @Deprecated
   public static String attemptDecodeAsAscii(ByteBuffer binary) {
     int start = binary.position();
     try {
