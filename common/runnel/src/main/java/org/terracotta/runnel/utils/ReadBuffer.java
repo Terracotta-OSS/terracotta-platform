@@ -18,15 +18,15 @@ package org.terracotta.runnel.utils;
 
 import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Ludovic Orban
  */
 public final class ReadBuffer {
-  private static final boolean V1_STRING_DECODING = false;
 
   private final ByteBuffer byteBuffer;
-  private final int limit;
+  private int limit;
 
   public ReadBuffer(ByteBuffer byteBuffer) {
     this(byteBuffer, byteBuffer.remaining());
@@ -34,20 +34,25 @@ public final class ReadBuffer {
 
   private ReadBuffer(ByteBuffer byteBuffer, int limit) {
     this.byteBuffer = byteBuffer;
-    this.limit = byteBuffer.position() + limit;
-    if (this.limit > byteBuffer.capacity()) {
-      throw new LimitReachedException();
-    }
+    setLimit(limit);
   }
 
   public Boolean getBoolean() {
+    return getBooleanValue() ? Boolean.TRUE : Boolean.FALSE;
+  }
+
+  public boolean getBooleanValue() {
     if (byteBuffer.position() + 1 > limit) {
       throw new LimitReachedException();
     }
-    return byteBuffer.get() == (byte) 0 ? Boolean.FALSE : Boolean.TRUE;
+    return byteBuffer.get() != (byte) 0;
   }
 
   public Double getDouble() {
+    return getDoubleValue();
+  }
+
+  public double getDoubleValue() {
     if (byteBuffer.position() + 8 > limit) {
       throw new LimitReachedException();
     }
@@ -55,6 +60,10 @@ public final class ReadBuffer {
   }
 
   public Long getLong() {
+    return getLongValue();
+  }
+
+  public long getLongValue() {
     if (byteBuffer.position() + 8 > limit) {
       throw new LimitReachedException();
     }
@@ -62,6 +71,10 @@ public final class ReadBuffer {
   }
 
   public Character getChar() {
+    return getCharValue();
+  }
+
+  public char getCharValue() {
     if (byteBuffer.position() + 2 > limit) {
       throw new LimitReachedException();
     }
@@ -69,6 +82,10 @@ public final class ReadBuffer {
   }
 
   public Integer getInt() {
+    return getIntValue();
+  }
+
+  public int getIntValue() {
     if (byteBuffer.position() + 4 > limit) {
       throw new LimitReachedException();
     }
@@ -101,72 +118,81 @@ public final class ReadBuffer {
       throw new LimitReachedException();
     }
 
-    ByteBuffer slice = byteBuffer.slice();
-    slice.limit(size);
-    String s = readString(slice);
+    /*
+     * Fast path: the modified UTF-8 encoding of a string containing only 7-bit ASCII characters
+     * is the character bytes themselves. Scan the raw bytes once; if none have the high bit set,
+     * decode the whole range in a single String construction (no intermediate decoder, CharBuffer
+     * or slice). All bytes below 0x80 decode identically under US-ASCII and modified UTF-8.
+     * The scan is a branchless OR-reduction, which JITs auto-vectorize.
+     * Otherwise, at least one byte is >= 0x80 (exactly the inputs on which a US-ASCII decode
+     * attempt would fail), so decode straight away as modified UTF-8.
+     */
+    ByteBuffer encoded;
+    if (byteBuffer.hasArray()) {
+      byte[] array = byteBuffer.array();
+      int start = byteBuffer.arrayOffset() + byteBuffer.position();
+      if (isAscii(array, start, size)) {
+        byteBuffer.position(byteBuffer.position() + size);
+        return new String(array, start, size, StandardCharsets.US_ASCII);
+      }
+      encoded = byteBuffer.slice();
+      encoded.limit(size);
+    } else {
+      /*
+       * Non-array-backed (e.g. direct) buffer: bulk-read into a scratch array without moving
+       * this buffer's position, then decode from that array.
+       */
+      ByteBuffer duplicate = byteBuffer.duplicate();
+      byte[] data = new byte[size];
+      duplicate.get(data, 0, size);
+      if (isAscii(data, 0, size)) {
+        byteBuffer.position(byteBuffer.position() + size);
+        return new String(data, 0, size, StandardCharsets.US_ASCII);
+      }
+      encoded = ByteBuffer.wrap(data);
+    }
 
+    String s = decodeModifiedUtf8(encoded, size);
     byteBuffer.position(byteBuffer.position() + size);
     return s;
   }
 
-  private String readString(ByteBuffer binary) {
-    if (V1_STRING_DECODING) {
-      StringBuilder sb = new StringBuilder(binary.remaining());
-      int i = binary.position();
-      int end = binary.limit();
-      for (; i < end; i++) {
-        byte a = binary.get(i);
-        if (((a & 0x80) != 0)) {
-          break;
-        }
-        sb.append((char) a);
-      }
+  /**
+   * @return true if every one of {@code data[start .. start+length)} is a 7-bit ASCII byte
+   */
+  private static boolean isAscii(byte[] data, int start, int length) {
+    int acc = 0;
+    int end = start + length;
+    int i = start;
+    int end8 = start + (length & ~7);
+    for (; i < end8; i += 8) {
+      acc |= (data[i] | data[i + 1] | data[i + 2] | data[i + 3] | data[i + 4] | data[i + 5] | data[i + 6] | data[i + 7]);
+    }
+    for (; i < end; i++) {
+      acc |= data[i];
+    }
+    return acc >= 0;
+  }
 
-      for (; i < end; i++) {
-        byte a = binary.get(i);
-        if ((a & 0x80) == 0) {
-          sb.append((char) a);
-        } else if ((a & 0xe0) == 0xc0) {
-          sb.append((char) (((a & 0x1f) << 6) | ((binary.get(++i) & 0x3f))));
-        } else if ((a & 0xf0) == 0xe0) {
-          sb.append((char) (((a & 0x0f) << 12) | ((binary.get(++i) & 0x3f) << 6) | (binary.get(++i) & 0x3f)));
-        } else {
-          //these remaining stanzas are for compatibility with the previous regular UTF-8 codec
-          int codepoint;
-          if ((a & 0xf8) == 0xf0) {
-            codepoint = ((a & 0x7) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary
-              .get(++i) & 0x3f));
-          } else if ((a & 0xfc) == 0xf8) {
-            codepoint = ((a & 0x3) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary.get(++i) & 0x3f) << 12) | ((binary
-              .get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
-          } else if ((a & 0xfe) == 0xfc) {
-            codepoint = ((a & 0x1) << 30) | ((binary.get(++i) & 0x3f) << 24) | ((binary.get(++i) & 0x3f) << 18) | ((binary
-              .get(++i) & 0x3f) << 12) | ((binary.get(++i) & 0x3f) << 6) | ((binary.get(++i) & 0x3f));
-          } else {
-            throw new CorruptDataException("Unexpected encoding");
-          }
-          sb.appendCodePoint(codepoint);
-        }
-      }
-
-      return sb.toString();
-    } else {
-      try {
-        String ret = StringTool.attemptDecodeAsAscii(binary);
-        if (ret != null) {
-          return ret;
-        }
-        return StringTool.decodeString(binary, binary.remaining());
-      } catch (UTFDataFormatException e) {
-        CorruptDataException cde = new CorruptDataException("Unexpected encoding");
-        cde.addSuppressed(e);
-        throw cde;
-      }
+  private static String decodeModifiedUtf8(ByteBuffer encoded, int size) {
+    try {
+      return StringTool.decodeString(encoded, size);
+    } catch (UTFDataFormatException e) {
+      CorruptDataException cde = new CorruptDataException("Unexpected encoding");
+      cde.addSuppressed(e);
+      throw cde;
     }
   }
 
   public boolean limitReached() {
     return byteBuffer.position() == limit;
+  }
+
+  /**
+   * @return the number of bytes between the current position and this buffer's limit
+   */
+  public int remaining() {
+    return limit - byteBuffer.position();
   }
 
   public void skipAll() {
@@ -189,5 +215,23 @@ public final class ReadBuffer {
       throw new IllegalArgumentException("size cannot be < 0");
     }
     return new ReadBuffer(byteBuffer, size);
+  }
+
+  /**
+   * Re-set the limit of this buffer to {@code size} bytes ahead of the current position of the
+   * underlying {@link ByteBuffer}. This mutates the buffer and allows a single {@code ReadBuffer}
+   * instance to be reused across successive same-sized frames on the same underlying buffer.
+   *
+   * @param size the number of bytes until the new limit
+   * @throws LimitReachedException if the new limit exceeds the underlying buffer capacity
+   */
+  public void setLimit(int size) {
+    if (size < 0) {
+      throw new IllegalArgumentException("size cannot be < 0");
+    }
+    this.limit = byteBuffer.position() + size;
+    if (this.limit > byteBuffer.capacity()) {
+      throw new LimitReachedException();
+    }
   }
 }
