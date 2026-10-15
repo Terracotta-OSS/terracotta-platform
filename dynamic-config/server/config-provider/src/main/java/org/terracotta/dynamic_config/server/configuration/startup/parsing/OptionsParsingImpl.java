@@ -20,7 +20,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.SettingName;
 import org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
@@ -30,7 +29,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -65,6 +63,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_HOSTNA
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
+import static org.terracotta.dynamic_config.api.model.SettingName.CRYPTO_COMPLIANCE_LEVEL;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
@@ -156,6 +155,9 @@ public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-" + SECURITY_WHITELIST}, description = "Security whitelist (true|false). Default: false")
   private String securityWhitelist;
+
+  @Parameter(names = {"-" + CRYPTO_COMPLIANCE_LEVEL}, description = "Cryptography compliance level (legacy|preferred|strict). Default: preferred")
+  private String cryptoComplianceLevel;
 
   @Parameter(names = {"-" + FAILOVER_PRIORITY}, description = "Failover priority setting (availability|consistency), required with more than 1 node. Default: <unset>")
   private String failoverPriority;
