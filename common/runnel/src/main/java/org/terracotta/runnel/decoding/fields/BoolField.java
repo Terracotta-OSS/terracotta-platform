@@ -30,11 +30,20 @@ public class BoolField extends AbstractValueField<Boolean> {
 
   @Override
   public Boolean decode(ReadBuffer readBuffer) {
+    return decodeBoolean(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public boolean decodeBoolean(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 1) {
       throw new CorruptDataException("Expected field size of 1, read : " + size);
     }
-    return readBuffer.getBoolean();
+    return readBuffer.getBooleanValue();
   }
 
 }

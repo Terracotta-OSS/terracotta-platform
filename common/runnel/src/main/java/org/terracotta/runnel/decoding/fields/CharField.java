@@ -30,11 +30,20 @@ public class CharField extends AbstractValueField<Character> {
 
   @Override
   public Character decode(ReadBuffer readBuffer) {
+    return decodeChar(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public char decodeChar(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 2) {
       throw new CorruptDataException("Expected field size of 2, read : " + size);
     }
-    return readBuffer.getChar();
+    return readBuffer.getCharValue();
   }
 
 }
