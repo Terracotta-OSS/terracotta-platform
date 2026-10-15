@@ -38,4 +38,7 @@ public class ServerInfoTest {
     ServerInfo serverInfo = new ServerInfo("ABC");
     assertEquals("ABC", serverInfo.getName());
   }
+
+  public void badMethod() {
+    System.out.println("yup");
 }
