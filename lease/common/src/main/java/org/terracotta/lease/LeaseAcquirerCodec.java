@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.terracotta.lease;
 
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.runnel.EnumMapping;
 import org.terracotta.runnel.EnumMappingBuilder;
 import org.terracotta.runnel.Struct;
@@ -36,7 +35,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   private static final Struct responseStruct = createResponseStruct();
 
   @Override
-  public byte[] encodeMessage(LeaseMessage leaseMessage) throws MessageCodecException {
+  public byte[] encodeMessage(LeaseMessage leaseMessage) {
     StructEncoder<Void> encoder = messageStruct.encoder();
     encoder.enm("messageType", leaseMessage.getType());
     leaseMessage.encode(encoder);
@@ -44,14 +43,14 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
+  public LeaseMessage decodeMessage(byte[] bytes) {
     StructDecoder<Void> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
     LeaseMessageType type = decoder.<LeaseMessageType>enm("messageType").get();
     return type.decode(decoder);
   }
 
   @Override
-  public byte[] encodeResponse(LeaseResponse leaseResponse) throws MessageCodecException {
+  public byte[] encodeResponse(LeaseResponse leaseResponse) {
     StructEncoder<Void> encoder = responseStruct.encoder();
     encoder.enm("responseType", leaseResponse.getType());
     leaseResponse.encode(encoder);
@@ -59,7 +58,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
+  public LeaseResponse decodeResponse(byte[] bytes) {
     StructDecoder<Void> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
     LeaseResponseType type = decoder.<LeaseResponseType>enm("responseType").get();
     return type.decode(decoder);
