@@ -37,6 +37,6 @@ jobs:
           queue_token: '${{ secrets.BOB_ENQUEUE_PR_REVIEW }}'
           comment:     '${{ github.event.comment.body }}'
           # Optional: override default Bobcoin budgets
-          # max_cost_review:  5
+          max_cost_review:  10
           # max_cost_summary: 2
           # max_cost_triage:  2
