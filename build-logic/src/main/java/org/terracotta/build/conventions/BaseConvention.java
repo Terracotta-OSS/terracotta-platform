@@ -192,6 +192,7 @@ public class BaseConvention implements ConventionPlugin<Project, BasePlugin> {
   }
 
   private static void setupRepositories(RepositoryHandler repositories) {
+    repositories.mavenLocal();
     repositories.mavenCentral();
     repositories.maven(terracotta -> {
       terracotta.setUrl(URI.create("https://repo.terracotta.org/maven2"));
