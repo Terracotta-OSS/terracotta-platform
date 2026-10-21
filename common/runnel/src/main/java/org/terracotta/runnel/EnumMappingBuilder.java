@@ -90,7 +90,12 @@ public class EnumMappingBuilder<E> {
       ordinalConstants = enumClass.getEnumConstants();
       ordinalToInt = new int[ordinalConstants.length];
       for (E e : ordinalConstants) {
-        ordinalToInt[((Enum<?>) e).ordinal()] = enumToInteger.get(e);
+        Integer mapped = enumToInteger.get(e);
+        if (mapped == null) {
+          // unreachable: the unregistered-enums check above has already rejected this mapping
+          throw new IllegalStateException("No mapping for enum constant : " + e);
+        }
+        ordinalToInt[((Enum<?>) e).ordinal()] = mapped;
       }
     }
     return new EnumMapping<>(enumToInteger, integerToEnum, denseToEnum, ordinalConstants, ordinalToInt);

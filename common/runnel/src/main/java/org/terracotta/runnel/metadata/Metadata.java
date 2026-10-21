@@ -20,22 +20,20 @@ import org.terracotta.runnel.decoding.fields.Field;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.ReadBuffer;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Ludovic Orban
  */
 public class Metadata {
 
-  private final List<Field> fields = new ArrayList<>();
+  // a LinkedHashSet, so that hasField() membership checks use identity semantics
+  // (Field does not override equals/hashCode) while preserving insertion-ordered iteration
+  private final LinkedHashSet<Field> fields = new LinkedHashSet<>();
   private final Map<String, Field> fieldsByName = new HashMap<>();
-  private final Set<Field> fieldsByIdentity = Collections.newSetFromMap(new IdentityHashMap<>());
   private volatile Map<Integer, Field> fieldsByIndex;
   private volatile boolean initialized = false;
   private volatile boolean initializationFullyChecked = false;
@@ -49,7 +47,6 @@ public class Metadata {
       throw new IllegalStateException("Metadata already initialized");
     }
     fields.add(field);
-    fieldsByIdentity.add(field);
   }
 
   public void init() {
@@ -98,7 +95,7 @@ public class Metadata {
 
   /**
    * Returns the field-by-index map of this metadata, building and caching it on first use.
-   * The returned map must not be mutated.
+   * The returned map is unmodifiable.
    * <p>
    * The map is only cached once this metadata is {@link #init() initialized}: fields can no
    * longer be added afterwards, so the cache cannot go stale. Before initialization a fresh,
@@ -109,10 +106,11 @@ public class Metadata {
   public Map<Integer, Field> fieldsByIndex() {
     Map<Integer, Field> map = fieldsByIndex;
     if (map == null) {
-      map = new HashMap<>();
+      Map<Integer, Field> built = new HashMap<>();
       for (Field field : fieldsByName.values()) {
-        map.put(field.index(), field);
+        built.put(field.index(), field);
       }
+      map = Collections.unmodifiableMap(built);
       if (initialized) {
         fieldsByIndex = map;
       }
@@ -133,7 +131,7 @@ public class Metadata {
    * @return true if this exact field instance belongs to this metadata
    */
   public boolean hasField(Field field) {
-    return fieldsByIdentity.contains(field);
+    return fields.contains(field);
   }
 
   /**
@@ -143,7 +141,6 @@ public class Metadata {
    * @return the field
    * @throws IllegalArgumentException if the field does not exist or has a different type
    */
-  @SuppressWarnings("unchecked")
   public <T extends Field> T getFieldByName(String name, Class<T> fieldClazz) {
     Field field = getFieldByName(name);
     if (field == null) {
@@ -152,7 +149,7 @@ public class Metadata {
     if (field.getClass() != fieldClazz) {
       throw new IllegalArgumentException("Invalid type for field '" + name + "', expected : '" + fieldClazz.getSimpleName() + "' but was '" + field.getClass().getSimpleName() + "'");
     }
-    return (T) field;
+    return fieldClazz.cast(field);
   }
 
   public Field getFieldByName(String name) {

@@ -24,8 +24,12 @@ import java.nio.ByteBuffer;
 /**
  * Holds a whole byte buffer array field, encoding byte-identically to per-element
  * {@link ByteBufferDataHolder}s but without one holder object per element.
- * Buffers are referenced, not copied (consistent with {@link ByteBufferDataHolder});
- * their positions are consumed at encode time.
+ * <p>
+ * The element references are snapshotted at construction (the array is cloned); the buffers
+ * themselves are referenced, not copied, consistent with {@link ByteBufferDataHolder}. Each
+ * buffer's position is consumed at encode time, and {@code valueSize()} reads each buffer's
+ * {@code remaining()} during size computation: do not advance, reuse or share a buffer between
+ * construction and encoding — the holder is a single-use write.
  */
 public final class ByteBufferArrayDataHolder extends AbstractDataHolder {
 
@@ -33,7 +37,7 @@ public final class ByteBufferArrayDataHolder extends AbstractDataHolder {
 
   public ByteBufferArrayDataHolder(ByteBuffer[] values, int index) {
     super(index);
-    this.values = values;
+    this.values = values.clone();
   }
 
   @Override

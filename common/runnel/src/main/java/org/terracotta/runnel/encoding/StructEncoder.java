@@ -219,13 +219,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return boolsEncoder(field);
   }
 
-  private ArrayEncoder<Boolean, StructEncoder<P>> boolsEncoder(final ArrayField f) {
+  private ArrayEncoder<Boolean, StructEncoder<P>> boolsEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Boolean, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Boolean value) {
-        return new BoolDataHolder(value, f.index());
+        return new BoolDataHolder(value, field.index());
       }
     };
   }
@@ -255,13 +255,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return chrsEncoder(field);
   }
 
-  private ArrayEncoder<Character, StructEncoder<P>> chrsEncoder(final ArrayField f) {
+  private ArrayEncoder<Character, StructEncoder<P>> chrsEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Character, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Character value) {
-        return new CharDataHolder(value, f.index());
+        return new CharDataHolder(value, field.index());
       }
     };
   }
@@ -291,13 +291,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return int32sEncoder(field);
   }
 
-  private ArrayEncoder<Integer, StructEncoder<P>> int32sEncoder(final ArrayField f) {
+  private ArrayEncoder<Integer, StructEncoder<P>> int32sEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Integer, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Integer value) {
-        return new Int32DataHolder(value, f.index());
+        return new Int32DataHolder(value, field.index());
       }
     };
   }
@@ -327,13 +327,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return int64sEncoder(field);
   }
 
-  private ArrayEncoder<Long, StructEncoder<P>> int64sEncoder(final ArrayField f) {
+  private ArrayEncoder<Long, StructEncoder<P>> int64sEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Long, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Long value) {
-        return new Int64DataHolder(value, f.index());
+        return new Int64DataHolder(value, field.index());
       }
     };
   }
@@ -363,13 +363,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return fp64sEncoder(field);
   }
 
-  private ArrayEncoder<Double, StructEncoder<P>> fp64sEncoder(final ArrayField f) {
+  private ArrayEncoder<Double, StructEncoder<P>> fp64sEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<Double, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(Double value) {
-        return new FloatingPoint64DataHolder(value, f.index());
+        return new FloatingPoint64DataHolder(value, field.index());
       }
     };
   }
@@ -399,13 +399,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return stringsEncoder(field);
   }
 
-  private ArrayEncoder<String, StructEncoder<P>> stringsEncoder(final ArrayField f) {
+  private ArrayEncoder<String, StructEncoder<P>> stringsEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<String, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(String value) {
-        return new StringDataHolder(value, f.index());
+        return new StringDataHolder(value, field.index());
       }
     };
   }
@@ -435,13 +435,13 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return byteBuffersEncoder(field);
   }
 
-  private ArrayEncoder<ByteBuffer, StructEncoder<P>> byteBuffersEncoder(final ArrayField f) {
+  private ArrayEncoder<ByteBuffer, StructEncoder<P>> byteBuffersEncoder(final ArrayField field) {
     List<DataHolder> values = new ArrayList<>();
-    data.add(new ArrayDataHolder(values, f.index()));
+    data.add(new ArrayDataHolder(values, field.index()));
     return new ArrayEncoder<ByteBuffer, StructEncoder<P>>(values, this) {
       @Override
       protected DataHolder buildDataHolder(ByteBuffer value) {
-        return new ByteBufferDataHolder(value, f.index());
+        return new ByteBufferDataHolder(value, field.index());
       }
     };
   }
@@ -492,8 +492,8 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
 
   /**
    * Computes the total number of bytes a call to {@link #encode()} or {@link #encode(ByteBuffer)}
-   * will produce for this structure, allowing callers to pre-size or pool a target buffer.
-   * Must only be called on the root encoder, after all fields have been set.
+   * will produce for this structure as it stands at the time of this call, allowing callers to
+   * pre-size or pool a target buffer. Must only be called on the root encoder.
    * <p>
    * The returned value goes stale if fields are added afterwards — {@link #encode()} recalculates
    * and encodes such a modified structure correctly. Encoding fails with an
