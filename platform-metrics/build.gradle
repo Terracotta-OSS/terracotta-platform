@@ -1,0 +1,31 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+  id 'org.terracotta.build.convention.deploy'
+  id 'org.terracotta.build.convention.voltron-server'
+  id 'org.terracotta.build.convention.angela'
+}
+
+deploy {
+  groupId = 'org.terracotta'
+  artifactId = 'terracotta-platform-metrics'
+  name = 'Metrics Server Plugin'
+}
+
+// only itTest needs the kit: unit tests must run before the kit is built
+angela {
+  suites = ['itTest']
+}
+
+dependencies {
+  service project(':dynamic-config:api')
+}
+
+testing {
+  suites {
+    itTest(JvmTestSuite) {
+      dependencies {
+        implementation project(':dynamic-config:testing:support')
+      }
+    }
+  }
+}
