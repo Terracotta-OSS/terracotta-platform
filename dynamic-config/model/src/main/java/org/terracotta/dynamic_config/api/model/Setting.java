@@ -856,6 +856,20 @@ public enum Setting {
       of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
+  CRYPTO_COMPLIANCE_LEVEL(SettingName.CRYPTO_COMPLIANCE_LEVEL,
+      of(V2),
+      false,
+      always("preferred"),
+      CLUSTER,
+      fromCluster(Cluster::getCryptoComplianceLevel),
+      intoCluster(Cluster::setCryptoComplianceLevel),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
+      ),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
+      asList("legacy", "preferred", "strict")
+  ),
 
   // ==== Resources configuration
 
