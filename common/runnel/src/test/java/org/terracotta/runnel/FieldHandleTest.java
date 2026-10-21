@@ -84,7 +84,7 @@ public class FieldHandleTest {
         .string("name", "alice").int64("id", 1234567890123L).bool("flag", true).enm("colour", Colour.BLUE)
         .encode();
 
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertThat(d.string(STRUCT.field("name", StringField.class)), is("alice"));
     assertThat(d.int64(STRUCT.field("id", Int64Field.class)), is(1234567890123L));
     assertThat(d.bool(STRUCT.field("flag", BoolField.class)), is(true));
@@ -103,7 +103,7 @@ public class FieldHandleTest {
         .string("name", "alice").int64("id", 1234567890123L).bool("flag", true).enm("colour", Colour.BLUE)
         .encode();
 
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertThat(d.string("name"), is("alice"));
     assertThat(d.int64(STRUCT.field("id", Int64Field.class), -1L), is(1234567890123L));
     assertThat(d.bool(STRUCT.field("flag", BoolField.class), false), is(true));
@@ -114,7 +114,7 @@ public class FieldHandleTest {
   public void primitiveDecodesReturnDefaultsWhenAbsent() {
     ByteBuffer encoded = STRUCT.encoder().string("name", "alice").encode();
 
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertThat(d.string("name"), is("alice"));
     assertThat(d.int64("id", -42L), is(-42L));
     assertThat(d.bool("flag", true), is(true));
@@ -122,7 +122,7 @@ public class FieldHandleTest {
 
     // note: each field may only be queried once per decoder (ascending-index stream contract),
     // so the boxed-absent check uses a fresh decoder
-    StructDecoder<Void> d2 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d2 = STRUCT.decoder(encoded.duplicate().position(0));
     d2.string("name");
     assertThat(d2.int64("id"), nullValue());
   }
@@ -137,14 +137,14 @@ public class FieldHandleTest {
     ByteBuffer encoded = alienStruct.encoder()
         .string("name", "x").int64("id", 5L).bool("flag", false).enm("colour", Colour.BLUE).encode();
 
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertThat(d.string("name"), is("x"));
     assertThat(d.int64("id", -1), is(5L));
     assertThat(d.bool("flag", true), is(false));
     assertThat(d.enm("colour", Colour.GREEN), is(Colour.GREEN)); // unmappable -> default
 
     // while the Enm-based decode still surfaces the raw value
-    StructDecoder<Void> d2 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d2 = STRUCT.decoder(encoded.duplicate().position(0));
     d2.string("name"); d2.int64("id"); d2.bool("flag");
     Enm<Colour> enm = d2.enm("colour");
     assertThat(enm.isFound(), is(true));
@@ -228,7 +228,7 @@ public class FieldHandleTest {
   public void decodeTokenApiEnforcesOrderingAndType() {
     ByteBuffer encoded = STRUCT.encoder()
         .string("name", "alice").int64("id", 7L).bool("flag", true).enm("colour", Colour.RED).encode();
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     Int64Field id = STRUCT.field("id", Int64Field.class);
     StringField name = STRUCT.field("name", StringField.class);
     assertThat(d.int64(id), is(7L));
@@ -238,7 +238,7 @@ public class FieldHandleTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    StructDecoder<Void> d2 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d2 = STRUCT.decoder(encoded.duplicate().position(0));
     try {
       d2.int64(OTHER_STRUCT.field("other", Int64Field.class));
       fail();

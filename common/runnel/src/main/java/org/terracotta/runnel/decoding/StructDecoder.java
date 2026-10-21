@@ -35,39 +35,44 @@ import java.nio.ByteBuffer;
  * A decoder allows decoding structured data described by a {@link org.terracotta.runnel.Struct}.
  * Note: Instances of this class are not thread-safe.
  */
-public class StructDecoder<P> implements PrimitiveDecodingSupport {
+public class StructDecoder<P extends Decoder> implements PrimitiveDecodingSupport, Decoder {
 
   private final FieldDecoder fieldDecoder;
-  private ReadBuffer readBuffer;
-  private P parent;
+  private final ReadBuffer readBuffer;
+  private final P parent;
 
   public StructDecoder(StructField structField, ReadBuffer readBuffer) {
     this(structField, readBuffer, null);
   }
 
   public StructDecoder(StructField structField, ReadBuffer readBuffer, P parent) {
-    init(readBuffer, parent);
+    this.parent = parent;
+    int size = readBuffer.getVlqInt();
+    this.readBuffer = readBuffer.limit(size);
     this.fieldDecoder = structField.getMetadata().fieldDecoder(this.readBuffer);
   }
 
-  private void init(ReadBuffer readBuffer, P parent) {
-    this.parent = parent;
-    int size = readBuffer.getVlqInt();
-    if (this.readBuffer == null) {
-      this.readBuffer = readBuffer.limit(size);
+  /**
+   * Advance this decoder to the next element of the enclosing array. Internal use by
+   * {@link StructArrayDecoder#forEachRemaining}: skips any unread remainder of the current
+   * element, then re-initializes the shared {@link ReadBuffer} for the next one. Returns
+   * {@code true} if there is a next element, {@code false} when the array is exhausted.
+   * Callers must not retain this instance across iterations.
+   */
+  boolean next() {
+    ReadBuffer parentBuffer = end().buffer();
+    if (parentBuffer.limitReached()) {
+      return false;
     } else {
-      this.readBuffer.setLimit(size);
+      readBuffer.setLimit(parent.buffer().getVlqInt());
+      fieldDecoder.reset(readBuffer);
+      return true;
     }
   }
 
-  /**
-   * Re-initialize this decoder to decode the next frame from the given buffer. Internal use:
-   * allows a single decoder instance to be reused (e.g. by
-   * {@link StructArrayDecoder#decodeAll}). Callers must not retain the reused instance.
-   */
-  void reinit(ReadBuffer readBuffer, P parent) {
-    init(readBuffer, parent);
-    this.fieldDecoder.reset(this.readBuffer);
+  @Override
+  public ReadBuffer buffer() {
+    return readBuffer;
   }
 
   @Override

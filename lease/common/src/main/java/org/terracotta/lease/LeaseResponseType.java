@@ -29,7 +29,7 @@ public enum LeaseResponseType {
     this.leaseResponseDecoder = leaseResponseDecoder;
   }
 
-  public LeaseResponse decode(StructDecoder<Void> decoder) {
+  public LeaseResponse decode(StructDecoder<?> decoder) {
     return leaseResponseDecoder.decode(decoder);
   }
 }

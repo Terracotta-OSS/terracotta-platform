@@ -17,6 +17,7 @@
 package org.terracotta.runnel.metadata;
 
 import org.terracotta.runnel.decoding.ArrayDecoder;
+import org.terracotta.runnel.decoding.Decoder;
 import org.terracotta.runnel.decoding.StructArrayDecoder;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
@@ -64,7 +65,7 @@ public class FieldDecoder {
     this.readAheadIndex = -1;
   }
 
-  public <P> StructArrayDecoder<P> decodeStructArray(String name, P parent) {
+  public <P extends Decoder> StructArrayDecoder<P> decodeStructArray(String name, P parent) {
     ArrayField field = nextField(name, ArrayField.class, StructField.class);
     if (field == null) {
       return null;
@@ -72,14 +73,14 @@ public class FieldDecoder {
     return new StructArrayDecoder<>(((StructField) field.subField()), readBuffer, parent);
   }
 
-  public <P> StructArrayDecoder<P> decodeStructArray(ArrayField field, P parent) {
+  public <P extends Decoder> StructArrayDecoder<P> decodeStructArray(ArrayField field, P parent) {
     if (nextField(field, ArrayField.class, StructField.class) == null) {
       return null;
     }
     return new StructArrayDecoder<>(((StructField) field.subField()), readBuffer, parent);
   }
 
-  public <P> StructDecoder<P> decodeStruct(String name, P parent) {
+  public <P extends Decoder> StructDecoder<P> decodeStruct(String name, P parent) {
     StructField field = nextField(name, StructField.class, null);
     if (field == null) {
       return null;
@@ -87,7 +88,7 @@ public class FieldDecoder {
     return new StructDecoder<>(field, readBuffer, parent);
   }
 
-  public <P> StructDecoder<P> decodeStruct(StructField field, P parent) {
+  public <P extends Decoder> StructDecoder<P> decodeStruct(StructField field, P parent) {
     if (nextField(field, StructField.class, null) == null) {
       return null;
     }

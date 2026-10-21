@@ -60,8 +60,8 @@ public class LeaseReconnectFinished implements LeaseMessage {
     encoder.end();
   }
 
-  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseReconnectFinished");
+  public static LeaseMessage decode(StructDecoder<?> parentDecoder) {
+    StructDecoder<?> decoder = parentDecoder.struct("leaseReconnectFinished");
     long uuidMSB = decoder.int64("uuidMSB");
     long uuidLSB = decoder.int64("uuidLSB");
 

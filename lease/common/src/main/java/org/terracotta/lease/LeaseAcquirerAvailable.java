@@ -37,7 +37,7 @@ public class LeaseAcquirerAvailable implements LeaseResponse {
   public void encode(StructEncoder<Void> parentEncoder) {
   }
 
-  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) {
+  public static LeaseResponse decode(StructDecoder<?> parentDecoder) {
     return new LeaseAcquirerAvailable();
   }
 }
