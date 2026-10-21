@@ -61,7 +61,7 @@ public class Struct {
    * @param byteBuffer the byte buffer containing the data to be decoded.
    * @return the decoder.
    */
-  public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
+  public StructDecoder<?> decoder(ByteBuffer byteBuffer) {
     root.checkFullyInitialized();
     return new StructDecoder<>(root, new ReadBuffer(byteBuffer));
   }

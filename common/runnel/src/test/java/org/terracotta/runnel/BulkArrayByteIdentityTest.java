@@ -121,13 +121,13 @@ public class BulkArrayByteIdentityTest {
   public void bulkDecodeMatchesElementWiseDecode() {
     ByteBuffer encoded = encodeElementWise();
 
-    StructDecoder<Void> d1 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d1 = STRUCT.decoder(encoded.duplicate().position(0));
     ArrayDecoder<Long, ?> a = d1.int64s("int64s"); // must skip int32s
     long[] viaElements = new long[a.length()];
     for (int i = 0; i < viaElements.length; i++) viaElements[i] = a.value();
     a.end();
 
-    StructDecoder<Void> d2 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d2 = STRUCT.decoder(encoded.duplicate().position(0));
     d2.int32s("int32s").end();
     long[] viaBulk = d2.int64sArray("int64s");
 
@@ -137,7 +137,7 @@ public class BulkArrayByteIdentityTest {
   @Test
   public void allBulkDecodersRoundTrip() {
     ByteBuffer encoded = encodeBulk();
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertArrayEquals(INT32S, d.int32sArray("int32s"));
     assertArrayEquals(INT64S, d.int64sArray("int64s"));
     assertArrayEquals(FP64S, d.fp64sArray("fp64s"), 0.0);
@@ -160,10 +160,10 @@ public class BulkArrayByteIdentityTest {
   @Test
   public void absentArrayFieldsReturnNullFromBulkDecoders() {
     ByteBuffer encoded = STRUCT.encoder().int64s("int64s", INT64S).encode();
-    StructDecoder<Void> d = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(encoded.duplicate().position(0));
     assertThat(d.int32sArray("int32s") == null, is(true)); // skipped over
     assertThat(d.int64sArray("int64s"), is(INT64S));
-    StructDecoder<Void> d2 = STRUCT.decoder(encoded.duplicate().position(0));
+    StructDecoder<?> d2 = STRUCT.decoder(encoded.duplicate().position(0));
     d2.int64s("int64s").end();
     assertThat(d2.stringsArray("strings") == null, is(true)); // absent at end
   }
@@ -244,7 +244,7 @@ public class BulkArrayByteIdentityTest {
     byte[] y = new byte[b.position()]; (b.flip()).get(y);
     assertArrayEquals(x, y);
 
-    StructDecoder<Void> d = STRUCT.decoder(ByteBuffer.wrap(x));
+    StructDecoder<?> d = STRUCT.decoder(ByteBuffer.wrap(x));
     assertThat(Arrays.equals(d.int32sArray("int32s"), new int[0]), is(true));
   }
 

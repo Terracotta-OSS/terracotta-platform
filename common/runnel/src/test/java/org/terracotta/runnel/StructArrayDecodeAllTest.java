@@ -56,12 +56,12 @@ public class StructArrayDecodeAllTest {
   }
 
   private static List<String> viaIterator(ByteBuffer bb) {
-    StructDecoder<Void> d = STRUCT.decoder(bb.position(0));
+    StructDecoder<?> d = STRUCT.decoder(bb.position(0));
     d.int64("count");
-    StructArrayDecoder<StructDecoder<Void>> arr = d.structs("cells");
+    StructArrayDecoder<?> arr = d.structs("cells");
     List<String> out = new ArrayList<>();
     while (arr.hasNext()) {
-      StructDecoder<StructArrayDecoder<StructDecoder<Void>>> cell = arr.next();
+      StructDecoder<?> cell = arr.next();
       out.add(cell.string("name") + "|" + cell.int64("value") + "|" + cell.bool("flag"));
       cell.end();
     }
@@ -74,7 +74,7 @@ public class StructArrayDecodeAllTest {
       ByteBuffer enc = encode(n);
       List<String> expected = viaIterator(enc.duplicate().position(0));
 
-      StructDecoder<Void> d = STRUCT.decoder(enc.duplicate().position(0));
+      StructDecoder<?> d = STRUCT.decoder(enc.duplicate().position(0));
       d.int64("count");
       List<String> actual = d.structs("cells").decodeAll(cell ->
           cell.string("name") + "|" + cell.int64("value", -1) + "|" + cell.bool("flag", false));
@@ -85,7 +85,7 @@ public class StructArrayDecodeAllTest {
   @Test
   public void decodeAllSkipsPartiallyReadElements() {
     ByteBuffer enc = encode(4);
-    StructDecoder<Void> d = STRUCT.decoder(enc.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(enc.duplicate().position(0));
     d.int64("count");
     List<String> names = d.structs("cells").decodeAll(cell -> cell.string("name"));
     assertThat(names, is(java.util.Arrays.asList("cell-0", "cell-1", "cell-2", "cell-3")));
@@ -94,7 +94,7 @@ public class StructArrayDecodeAllTest {
   @Test
   public void decodeAllOnEmptyArray() {
     ByteBuffer enc = encode(0);
-    StructDecoder<Void> d = STRUCT.decoder(enc.duplicate().position(0));
+    StructDecoder<?> d = STRUCT.decoder(enc.duplicate().position(0));
     d.int64("count");
     List<String> names = d.structs("cells").decodeAll(cell -> cell.string("name"));
     assertThat(names.isEmpty(), is(true));

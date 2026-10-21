@@ -89,8 +89,8 @@ public class LeaseRequestResult implements LeaseResponse {
     encoder.end();
   }
 
-  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequestResult");
+  public static LeaseResponse decode(StructDecoder<?> parentDecoder) {
+    StructDecoder<?> decoder = parentDecoder.struct("leaseRequestResult");
     boolean connectionGood = decoder.bool("connectionGood");
     boolean leaseGranted = decoder.bool("leaseGranted");
     long leaseLength = decoder.int64("leaseLength");

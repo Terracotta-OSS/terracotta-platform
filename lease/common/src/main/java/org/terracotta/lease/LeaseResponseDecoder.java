@@ -19,5 +19,5 @@ package org.terracotta.lease;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 public interface LeaseResponseDecoder {
-  LeaseResponse decode(StructDecoder<Void> parentDecoder);
+  LeaseResponse decode(StructDecoder<?> parentDecoder);
 }
