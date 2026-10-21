@@ -67,9 +67,9 @@ public final class StringDataHolder extends AbstractDataHolder {
     int pos = 0;
     for (int i = 0; i < strLength; i++) {
       char c = object.charAt(i);
-      if (c <= '\u007F' && c != '\u0000') {
+      if (c <= 0x7F && c != 0) {
         out[pos++] = (byte) c;
-      } else if (c <= '\u07FF') {
+      } else if (c <= 0x7FF) {
         out[pos++] = (byte) (0xC0 | c >>> 6);
         out[pos++] = (byte) (0x80 | (c & 0x3F));
       } else {

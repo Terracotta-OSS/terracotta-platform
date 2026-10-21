@@ -59,6 +59,17 @@ public class EnumMapping<E> {
     return integer;
   }
 
+  /**
+   * Maps an int value to its enum constant.
+   * <p>
+   * When the dense fast-path table is present, ids within its range are answered from the
+   * table directly: holes (unmapped ids inside the range) are {@code null} slots, identical
+   * to what the map would return for the same id, so there is deliberately no fall-through —
+   * the mapping is immutable, so a hole can never become a mapped value later.
+   *
+   * @param intValue the int value to map
+   * @return the mapped enum constant, or {@code null} if the value is unmapped
+   */
   public E toEnum(int intValue) {
     if (denseToEnum != null && intValue >= 0 && intValue < denseToEnum.length) {
       return denseToEnum[intValue];

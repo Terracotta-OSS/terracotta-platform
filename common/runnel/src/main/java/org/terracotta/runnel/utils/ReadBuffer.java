@@ -123,9 +123,8 @@ public final class ReadBuffer {
      * is the character bytes themselves. Scan the raw bytes once; if none have the high bit set,
      * decode the whole range in a single String construction (no intermediate decoder, CharBuffer
      * or slice). All bytes below 0x80 decode identically under US-ASCII and modified UTF-8.
-     * The scan is a branchless OR-reduction, which JITs auto-vectorize.
-     * Otherwise, at least one byte is >= 0x80 (exactly the inputs on which a US-ASCII decode
-     * attempt would fail), so decode straight away as modified UTF-8.
+     * The scan bails out at the first byte with the high bit set, so non-ASCII input pays
+     * almost nothing for the check before the modified-UTF-8 path takes over.
      */
     ByteBuffer encoded;
     if (byteBuffer.hasArray()) {
@@ -161,17 +160,13 @@ public final class ReadBuffer {
    * @return true if every one of {@code data[start .. start+length)} is a 7-bit ASCII byte
    */
   private static boolean isAscii(byte[] data, int start, int length) {
-    int acc = 0;
     int end = start + length;
-    int i = start;
-    int end8 = start + (length & ~7);
-    for (; i < end8; i += 8) {
-      acc |= (data[i] | data[i + 1] | data[i + 2] | data[i + 3] | data[i + 4] | data[i + 5] | data[i + 6] | data[i + 7]);
+    for (int i = start; i < end; i++) {
+      if (data[i] < 0) {
+        return false;
+      }
     }
-    for (; i < end; i++) {
-      acc |= data[i];
-    }
-    return acc >= 0;
+    return true;
   }
 
   private static String decodeModifiedUtf8(ByteBuffer encoded, int size) {

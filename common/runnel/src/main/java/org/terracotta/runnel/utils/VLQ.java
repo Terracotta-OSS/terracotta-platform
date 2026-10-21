@@ -73,8 +73,8 @@ public class VLQ {
     if (value < 0) {
       throw new IllegalArgumentException("Cannot encode negative values");
     }
-    // number of 7-bit groups needed to represent the value, branchless
-    return (38 - Integer.numberOfLeadingZeros(value | 1)) / 7;
+    // ceil(bits / 7): the number of 7-bit groups needed to represent the value, branchless
+    return (((32 - Integer.numberOfLeadingZeros(value | 1)) + 6) / 7);
   }
 
 }
