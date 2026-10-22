@@ -1,4 +1,5 @@
 /*
+ * Copyright Terracotta, Inc.
  * Copyright IBM Corp. 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +18,14 @@ package org.terracotta.runnel.decoding;
 
 import org.terracotta.runnel.utils.ReadBuffer;
 
+/**
+ * A decoder backed by a {@link ReadBuffer}.
+ * <p>
+ * Exposes the live buffer that delimits the frame this decoder is positioned on, so that a
+ * child decoder can advance within its parent's frame (e.g.
+ * {@link StructDecoder#next()} across the elements of a struct array). The returned buffer
+ * must not be mutated by callers: its limit and position are managed by the decoder.
+ */
 public interface Decoder {
 
   ReadBuffer buffer();
