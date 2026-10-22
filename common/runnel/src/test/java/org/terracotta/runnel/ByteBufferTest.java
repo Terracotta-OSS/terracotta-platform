@@ -49,12 +49,12 @@ public class ByteBufferTest {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
     ByteBuffer blob = decoder.byteBuffer("blob");
     checkByteBuffer(blob, 128, 'x');
 
-    ArrayDecoder<ByteBuffer, StructDecoder<Void>> ad = decoder.byteBuffers("blobs");
+    ArrayDecoder<ByteBuffer, ?> ad = decoder.byteBuffers("blobs");
     assertThat(ad.length(), is(3));
     checkByteBuffer(ad.value(), 16, 'p');
     checkByteBuffer(ad.value(), 32, 'q');

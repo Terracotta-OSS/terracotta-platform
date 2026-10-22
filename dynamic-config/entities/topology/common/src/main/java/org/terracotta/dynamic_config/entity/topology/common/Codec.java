@@ -243,12 +243,12 @@ public class Codec implements MessageCodec<Message, Response> {
   @Override
   public Response decodeResponse(byte[] bytes) throws MessageCodecException {
     try {
-      StructDecoder<Void> decoder = struct.decoder(ByteBuffer.wrap(bytes));
+      StructDecoder<?> decoder = struct.decoder(ByteBuffer.wrap(bytes));
       Type type = decoder.<Type>enm("type").get();
       LOGGER.trace("decodeResponse({})", type);
       switch (type) {
         case REQ_LICENSE: {
-          StructDecoder<StructDecoder<Void>> payload = decoder.struct(type.name());
+          StructDecoder<?> payload = decoder.struct(type.name());
           if (payload == null) {
             return new Response(type, null);
           } else {

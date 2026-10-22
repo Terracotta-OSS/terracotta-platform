@@ -68,9 +68,9 @@ public class PrimitiveArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(bb);
+    StructDecoder<?> decoder = struct.decoder(bb);
 
-    ArrayDecoder<Long, StructDecoder<Void>> ids = decoder.int64s("ids");
+    ArrayDecoder<Long, ?> ids = decoder.int64s("ids");
     assertThat(ids.length(), is(0));
   }
 
@@ -96,11 +96,11 @@ public class PrimitiveArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(bb);
+    StructDecoder<?> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    ArrayDecoder<Long, StructDecoder<Void>> adi = decoder.int64s("ids");
+    ArrayDecoder<Long, ?> adi = decoder.int64s("ids");
     assertThat(adi.length(), is(3));
     assertThat(adi.value(), is(4L));
     assertThat(adi.value(), is(5L));
@@ -109,7 +109,7 @@ public class PrimitiveArrayStructBuilderTest {
 
     assertThat(decoder.string("address"), is("my street"));
 
-    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.strings("colors");
+    ArrayDecoder<String, ?> ads = decoder.strings("colors");
     assertThat(ads.length(), is(2));
     assertThat(ads.value(), is("blue"));
     assertThat(ads.value(), is("green"));
@@ -191,18 +191,18 @@ public class PrimitiveArrayStructBuilderTest {
 
     bb.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(bb);
+    StructDecoder<?> decoder = struct.decoder(bb);
 
     assertThat(decoder.string("name"), is("joe"));
 
-    ArrayDecoder<Long, StructDecoder<Void>> ad = decoder.int64s("ids");
+    ArrayDecoder<Long, ?> ad = decoder.int64s("ids");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(4L));
     ad.end();
 
     assertThat(decoder.string("address"), is("my street"));
 
-    ArrayDecoder<String, StructDecoder<Void>> ads = decoder.strings("colors");
+    ArrayDecoder<String, ?> ads = decoder.strings("colors");
     assertThat(ads.length(), is(2));
     assertThat(ads.value(), is("blue"));
     ads.end();

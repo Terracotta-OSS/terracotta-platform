@@ -28,7 +28,7 @@ enum LeaseMessageType {
     this.leaseMessageDecoder = leaseMessageDecoder;
   }
 
-  public LeaseMessage decode(StructDecoder<Void> decoder) {
+  public LeaseMessage decode(StructDecoder<?> decoder) {
     return leaseMessageDecoder.decode(decoder);
   }
 }

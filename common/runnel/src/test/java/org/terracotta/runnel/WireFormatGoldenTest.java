@@ -140,7 +140,7 @@ public class WireFormatGoldenTest {
   @Test
   public void leaseGolden() {
     assertGolden(GOLDEN_LEASE, encodeLease());
-    StructDecoder<Void> d = LEASE.decoder(fromHex(GOLDEN_LEASE));
+    StructDecoder<?> d = LEASE.decoder(fromHex(GOLDEN_LEASE));
     assertThat(d.<Kind>enm("kind").get(), is(Kind.PONG));
     assertThat(d.int64("msn"), is(12345678901234L));
     assertThat(d.int64("ts"), is(1750000000000L));
@@ -151,7 +151,7 @@ public class WireFormatGoldenTest {
   @Test
   public void mixedGolden() {
     assertGolden(GOLDEN_MIXED, encodeMixed());
-    StructDecoder<Void> d = MIXED.decoder(fromHex(GOLDEN_MIXED));
+    StructDecoder<?> d = MIXED.decoder(fromHex(GOLDEN_MIXED));
     assertThat(d.string("name"), is("node-1"));
     assertThat(d.int32("port"), is(9410));
     assertThat(d.fp64("load"), is(0.83));
@@ -167,7 +167,7 @@ public class WireFormatGoldenTest {
   @Test
   public void stringsGolden() {
     assertGolden(GOLDEN_STRINGS, encodeStrings());
-    StructDecoder<Void> d = STRINGS.decoder(fromHex(GOLDEN_STRINGS));
+    StructDecoder<?> d = STRINGS.decoder(fromHex(GOLDEN_STRINGS));
     assertThat(d.string("empty"), is(""));
     assertThat(d.string("ascii"), is("plain"));
     assertThat(d.string("nul"), is("a\u0000b"));
@@ -180,7 +180,7 @@ public class WireFormatGoldenTest {
   @Test
   public void arraysGolden() {
     assertGolden(GOLDEN_ARRAYS, encodeArrays());
-    StructDecoder<Void> d = ARRAYS.decoder(fromHex(GOLDEN_ARRAYS));
+    StructDecoder<?> d = ARRAYS.decoder(fromHex(GOLDEN_ARRAYS));
     assertThat(d.int64sArray("longs"), is(new long[]{7L, -1L, Long.MAX_VALUE}));
     assertThat(d.stringsArray("names"), is(new String[]{"", "x", "\u4e2d\u6587"}));
     assertGolden(GOLDEN_ARRAYS, encodeArrays());
@@ -189,7 +189,7 @@ public class WireFormatGoldenTest {
   @Test
   public void structArrayGolden() {
     assertGolden(GOLDEN_STRUCTS, encodeStructs());
-    StructDecoder<Void> d = STRUCTS.decoder(fromHex(GOLDEN_STRUCTS));
+    StructDecoder<?> d = STRUCTS.decoder(fromHex(GOLDEN_STRUCTS));
     java.util.List<String> ids = d.structs("cells").decodeAll(
         cell -> cell.string("id") + ":" + cell.int64("v", Long.MIN_VALUE));
     assertThat(ids, is(java.util.Arrays.asList("c-0:1", "c-1:-2")));

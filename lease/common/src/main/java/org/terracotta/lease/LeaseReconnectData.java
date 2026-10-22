@@ -49,7 +49,7 @@ public class LeaseReconnectData {
   }
 
   public static LeaseReconnectData decode(byte[] bytes) {
-    StructDecoder<Void> decoder = reconnectStruct.decoder(ByteBuffer.wrap(bytes));
+    StructDecoder<?> decoder = reconnectStruct.decoder(ByteBuffer.wrap(bytes));
     long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
     return new LeaseReconnectData(connectionSequenceNumber);
   }

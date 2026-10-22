@@ -55,8 +55,8 @@ public class LeaseRequest implements LeaseMessage {
     encoder.end();
   }
 
-  public static LeaseMessage decode(StructDecoder<Void> parentDecoder) {
-    StructDecoder<StructDecoder<Void>> decoder = parentDecoder.struct("leaseRequest");
+  public static LeaseMessage decode(StructDecoder<?> parentDecoder) {
+    StructDecoder<?> decoder = parentDecoder.struct("leaseRequest");
     long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
     return new LeaseRequest(connectionSequenceNumber);
   }
