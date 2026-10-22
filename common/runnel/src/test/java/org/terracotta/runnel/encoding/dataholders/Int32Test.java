@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class Int32Test {
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(1));
     assertThat(readBuffer.getVlqInt(), is(4));
-    assertThat(readBuffer.getInt(), is(99));
+    assertThat(readBuffer.getIntValue(), is(99));
   }
 
   @Test
@@ -58,7 +58,7 @@ public class Int32Test {
     bb.rewind();
     ReadBuffer readBuffer = new ReadBuffer(bb);
     assertThat(readBuffer.getVlqInt(), is(4));
-    assertThat(readBuffer.getInt(), is(99));
+    assertThat(readBuffer.getIntValue(), is(99));
   }
 
 }

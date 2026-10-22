@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class StructTest {
     assertThat(readBuffer.getString(4), is("eins"));
     assertThat(readBuffer.getVlqInt(), is(3));
     assertThat(readBuffer.getVlqInt(), is(8));
-    assertThat(readBuffer.getLong(), is(111L));
+    assertThat(readBuffer.getLongValue(), is(111L));
     assertThat(readBuffer.getVlqInt(), is(4));
     assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getString(8), is("deuxieme"));
@@ -72,7 +72,7 @@ public class StructTest {
     assertThat(readBuffer.getString(4), is("eins"));
     assertThat(readBuffer.getVlqInt(), is(3));
     assertThat(readBuffer.getVlqInt(), is(8));
-    assertThat(readBuffer.getLong(), is(111L));
+    assertThat(readBuffer.getLongValue(), is(111L));
     assertThat(readBuffer.getVlqInt(), is(4));
     assertThat(readBuffer.getVlqInt(), is(8));
     assertThat(readBuffer.getString(8), is("deuxieme"));
