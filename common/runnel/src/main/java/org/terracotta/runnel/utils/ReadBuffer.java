@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ public final class ReadBuffer {
     setLimit(limit);
   }
 
+  /**
+   * @deprecated boxing: use {@link #getBooleanValue()} instead
+   */
+  @Deprecated
   public Boolean getBoolean() {
     return getBooleanValue() ? Boolean.TRUE : Boolean.FALSE;
   }
@@ -48,6 +52,10 @@ public final class ReadBuffer {
     return byteBuffer.get() != (byte) 0;
   }
 
+  /**
+   * @deprecated boxing: use {@link #getDoubleValue()} instead
+   */
+  @Deprecated
   public Double getDouble() {
     return getDoubleValue();
   }
@@ -59,6 +67,10 @@ public final class ReadBuffer {
     return byteBuffer.getDouble();
   }
 
+  /**
+   * @deprecated boxing: use {@link #getLongValue()} instead
+   */
+  @Deprecated
   public Long getLong() {
     return getLongValue();
   }
@@ -70,6 +82,10 @@ public final class ReadBuffer {
     return byteBuffer.getLong();
   }
 
+  /**
+   * @deprecated boxing: use {@link #getCharValue()} instead
+   */
+  @Deprecated
   public Character getChar() {
     return getCharValue();
   }
@@ -81,6 +97,10 @@ public final class ReadBuffer {
     return byteBuffer.getChar();
   }
 
+  /**
+   * @deprecated boxing: use {@link #getIntValue()} instead
+   */
+  @Deprecated
   public Integer getInt() {
     return getIntValue();
   }
