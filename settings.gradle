@@ -66,6 +66,7 @@ include ':common:test-utilities',
     ':lease:server',
     ':management:server:services',
     ':platform-base',
+    ':platform-metrics',
     ':security:logger:server:services',
 
     // voltron healthchecker entity
