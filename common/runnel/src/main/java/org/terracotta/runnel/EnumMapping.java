@@ -16,64 +16,30 @@
  */
 package org.terracotta.runnel;
 
-import java.util.Map;
-
 /**
- * @author Ludovic Orban
+ * Maps enum constants to int values and back.
+ * <p>
+ * Instances are created by {@link EnumMappingBuilder#build()}, which picks one of four
+ * package-private implementations based on whether the mapped type is a Java enum and whether
+ * the int id space is dense enough to be array-indexed, so the hot paths avoid hash lookups
+ * (and the boxing that goes with them) where possible.
  */
-public class EnumMapping<E> {
-  private final Map<E, Integer> enumToInteger;
-  private final Map<Integer, E> integerToEnum;
-  // Dense int->enum lookup table, present when the mapping's int values are small enough to be
-  // array-indexed cheaply; null for sparse/large id spaces.
-  private final E[] denseToEnum;
-  // Ordinal-indexed enum->int lookup tables, present for Java enum mappings; both null otherwise.
-  // ordinalConstants guards the lookup: callers can pass a constant of an unrelated enum type
-  // (the encoder API is unchecked), which must still be rejected as unmapped.
-  private final E[] ordinalConstants;
-  private final int[] ordinalToInt;
+public interface EnumMapping<E> {
 
-  EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum) {
-    this(enumToInteger, integerToEnum, null, null, null);
-  }
-
-  EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum, E[] denseToEnum, E[] ordinalConstants, int[] ordinalToInt) {
-    this.enumToInteger = enumToInteger;
-    this.integerToEnum = integerToEnum;
-    this.denseToEnum = denseToEnum;
-    this.ordinalConstants = ordinalConstants;
-    this.ordinalToInt = ordinalToInt;
-  }
-
-  public int toInt(E e) {
-    if (ordinalConstants != null && e instanceof Enum) {
-      int ordinal = ((Enum<?>) e).ordinal();
-      if (ordinal < ordinalConstants.length && ordinalConstants[ordinal] == e) {
-        return ordinalToInt[ordinal];
-      }
-    }
-    Integer integer = enumToInteger.get(e);
-    if (integer == null) {
-      throw new IllegalArgumentException("Unmapped enum : " + e);
-    }
-    return integer;
-  }
+  /**
+   * Maps an enum constant to its int value.
+   *
+   * @param e the enum constant
+   * @return the int value
+   * @throws IllegalArgumentException if the constant is not mapped (including {@code null})
+   */
+  int toInt(E e);
 
   /**
    * Maps an int value to its enum constant.
-   * <p>
-   * When the dense fast-path table is present, ids within its range are answered from the
-   * table directly: holes (unmapped ids inside the range) are {@code null} slots, identical
-   * to what the map would return for the same id, so there is deliberately no fall-through —
-   * the mapping is immutable, so a hole can never become a mapped value later.
    *
    * @param intValue the int value to map
    * @return the mapped enum constant, or {@code null} if the value is unmapped
    */
-  public E toEnum(int intValue) {
-    if (denseToEnum != null && intValue >= 0 && intValue < denseToEnum.length) {
-      return denseToEnum[intValue];
-    }
-    return integerToEnum.get(intValue);
-  }
+  E toEnum(int intValue);
 }
