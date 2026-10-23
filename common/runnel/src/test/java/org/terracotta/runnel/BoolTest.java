@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,10 @@ public class BoolTest {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
     assertThat(decoder.bool("x"), is(true));
-    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
+    ArrayDecoder<Boolean, ?> ad = decoder.bools("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(false));
     assertThat(ad.value(), is(true));
@@ -82,9 +82,9 @@ public class BoolTest {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Boolean, StructDecoder<Void>> ad = decoder.bools("y");
+    ArrayDecoder<Boolean, ?> ad = decoder.bools("y");
     assertThat(ad.length(), is(3));
     assertThat(ad.value(), is(true));
     assertThat(ad.value(), is(false));

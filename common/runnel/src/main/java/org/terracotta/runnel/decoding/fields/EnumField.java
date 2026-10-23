@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,27 @@ public class EnumField<E> extends AbstractValueField<Enm<E>> {
     return enumMapping;
   }
 
+  /**
+   * @deprecated allocating: use {@link #decodeEnum(ReadBuffer)} to avoid the {@link Enm} holder
+   */
+  @Deprecated
   @Override
   public Enm<E> decode(ReadBuffer readBuffer) {
     readBuffer.getVlqInt();
     int intValue = readBuffer.getVlqInt();
     E e = enumMapping.toEnum(intValue);
     return new Enm<>(name(), intValue, e);
+  }
+
+  /**
+   * Decode this enum field without allocating an {@link Enm} holder.
+   * @param readBuffer the buffer to read from
+   * @return the mapped enum value, or {@code null} if the raw value cannot be mapped
+   */
+  public E decodeEnum(ReadBuffer readBuffer) {
+    readBuffer.getVlqInt();
+    int intValue = readBuffer.getVlqInt();
+    return enumMapping.toEnum(intValue);
   }
 
   @Override

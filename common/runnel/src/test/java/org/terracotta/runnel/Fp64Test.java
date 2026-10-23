@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,10 @@ public class Fp64Test {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
     assertThat(decoder.fp64("x"), is(-1.0));
-    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
+    ArrayDecoder<Double, ?> ad = decoder.fp64s("y");
     assertThat(ad.length(), is(5));
     assertThat(ad.value(), is(1.0));
     assertThat(ad.value(), is(-0.123));
@@ -88,9 +88,9 @@ public class Fp64Test {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
-    ArrayDecoder<Double, StructDecoder<Void>> ad = decoder.fp64s("y");
+    ArrayDecoder<Double, ?> ad = decoder.fp64s("y");
     assertThat(ad.length(), is(5));
     assertThat(ad.value(), is(1.0));
     assertThat(ad.value(), is(-0.123));

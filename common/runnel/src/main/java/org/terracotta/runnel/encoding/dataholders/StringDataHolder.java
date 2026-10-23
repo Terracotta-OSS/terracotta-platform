@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,14 @@ package org.terracotta.runnel.encoding.dataholders;
 import org.terracotta.runnel.utils.StringTool;
 import org.terracotta.runnel.utils.WriteBuffer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Ludovic Orban
  */
 public final class StringDataHolder extends AbstractDataHolder {
 
-  private static final boolean V1_STRING_ENCODING = false;
-
-  private final ByteBuffer encodedString;
+  private final byte[] encodedString;
 
   public StringDataHolder(String value, int index) {
     super(index);
@@ -39,59 +35,50 @@ public final class StringDataHolder extends AbstractDataHolder {
 
   @Override
   protected int valueSize() {
-    return encodedString.remaining();
+    return encodedString.length;
   }
 
   @Override
   protected void encodeValue(WriteBuffer writeBuffer) {
-    writeBuffer.putByteBuffer(encodedString);
+    writeBuffer.putBytes(encodedString, 0, encodedString.length);
   }
 
-  private ByteBuffer encodeString(String object) {
-    if (V1_STRING_ENCODING) {
-      ByteArrayOutputStream bout = new ByteArrayOutputStream(4 * object.length() + 1);
-      try {
-        int length = object.length();
-        int i = 0;
-
-        for (; i < length; i++) {
-          char c = object.charAt(i);
-          if ((c == 0x0000) || (c > 0x007f)) {
-            break;
-          }
-          bout.write(c);
-        }
-
-        for (; i < length; i++) {
-          char c = object.charAt(i);
-          if (c == 0x0000) {
-            bout.write(0xc0);
-            bout.write(0x80);
-          } else if (c < 0x0080) {
-            bout.write(c);
-          } else if (c < 0x800) {
-            bout.write(0xc0 | ((c >>> 6) & 0x1f));
-            bout.write(0x80 | (c & 0x3f));
-          } else {
-            bout.write(0xe0 | ((c >>> 12) & 0x1f));
-            bout.write(0x80 | ((c >>> 6) & 0x3f));
-            bout.write(0x80 | (c & 0x3f));
-          }
-        }
-      } finally {
-        try {
-          bout.close();
-        } catch (IOException ex) {
-          throw new AssertionError(ex);
-        }
-      }
-      return ByteBuffer.wrap(bout.toByteArray());
-    } else {
-      ByteBuffer w = ByteBuffer.allocate(4 * object.length() + 1);
-      StringTool.putEncoded(w, object, object.length());
-      w.flip();
-      return w.slice();
+  /**
+   * Encodes a string to its modified UTF-8 representation (NUL as {@code C0 80}, 2- and 3-byte
+   * forms, supplementary characters as surrogate pairs), in an exactly-sized byte array.
+   */
+  static byte[] encodeString(String object) {
+    int strLength = object.length();
+    long encodedLen = StringTool.getEncodedLen(object);
+    if (encodedLen != (int) encodedLen) {
+      throw new IllegalStateException("Encoded length greater than Integer.MAX_VALUE: " + encodedLen);
     }
+
+    if (encodedLen == strLength) {
+      /*
+       * Every character weighed exactly one byte, which can only happen when all characters
+       * are non-NUL 7-bit ASCII (NUL weighs two bytes). Those encode to themselves under
+       * ISO-8859-1, which on compact-string JVMs is a plain copy of the string's internal bytes.
+       */
+      return object.getBytes(StandardCharsets.ISO_8859_1);
+    }
+
+    byte[] out = new byte[(int) encodedLen];
+    int pos = 0;
+    for (int i = 0; i < strLength; i++) {
+      char c = object.charAt(i);
+      if (c <= 0x7F && c != 0) {
+        out[pos++] = (byte) c;
+      } else if (c <= 0x7FF) {
+        out[pos++] = (byte) (0xC0 | c >>> 6);
+        out[pos++] = (byte) (0x80 | (c & 0x3F));
+      } else {
+        out[pos++] = (byte) (0xE0 | c >>> 12);
+        out[pos++] = (byte) (0x80 | ((c >>> 6) & 0x3F));
+        out[pos++] = (byte) (0x80 | (c & 0x3F));
+      }
+    }
+    return out;
   }
 
 }

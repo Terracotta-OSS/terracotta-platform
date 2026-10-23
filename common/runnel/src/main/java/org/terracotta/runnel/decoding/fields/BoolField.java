@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,26 @@ public class BoolField extends AbstractValueField<Boolean> {
     super(name, index);
   }
 
+  /**
+   * @deprecated boxing: use {@link #decodeBoolean(ReadBuffer)} instead
+   */
+  @Deprecated
   @Override
   public Boolean decode(ReadBuffer readBuffer) {
+    return decodeBoolean(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public boolean decodeBoolean(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 1) {
       throw new CorruptDataException("Expected field size of 1, read : " + size);
     }
-    return readBuffer.getBoolean();
+    return readBuffer.getBooleanValue();
   }
 
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,14 @@ public class EnumMappingBuilder<E> {
     return new EnumMappingBuilder<>(enumClass);
   }
 
+  /** Hard cap on the int value range for which the dense int->enum table is built. */
+  private static final int MAX_DENSE_ID = 4096;
+  /**
+   * Footprint floor for the dense table: small id spaces (e.g. ids 10, 20, 30) always get the
+   * fast path even though they are not fully populated.
+   */
+  private static final int MIN_DENSE_TABLE_SIZE = 1024;
+
   @SuppressWarnings({"SuspiciousMethodCalls", "unchecked", "rawtypes"})
   public EnumMapping<E> build() {
     if (Enum.class.isAssignableFrom(enumClass)) {
@@ -53,8 +61,62 @@ public class EnumMappingBuilder<E> {
       if (!unregisteredEnums.isEmpty()) {
         throw new IllegalStateException("Missing enum mappings for : " + unregisteredEnums);
       }
+
+      /*
+       * Java enum mappings answer the enum-to-int direction from an ordinal-indexed table
+       * (which does not depend on the id space at all), avoiding the forward-map hit and its
+       * boxing; the int-to-enum direction picks between a dense array and the reverse map.
+       */
+      E[] constants = enumClass.getEnumConstants();
+      int[] ordinalToInt = new int[constants.length];
+      for (E e : constants) {
+        Integer mapped = enumToInteger.get(e);
+        if (mapped == null) {
+          // unreachable: the unregistered-enums check above has already rejected this mapping
+          throw new IllegalStateException("No mapping for enum constant : " + e);
+        }
+        ordinalToInt[((Enum<?>) e).ordinal()] = mapped;
+      }
+      if (isDenseIdSpace()) {
+        return new DenseOrdinalEnumMapping<>(constants, ordinalToInt, buildDenseToEnum());
+      }
+      return new SparseOrdinalEnumMapping<>(constants, ordinalToInt, integerToEnum);
     }
-    return new EnumMapping<>(enumToInteger, integerToEnum);
+
+    /*
+     * Non-Java-enum mapped types keep the forward map (there are no ordinals to index by);
+     * the int-to-enum direction picks between a dense array and the reverse map.
+     */
+    if (isDenseIdSpace()) {
+      return new DenseEnumMapping<>(enumToInteger, buildDenseToEnum());
+    }
+    return new MapEnumMapping<>(enumToInteger, integerToEnum);
+  }
+
+  /**
+   * @return true when the mapped int values are small, non-negative and densely distributed
+   * enough that an int-indexed array is a reasonable substitute for the reverse map.
+   */
+  private boolean isDenseIdSpace() {
+    if (integerToEnum.isEmpty()) {
+      return false;
+    }
+    int max = integerToEnum.keySet().stream().mapToInt(Integer::intValue).max().getAsInt();
+    // Build the array only when its footprint stays proportional to the entry count, so a
+    // sparse-but-small id space (e.g. ids 0 and 4096 for a two-value enum) stays map-backed
+    // instead of pinning a multi-kilobyte array for the mapping's lifetime; small id spaces
+    // (e.g. ids 10, 20, 30) always get the fast path.
+    return max <= MAX_DENSE_ID && max + 1 <= Math.max(MIN_DENSE_TABLE_SIZE, integerToEnum.size() * 8);
+  }
+
+  @SuppressWarnings("unchecked")
+  private E[] buildDenseToEnum() {
+    int max = integerToEnum.keySet().stream().mapToInt(Integer::intValue).max().getAsInt();
+    E[] denseToEnum = (E[]) java.lang.reflect.Array.newInstance(enumClass, max + 1);
+    for (Map.Entry<Integer, E> entry : integerToEnum.entrySet()) {
+      denseToEnum[entry.getKey()] = entry.getValue();
+    }
+    return denseToEnum;
   }
 
   public EnumMappingBuilder<E> mapping(E e, int value) {

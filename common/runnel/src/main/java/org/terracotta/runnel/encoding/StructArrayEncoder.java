@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@ public class StructArrayEncoder<P> {
     this.structField = structField;
     this.values = values;
     this.parent = parent;
-    this.currentData = new ArrayList<>();
+    this.currentData = new ArrayList<>(structField.getMetadata().fieldCount());
   }
 
   public StructEncoder<StructArrayEncoder<P>> add() {
     if (!currentData.isEmpty()) {
       values.add(new StructDataHolder(currentData, -1));
     }
-    return new StructEncoder<>(structField, currentData = new ArrayList<>(), this);
+    return new StructEncoder<>(structField, currentData = new ArrayList<>(structField.getMetadata().fieldCount()), this);
   }
 
   public P end() {

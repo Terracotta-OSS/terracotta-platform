@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class ReadBufferTest {
     ReadBuffer readBuffer = new ReadBuffer(byteBuffer);
 
     try {
-      readBuffer.getInt();
+      readBuffer.getIntValue();
       fail();
     } catch (LimitReachedException e) {
       // expected

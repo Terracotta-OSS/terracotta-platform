@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,13 @@ public abstract class AbstractDataHolder implements DataHolder {
     this.index = index;
   }
 
+  /**
+   * {@inheritDoc}
+   * <p>
+   * For structured holders the recursive work is memoized by their {@code valueSize()}
+   * implementation; the remaining per-holder computation here reduces to the (branchless)
+   * VLQ size of a constant and costs ~1-2 CPU ops, so no extra per-holder cache is kept.
+   */
   @Override
   public final int size(boolean withIndex) {
     int dataSize = valueSize();

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class LeaseAcquirerAvailable implements LeaseResponse {
   public void encode(StructEncoder<Void> parentEncoder) {
   }
 
-  public static LeaseResponse decode(StructDecoder<Void> parentDecoder) {
+  public static LeaseResponse decode(StructDecoder<?> parentDecoder) {
     return new LeaseAcquirerAvailable();
   }
 }

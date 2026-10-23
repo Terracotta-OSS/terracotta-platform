@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
 
   @Override
   public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
-    StructDecoder<Void> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
+    StructDecoder<?> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
     LeaseMessageType type = decoder.<LeaseMessageType>enm("messageType").get();
     return type.decode(decoder);
   }
@@ -60,7 +60,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
 
   @Override
   public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
-    StructDecoder<Void> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
+    StructDecoder<?> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
     LeaseResponseType type = decoder.<LeaseResponseType>enm("responseType").get();
     return type.decode(decoder);
   }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,26 @@ public class Int64Field extends AbstractValueField<Long> {
     super(name, index);
   }
 
+  /**
+   * @deprecated boxing: use {@link #decodeLong(ReadBuffer)} instead
+   */
+  @Deprecated
   @Override
   public Long decode(ReadBuffer readBuffer) {
+    return decodeLong(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public long decodeLong(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 8) {
       throw new CorruptDataException("Expected field size of 8, read : " + size);
     }
-    return readBuffer.getLong();
+    return readBuffer.getLongValue();
   }
 
 }

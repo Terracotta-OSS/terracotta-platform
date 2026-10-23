@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,10 @@ public class WriteBuffer {
 
   public void putByteBuffer(ByteBuffer buffer) {
     byteBuffer.put(buffer);
+  }
+
+  public void putBytes(byte[] bytes, int offset, int length) {
+    byteBuffer.put(bytes, offset, length);
   }
 
 }
