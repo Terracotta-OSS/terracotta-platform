@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.entity.management.server;
 
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.api.server.DynamicConfigEventService;
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
@@ -30,6 +31,11 @@ public class ManagementActiveEntity extends ManagementCommonEntity implements Ac
 
   ManagementActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
     super(managementRegistry, dynamicConfigEventService, topologyService);
+  }
+
+  @Override
+  public EntityResponse invokeActive(ActiveInvokeContext<EntityResponse> context, EntityMessage message) {
+    return null;
   }
 
   @Override
