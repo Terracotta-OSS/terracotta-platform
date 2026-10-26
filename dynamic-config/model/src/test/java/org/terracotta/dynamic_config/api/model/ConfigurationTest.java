@@ -75,6 +75,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
+import static org.terracotta.dynamic_config.api.model.Setting.CRYPTO_COMPLIANCE_LEVEL;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.RELAY_HOSTNAME;
@@ -384,7 +385,8 @@ public class ConfigurationTest {
           tuple2(CLIENT_RECONNECT_WINDOW, "20s"),
           tuple2(CLIENT_LEASE_DURATION, "20s"),
           tuple2(SECURITY_SSL_TLS, "true"),
-          tuple2(SECURITY_WHITELIST, "true")
+          tuple2(SECURITY_WHITELIST, "true"),
+          tuple2(CRYPTO_COMPLIANCE_LEVEL, "preferred")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
         rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
