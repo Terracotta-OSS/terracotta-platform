@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.MessageCodecException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,7 +60,7 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
                 }
             }
             monitors.remove(requestSequenceNumber);
-        } catch (InterruptedException | MessageCodecException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -69,16 +68,11 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
     @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
     @Override
     public void handleClientCommunicatorMessage(R message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {
-      try {
         ClientCommunicatorRequest clientCommunicatorRequest = ClientCommunicatorRequestCodec.deserialize(clientCommunicatorMessageFactory.extractBytesFromResponse(message));
         switch (clientCommunicatorRequest.getRequestType()) {
             case ACK:
                 clientCommunicatorMessageHandler.handleMessage(clientCommunicatorRequest.getMsgBytes());
-                try {
-                    entityClientEndpoint.message(clientCommunicatorMessageFactory.createEntityMessage(ByteBuffer.allocate(4).putInt(clientCommunicatorRequest.getRequestSequenceNumber()).array())).invoke();
-                } catch (MessageCodecException e) {
-                    throw new RuntimeException(e);
-                }
+                entityClientEndpoint.message(clientCommunicatorMessageFactory.createEntityMessage(ByteBuffer.allocate(4).putInt(clientCommunicatorRequest.getRequestSequenceNumber()).array())).invoke();
                 break;
 
             case NO_ACK:
@@ -100,10 +94,6 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
             default:
                 throw new IllegalArgumentException("unexpected/unknown ClientCommunicatorRequestType: " + clientCommunicatorRequest.getRequestType());
         }
-      } catch (MessageCodecException e) {
-        // This would mean a serious bug in the message factory.
-        throw new RuntimeException(e);
-      }
     }
 }
 
