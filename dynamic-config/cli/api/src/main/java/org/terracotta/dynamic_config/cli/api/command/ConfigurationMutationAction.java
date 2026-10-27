@@ -29,7 +29,6 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -42,7 +41,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,12 +51,10 @@ import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.RELAY;
-import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_ONLINE;
@@ -300,68 +296,10 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     // node that we cannot restart
     Collection<Endpoint> cannotRestart = new LinkedHashSet<>();
 
-    // nodes that we will restart
-    Collection<Endpoint> actives = new LinkedList<>();
-    Collection<Endpoint> others = new LinkedList<>();
-
-    // first try to grasp the shape of the online topology
-    // to determine which nodes can be restarted
-    for (Stripe stripe : cluster.getStripes()) {
-      List<Endpoint> onlineNodesPerStripe = onlineNodesToRestart.values().stream().filter(endpoint -> stripe.containsNode(endpoint.getNodeName())).collect(toList());
-
-      if (onlineNodesPerStripe.isEmpty()) {
-        LOGGER.warn("No node in stripe '{}' seem to be online", stripe.getName());
-
-      } else if (onlineNodesPerStripe.size() == 1) {
-        Endpoint alone = onlineNodesPerStripe.get(0);
-        LOGGER.warn("Unable to restart node: {} in stripe '{}' because this is the only online node", alone, stripe.getName());
-        cannotRestart.add(alone);
-
-      } else {
-        for (Endpoint endpoint : onlineNodesPerStripe) {
-          // get the node state again (we are searching for actives)
-          LogicalServerState state = UNREACHABLE;
-          try {
-            state = getLogicalServerState(endpoint);
-          } catch (RuntimeException e) {
-            LOGGER.warn("Node: {} in stripe '{}' is not reachable anymore: {}", endpoint, stripe.getName(), e.getMessage(), e);
-            cannotRestart.add(endpoint);
-          }
-          if (state.isActive()) {
-            actives.add(endpoint);
-          } else {
-            others.add(endpoint);
-          }
-        }
-      }
-    }
-
-    // Restarting all but active nodes.
-    // We except the nodes to be restarted in either active or passive state.
-    // If not, the restart will throw.
-    // This is required because next step is to restart the remaining nodes...
-    // Which are active, so we have to ensure that a passive not will be there to take over the active role
-    if (!others.isEmpty()) {
-      LOGGER.info("Restarting non active nodes: {}...", toString(others));
-      restartNodesIfPassives(
-          others,
-          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
-    } else {
-      LOGGER.info("No non active nodes to restart");
-    }
-
-    // Restarting actives. This will trigger failovers and active will restart as passives.
-    if (!actives.isEmpty()) {
-      LOGGER.info("Restarting active nodes: {}...", toString(actives));
-      restartNodesIfActives(
-          actives,
-          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
-    } else {
-      LOGGER.info("No active nodes to restart");
-    }
+    Collection<Endpoint> attempted = rollingRestart(cluster, onlineNodesToRestart.values(), cannotRestart);
 
     // let's check if some nodes were not restarted because their state has changed from the last time we got their state
-    concat(actives.stream(), others.stream())
+    attempted.stream()
         .filter(endpoint -> {
           try {
             return mustBeRestarted(endpoint);

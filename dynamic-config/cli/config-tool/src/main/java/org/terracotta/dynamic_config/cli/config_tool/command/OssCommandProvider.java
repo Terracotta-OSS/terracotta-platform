@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.cli.config_tool.parsing.LogCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RepairCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.ReplicaFailoverCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RollingRestartCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.UnlockConfigCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.UnsetCommand;
@@ -76,6 +77,7 @@ public class OssCommandProvider implements CommandProvider {
     commands.put("lock-config", new LockConfigCommand());
     commands.put("unlock-config", new UnlockConfigCommand());
     commands.put("replica-failover", new ReplicaFailoverCommand());
+    commands.put("rolling-restart", new RollingRestartCommand());
     return unmodifiableMap(commands);
   }
 

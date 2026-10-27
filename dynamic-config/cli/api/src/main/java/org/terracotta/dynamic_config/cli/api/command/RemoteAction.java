@@ -35,6 +35,7 @@ import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
@@ -69,6 +70,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -90,6 +92,7 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Stream.concat;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
@@ -609,6 +612,70 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
+  protected final Collection<Endpoint> rollingRestart(Cluster cluster, Collection<Endpoint> onlineNodesToRestart, Collection<Endpoint> cannotRestart) {
+    // nodes that we will restart
+    Collection<Endpoint> actives = new LinkedList<>();
+    Collection<Endpoint> others = new LinkedList<>();
+
+    // first try to grasp the shape of the online topology
+    // to determine which nodes can be restarted
+    for (Stripe stripe : cluster.getStripes()) {
+      List<Endpoint> onlineNodesPerStripe = onlineNodesToRestart.stream().filter(endpoint -> stripe.containsNode(endpoint.getNodeName())).collect(toList());
+
+      if (onlineNodesPerStripe.isEmpty()) {
+        LOGGER.warn("No node in stripe '{}' seem to be online", stripe.getName());
+
+      } else if (onlineNodesPerStripe.size() == 1) {
+        Endpoint alone = onlineNodesPerStripe.get(0);
+        LOGGER.warn("Unable to restart node: {} in stripe '{}' because this is the only online node", alone, stripe.getName());
+        cannotRestart.add(alone);
+
+      } else {
+        for (Endpoint endpoint : onlineNodesPerStripe) {
+          // get the node state again (we are searching for actives)
+          LogicalServerState state = UNREACHABLE;
+          try {
+            state = getLogicalServerState(endpoint);
+          } catch (RuntimeException e) {
+            LOGGER.warn("Node: {} in stripe '{}' is not reachable anymore: {}", endpoint, stripe.getName(), e.getMessage(), e);
+            cannotRestart.add(endpoint);
+          }
+          if (state.isActive()) {
+            actives.add(endpoint);
+          } else {
+            others.add(endpoint);
+          }
+        }
+      }
+    }
+
+    // Restarting all but active nodes.
+    // We except the nodes to be restarted in either active or passive state.
+    // If not, the restart will throw.
+    // This is required because next step is to restart the remaining nodes...
+    // Which are active, so we have to ensure that a passive not will be there to take over the active role
+    if (!others.isEmpty()) {
+      LOGGER.info("Restarting non active nodes: {}...", toString(others));
+      restartNodesIfPassives(
+          others,
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
+    } else {
+      LOGGER.info("No non active nodes to restart");
+    }
+
+    // Restarting actives. This will trigger failovers and active will restart as passives.
+    if (!actives.isEmpty()) {
+      LOGGER.info("Restarting active nodes: {}...", toString(actives));
+      restartNodesIfActives(
+          actives,
+          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, PASSIVE, RELAY));
+    } else {
+      LOGGER.info("No active nodes to restart");
+    }
+
+    return concat(actives.stream(), others.stream()).collect(toList());
+  }
+
   protected final void stopNodes(Collection<Endpoint> addresses, Duration maximumWaitTime, Duration restartDelay) {
     LOGGER.trace("stopNodes({}, {})", addresses, maximumWaitTime);
     try {
@@ -668,6 +735,10 @@ public abstract class RemoteAction implements Runnable {
   protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(Collection<HostPort> expectedOnlineNodes) {
     LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNodes);
     Cluster cluster = getRuntimeCluster(expectedOnlineNodes);
+    return findRuntimePeersStatus(cluster, expectedOnlineNodes);
+  }
+
+  protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(Cluster cluster, Collection<HostPort> expectedOnlineNodes) {
     final Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNodes);
     output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
     return getLogicalServerStates(endpoints);
