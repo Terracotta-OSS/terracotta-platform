@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,26 @@ public class Int32Field extends AbstractValueField<Integer> {
     super(name, index);
   }
 
+  /**
+   * @deprecated boxing: use {@link #decodeInt(ReadBuffer)} instead
+   */
+  @Deprecated
   @Override
   public Integer decode(ReadBuffer readBuffer) {
+    return decodeInt(readBuffer);
+  }
+
+  /**
+   * Decode this field without boxing.
+   * @param readBuffer the buffer to read from
+   * @return the decoded primitive value
+   */
+  public int decodeInt(ReadBuffer readBuffer) {
     int size = readBuffer.getVlqInt();
     if (size != 4) {
       throw new CorruptDataException("Expected field size of 4, read : " + size);
     }
-    return readBuffer.getInt();
+    return readBuffer.getIntValue();
   }
 
 }

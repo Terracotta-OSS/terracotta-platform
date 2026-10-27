@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,17 @@ package org.terracotta.runnel.decoding;
 import org.terracotta.runnel.decoding.fields.StructField;
 import org.terracotta.runnel.utils.ReadBuffer;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author Ludovic Orban
  */
-public class StructArrayDecoder<P> implements Iterator<StructDecoder<StructArrayDecoder<P>>> {
+public class StructArrayDecoder<P extends Decoder> implements Iterator<StructDecoder<StructArrayDecoder<P>>>, Decoder {
   private final P parent;
   private final ReadBuffer arrayReadBuffer;
   private final int arrayLength;
@@ -71,5 +75,31 @@ public class StructArrayDecoder<P> implements Iterator<StructDecoder<StructArray
   @Override
   public void remove() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void forEachRemaining(Consumer<? super StructDecoder<StructArrayDecoder<P>>> action) {
+    if (current != null) {
+      current.end();
+      current = null;
+    }
+    if (hasNext()) {
+      StructDecoder<StructArrayDecoder<P>> decoder = new StructDecoder<>(field, arrayReadBuffer, this);
+      do {
+        action.accept(decoder);
+      } while (decoder.next());
+      decoder.end();
+    }
+  }
+
+  public <T> List<T> decodeAll(Function<StructDecoder<StructArrayDecoder<P>>, T> elementDecoder) {
+    List<T> result = new ArrayList<>();
+    forEachRemaining(decoder -> result.add(elementDecoder.apply(decoder)));
+    return result;
+  }
+
+  @Override
+  public ReadBuffer buffer() {
+    return arrayReadBuffer;
   }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,12 +73,8 @@ public class VLQ {
     if (value < 0) {
       throw new IllegalArgumentException("Cannot encode negative values");
     }
-    int i = 1;
-    while ((value & 0xFFFFFF80) != 0L) {
-      value >>>= 7;
-      i++;
-    }
-    return i;
+    // ceil(bits / 7): the number of 7-bit groups needed to represent the value, branchless
+    return (((32 - Integer.numberOfLeadingZeros(value | 1)) + 6) / 7);
   }
 
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,5 +19,5 @@ package org.terracotta.lease;
 import org.terracotta.runnel.decoding.StructDecoder;
 
 public interface LeaseResponseDecoder {
-  LeaseResponse decode(StructDecoder<Void> parentDecoder);
+  LeaseResponse decode(StructDecoder<?> parentDecoder);
 }

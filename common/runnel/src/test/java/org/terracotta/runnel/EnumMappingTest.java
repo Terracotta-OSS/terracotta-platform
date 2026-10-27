@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,10 @@ public class EnumMappingTest {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
     assertThat(decoder.<Character>enm("myEnum2").get(), is(W));
-    StructDecoder<StructDecoder<Void>> sd = decoder.struct("z");
+    StructDecoder<?> sd = decoder.struct("z");
     assertThat(sd.<TestEnum1>enm("myEnum1").get(), is(TestEnum1.A));
     sd.end();
     assertThat(decoder.<Character>enm("myEnum2bis").get(), is(X));
@@ -108,7 +108,7 @@ public class EnumMappingTest {
 
     encoded.rewind();
 
-    StructDecoder<Void> decoder = struct.decoder(encoded);
+    StructDecoder<?> decoder = struct.decoder(encoded);
 
     assertThat(decoder.<Character>enm("myEnum2bis").get(), is(X));
   }

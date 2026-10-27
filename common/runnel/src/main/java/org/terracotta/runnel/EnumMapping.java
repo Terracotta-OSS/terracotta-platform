@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,30 @@
  */
 package org.terracotta.runnel;
 
-import java.util.Map;
-
 /**
- * @author Ludovic Orban
+ * Maps enum constants to int values and back.
+ * <p>
+ * Instances are created by {@link EnumMappingBuilder#build()}, which picks one of four
+ * package-private implementations based on whether the mapped type is a Java enum and whether
+ * the int id space is dense enough to be array-indexed, so the hot paths avoid hash lookups
+ * (and the boxing that goes with them) where possible.
  */
-public class EnumMapping<E> {
-  private final Map<E, Integer> enumToInteger;
-  private final Map<Integer, E> integerToEnum;
+public interface EnumMapping<E> {
 
-  EnumMapping(Map<E, Integer> enumToInteger, Map<Integer, E> integerToEnum) {
-    this.enumToInteger = enumToInteger;
-    this.integerToEnum = integerToEnum;
-  }
+  /**
+   * Maps an enum constant to its int value.
+   *
+   * @param e the enum constant
+   * @return the int value
+   * @throws IllegalArgumentException if the constant is not mapped (including {@code null})
+   */
+  int toInt(E e);
 
-  public int toInt(E e) {
-    Integer integer = enumToInteger.get(e);
-    if (integer == null) {
-      throw new IllegalArgumentException("Unmapped enum : " + e);
-    }
-    return integer;
-  }
-
-  public E toEnum(int intValue) {
-    return integerToEnum.get(intValue);
-  }
+  /**
+   * Maps an int value to its enum constant.
+   *
+   * @param intValue the int value to map
+   * @return the mapped enum constant, or {@code null} if the value is unmapped
+   */
+  E toEnum(int intValue);
 }

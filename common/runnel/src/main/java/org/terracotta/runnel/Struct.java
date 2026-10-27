@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,30 @@ public class Struct {
    * @param byteBuffer the byte buffer containing the data to be decoded.
    * @return the decoder.
    */
-  public StructDecoder<Void> decoder(ByteBuffer byteBuffer) {
+  public StructDecoder<?> decoder(ByteBuffer byteBuffer) {
     root.checkFullyInitialized();
     return new StructDecoder<>(root, new ReadBuffer(byteBuffer));
+  }
+
+  /**
+   * Resolve a field by name once, returning a handle that can be passed to the
+   * {@code Field}-keyed overloads of {@link org.terracotta.runnel.encoding.StructEncoder} and
+   * {@link org.terracotta.runnel.decoding.StructDecoder} to skip the per-call name lookup.
+   * <p>
+   * The returned handle is bound to <b>this exact {@code Struct} instance</b> (validated by
+   * identity): it is rejected with an {@link IllegalArgumentException} when used with an
+   * encoder or decoder created from a different {@code Struct} instance, even one built from
+   * an identical definition — the name-based API accepts those, handles do not. Share a
+   * single {@code Struct} instance (e.g. a static field) wherever handles are used.
+   * @param name the field name
+   * @param fieldClazz the expected field class
+   * @param <T> the field type
+   * @return the field handle
+   * @throws IllegalArgumentException if the field does not exist or has a different type
+   */
+  public <T extends Field> T field(String name, Class<T> fieldClazz) {
+    root.checkFullyInitialized();
+    return root.getMetadata().getFieldByName(name, fieldClazz);
   }
 
   /**
@@ -74,7 +95,7 @@ public class Struct {
    */
   public void dump(ByteBuffer byteBuffer, PrintStream out) {
     root.checkFullyInitialized();
-    Map<Integer, Field> fieldsByInteger = root.getMetadata().buildFieldsByIndexMap();
+    Map<Integer, Field> fieldsByInteger = root.getMetadata().fieldsByIndex();
 
     ReadBuffer readBuffer = new ReadBuffer(byteBuffer);
     int totalSize = readBuffer.getVlqInt();
