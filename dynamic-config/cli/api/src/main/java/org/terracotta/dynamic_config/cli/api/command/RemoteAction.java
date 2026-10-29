@@ -650,10 +650,10 @@ public abstract class RemoteAction implements Runnable {
     }
 
     // Restarting all but active nodes.
-    // We except the nodes to be restarted in either active or passive state.
+    // We expect the nodes to be restarted in either active or passive state.
     // If not, the restart will throw.
     // This is required because next step is to restart the remaining nodes...
-    // Which are active, so we have to ensure that a passive not will be there to take over the active role
+    // Which are active, so we have to ensure that a passive node will be there to take over the active role
     if (!others.isEmpty()) {
       LOGGER.info("Restarting non active nodes: {}...", toString(others));
       restartNodesIfPassives(
