@@ -122,7 +122,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public boolean isPartialConfiguration() {
-    return unConfigured || repairMode;
+    return unConfigured || repairMode || hasReplicaInCluster();
   }
 
   @Override
@@ -131,6 +131,17 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
       return false;
     }
     return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
+  }
+
+  private boolean hasReplicaInCluster() {
+    NodeContext cxt = nodeContextSupplier.get();
+    Node local = cxt.getNode();
+    for (Node n : cxt.getStripe().getNodes()) {
+      if (!local.equals(n) && DisasterRecoveryMode.isReplica(n)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
