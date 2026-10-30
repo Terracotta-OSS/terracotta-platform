@@ -30,6 +30,7 @@ The suite contains the following submodules:
 | `log` | Displays the historical Nomad 2PC change log across cluster nodes. |
 | `repair` | Resolves in-doubt, split-brain, or diverged Nomad transactions by forcing commit or rollback. |
 | `replica-failover`| Manages replica/backup failover priority settings. |
+| `rolling-restart` | Performs a rolling restart of active and passive cluster nodes. |
 | `diagnostic` | Inspects low-level diagnostic states of unconfigured or running nodes. |
 
 ---
