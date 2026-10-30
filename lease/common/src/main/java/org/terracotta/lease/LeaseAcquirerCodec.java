@@ -23,6 +23,7 @@ import org.terracotta.runnel.EnumMappingBuilder;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.nio.ByteBuffer;
@@ -34,11 +35,13 @@ import java.nio.ByteBuffer;
 public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseResponse> {
   private static final Struct messageStruct = createMessageStruct();
   private static final Struct responseStruct = createResponseStruct();
+  private static final EnumField<LeaseMessageType> MESSAGE_TYPE = messageStruct.field("messageType", EnumField.class);
+  private static final EnumField<LeaseResponseType> RESPONSE_TYPE = responseStruct.field("responseType", EnumField.class);
 
   @Override
   public byte[] encodeMessage(LeaseMessage leaseMessage) throws MessageCodecException {
     StructEncoder<Void> encoder = messageStruct.encoder();
-    encoder.enm("messageType", leaseMessage.getType());
+    encoder.enm(MESSAGE_TYPE, leaseMessage.getType());
     leaseMessage.encode(encoder);
     return encoder.encode().array();
   }
@@ -46,14 +49,14 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   @Override
   public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
     StructDecoder<?> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseMessageType type = decoder.<LeaseMessageType>enm("messageType").get();
+    LeaseMessageType type = decoder.enm(MESSAGE_TYPE).get();
     return type.decode(decoder);
   }
 
   @Override
   public byte[] encodeResponse(LeaseResponse leaseResponse) throws MessageCodecException {
     StructEncoder<Void> encoder = responseStruct.encoder();
-    encoder.enm("responseType", leaseResponse.getType());
+    encoder.enm(RESPONSE_TYPE, leaseResponse.getType());
     leaseResponse.encode(encoder);
     return encoder.encode().array();
   }
@@ -61,7 +64,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   @Override
   public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
     StructDecoder<?> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseResponseType type = decoder.<LeaseResponseType>enm("responseType").get();
+    LeaseResponseType type = decoder.enm(RESPONSE_TYPE).get();
     return type.decode(decoder);
   }
 

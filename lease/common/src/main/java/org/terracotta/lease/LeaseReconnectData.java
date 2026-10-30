@@ -19,12 +19,14 @@ package org.terracotta.lease;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.nio.ByteBuffer;
 
 public class LeaseReconnectData {
   private static final Struct reconnectStruct = createStruct();
+  private static final Int64Field CONNECTION_SEQUENCE_NUMBER = reconnectStruct.field("connectionSequenceNumber", Int64Field.class);
 
   private final long connectionSequenceNumber;
 
@@ -44,13 +46,13 @@ public class LeaseReconnectData {
 
   public byte[] encode() {
     StructEncoder<Void> encoder = reconnectStruct.encoder();
-    encoder.int64("connectionSequenceNumber", connectionSequenceNumber);
+    encoder.int64(CONNECTION_SEQUENCE_NUMBER, connectionSequenceNumber);
     return encoder.encode().array();
   }
 
   public static LeaseReconnectData decode(byte[] bytes) {
     StructDecoder<?> decoder = reconnectStruct.decoder(ByteBuffer.wrap(bytes));
-    long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
+    long connectionSequenceNumber = decoder.int64(CONNECTION_SEQUENCE_NUMBER, -1L);
     return new LeaseReconnectData(connectionSequenceNumber);
   }
 }
