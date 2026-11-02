@@ -138,6 +138,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     Node local = cxt.getNode();
     for (Node n : cxt.getStripe().getNodes()) {
       if (!local.getUID().equals(n.getUID()) && DisasterRecoveryMode.isReplica(n)) {
+        LOGGER.info("replica server {} is configured in this stripe", n.getName());
         return true;
       }
     }
