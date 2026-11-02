@@ -137,7 +137,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     NodeContext cxt = nodeContextSupplier.get();
     Node local = cxt.getNode();
     for (Node n : cxt.getStripe().getNodes()) {
-      if (!local.equals(n) && DisasterRecoveryMode.isReplica(n)) {
+      if (!local.getUID().equals(n.getUID()) && DisasterRecoveryMode.isReplica(n)) {
         return true;
       }
     }
