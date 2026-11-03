@@ -64,6 +64,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
   private final Supplier<NodeContext> nodeContextSupplier;
   private final boolean unConfigured;
   private final boolean repairMode;
+  private final boolean replicaInConfig;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
@@ -75,6 +76,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
+    this.replicaInConfig = hasReplicaInCluster(nodeContextSupplier.get());
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
@@ -122,7 +124,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public boolean isPartialConfiguration() {
-    return unConfigured || repairMode || hasReplicaInCluster();
+    return unConfigured || repairMode || replicaInConfig;
   }
 
   @Override
@@ -133,8 +135,7 @@ public final class StartupConfiguration implements Configuration, PrettyPrintabl
     return DisasterRecoveryMode.isRelay(nodeContextSupplier.get().getNode());
   }
 
-  private boolean hasReplicaInCluster() {
-    NodeContext cxt = nodeContextSupplier.get();
+  private static boolean hasReplicaInCluster(NodeContext cxt) {
     Node local = cxt.getNode();
     for (Node n : cxt.getStripe().getNodes()) {
       if (!local.getUID().equals(n.getUID()) && DisasterRecoveryMode.isReplica(n)) {
