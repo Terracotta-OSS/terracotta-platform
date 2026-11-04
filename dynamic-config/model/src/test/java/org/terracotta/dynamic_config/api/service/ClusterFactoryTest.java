@@ -129,6 +129,7 @@ public class ClusterFactoryTest {
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
+      .setCryptoComplianceLevel("pqc-preferred")
       .setSecurityWhitelist(false)
       .setClientReconnectWindow(120, TimeUnit.SECONDS)
       .setClientLeaseDuration(150, TimeUnit.SECONDS)

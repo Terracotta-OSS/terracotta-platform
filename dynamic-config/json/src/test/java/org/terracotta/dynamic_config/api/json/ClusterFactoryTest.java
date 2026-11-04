@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ public class ClusterFactoryTest {
               .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
+      .setCryptoComplianceLevel("pqc-preferred")
       .setSecurityWhitelist(false)
       .setClientReconnectWindow(120, TimeUnit.SECONDS)
       .setClientLeaseDuration(150, TimeUnit.SECONDS)
