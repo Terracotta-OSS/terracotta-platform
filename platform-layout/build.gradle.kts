@@ -103,6 +103,7 @@ dependencies {
           .with(project(":management:server:services"))
           .with(project(":security:logger:server:services"))
           .with(project(":platform-base"))
+          .with(project(":platform-metrics"))
 
   // voltron entities
   serverPluginLibs
