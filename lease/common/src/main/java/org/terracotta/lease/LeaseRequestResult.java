@@ -19,12 +19,23 @@ package org.terracotta.lease;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.decoding.fields.BoolField;
+import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 /**
  * A message sent from the server entity to the client entity to indicate the response to the LeaseRequest.
  */
 public class LeaseRequestResult implements LeaseResponse {
+  private static final Struct STRUCT = StructBuilder.newStructBuilder()
+      .bool("connectionGood", 10)
+      .bool("leaseGranted", 20)
+      .int64("leaseLength", 30)
+      .build();
+  private static final BoolField CONNECTION_GOOD = STRUCT.field("connectionGood", BoolField.class);
+  private static final BoolField LEASE_GRANTED = STRUCT.field("leaseGranted", BoolField.class);
+  private static final Int64Field LEASE_LENGTH = STRUCT.field("leaseLength", Int64Field.class);
+
   private final boolean connectionGood;
   private final boolean leaseGranted;
   private final long leaseLength;
@@ -71,29 +82,23 @@ public class LeaseRequestResult implements LeaseResponse {
 
 
   public static void addStruct(StructBuilder parentBuilder, int index) {
-    StructBuilder builder = StructBuilder.newStructBuilder();
-    builder.bool("connectionGood", 10);
-    builder.bool("leaseGranted", 20);
-    builder.int64("leaseLength", 30);
-    Struct struct = builder.build();
-
-    parentBuilder.struct("leaseRequestResult", index, struct);
+    parentBuilder.struct("leaseRequestResult", index, STRUCT);
   }
 
   @Override
   public void encode(StructEncoder<Void> parentEncoder) {
     StructEncoder<StructEncoder<Void>> encoder = parentEncoder.struct("leaseRequestResult");
-    encoder.bool("connectionGood", connectionGood);
-    encoder.bool("leaseGranted", leaseGranted);
-    encoder.int64("leaseLength", leaseLength);
+    encoder.bool(CONNECTION_GOOD, connectionGood);
+    encoder.bool(LEASE_GRANTED, leaseGranted);
+    encoder.int64(LEASE_LENGTH, leaseLength);
     encoder.end();
   }
 
   public static LeaseResponse decode(StructDecoder<?> parentDecoder) {
     StructDecoder<?> decoder = parentDecoder.struct("leaseRequestResult");
-    boolean connectionGood = decoder.bool("connectionGood");
-    boolean leaseGranted = decoder.bool("leaseGranted");
-    long leaseLength = decoder.int64("leaseLength");
+    boolean connectionGood = decoder.bool(CONNECTION_GOOD, false);
+    boolean leaseGranted = decoder.bool(LEASE_GRANTED, false);
+    long leaseLength = decoder.int64(LEASE_LENGTH, -1L);
     return new LeaseRequestResult(connectionGood, leaseGranted, leaseLength);
   }
 }

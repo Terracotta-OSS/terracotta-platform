@@ -19,12 +19,18 @@ package org.terracotta.lease;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.StructBuilder;
 import org.terracotta.runnel.decoding.StructDecoder;
+import org.terracotta.runnel.decoding.fields.Int64Field;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 /**
  * A message to send from the client entity to the server entity to request a lease.
  */
 public class LeaseRequest implements LeaseMessage {
+  private static final Struct STRUCT = StructBuilder.newStructBuilder()
+      .int64("connectionSequenceNumber", 10)
+      .build();
+  private static final Int64Field CONNECTION_SEQUENCE_NUMBER = STRUCT.field("connectionSequenceNumber", Int64Field.class);
+
   private final long connectionSequenceNumber;
 
   public LeaseRequest(long connectionSequenceNumber) {
@@ -41,23 +47,19 @@ public class LeaseRequest implements LeaseMessage {
   }
 
   public static void addStruct(StructBuilder parentBuilder, int index) {
-    StructBuilder builder = StructBuilder.newStructBuilder();
-    builder.int64("connectionSequenceNumber", 10);
-    Struct struct = builder.build();
-
-    parentBuilder.struct("leaseRequest", index, struct);
+    parentBuilder.struct("leaseRequest", index, STRUCT);
   }
 
   @Override
   public void encode(StructEncoder<Void> parentEncoder) {
     StructEncoder<StructEncoder<Void>> encoder = parentEncoder.struct("leaseRequest");
-    encoder.int64("connectionSequenceNumber", connectionSequenceNumber);
+    encoder.int64(CONNECTION_SEQUENCE_NUMBER, connectionSequenceNumber);
     encoder.end();
   }
 
   public static LeaseMessage decode(StructDecoder<?> parentDecoder) {
     StructDecoder<?> decoder = parentDecoder.struct("leaseRequest");
-    long connectionSequenceNumber = decoder.int64("connectionSequenceNumber");
+    long connectionSequenceNumber = decoder.int64(CONNECTION_SEQUENCE_NUMBER, -1L);
     return new LeaseRequest(connectionSequenceNumber);
   }
 }
