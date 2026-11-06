@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import static java.util.Arrays.asList;
@@ -190,8 +191,13 @@ public class Codec implements MessageCodec<Message, Response> {
   @Override
   public Message decodeMessage(byte[] bytes) throws MessageCodecException {
     try {
-      // keep the Enm dispatch form: an unknown type from a future version must fail loudly
-      final Message message = new Message(STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD).get());
+      // unknown or absent types (e.g. from a future version) fail loudly via the null check,
+      // without allocating an Enm per decoded message
+      Type type = STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD, null);
+      if (type == null) {
+        throw new NoSuchElementException("Unknown or absent message type");
+      }
+      final Message message = new Message(type);
       LOGGER.trace("decodeMessage(): {}", message);
       return message;
     } catch (RuntimeException e) {
@@ -304,8 +310,12 @@ public class Codec implements MessageCodec<Message, Response> {
   public Response decodeResponse(byte[] bytes) throws MessageCodecException {
     try {
       StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
-      // keep the Enm dispatch form: an unknown type from a future version must fail loudly
-      Type type = decoder.enm(TYPE_FIELD).get();
+      // unknown or absent types (e.g. from a future version) fail loudly via the null check,
+      // without allocating an Enm per decoded message
+      Type type = decoder.enm(TYPE_FIELD, null);
+      if (type == null) {
+        throw new NoSuchElementException("Unknown or absent response type");
+      }
       LOGGER.trace("decodeResponse({})", type);
       switch (type) {
         case REQ_LICENSE: {

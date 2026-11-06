@@ -27,6 +27,7 @@ import org.terracotta.runnel.decoding.fields.EnumField;
 import org.terracotta.runnel.encoding.StructEncoder;
 
 import java.nio.ByteBuffer;
+import java.util.NoSuchElementException;
 
 /**
  * The codec responsible for converting back and forth between bytes and lease messages.
@@ -49,7 +50,12 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   @Override
   public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
     StructDecoder<?> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseMessageType type = decoder.enm(MESSAGE_TYPE).get();
+    // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
+    // check, without allocating an Enm per decoded message
+    LeaseMessageType type = decoder.enm(MESSAGE_TYPE, null);
+    if (type == null) {
+      throw new NoSuchElementException("Unknown or absent lease message type");
+    }
     return type.decode(decoder);
   }
 
@@ -64,7 +70,12 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   @Override
   public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
     StructDecoder<?> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
-    LeaseResponseType type = decoder.enm(RESPONSE_TYPE).get();
+    // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
+    // check, without allocating an Enm per decoded message
+    LeaseResponseType type = decoder.enm(RESPONSE_TYPE, null);
+    if (type == null) {
+      throw new NoSuchElementException("Unknown or absent lease response type");
+    }
     return type.decode(decoder);
   }
 
