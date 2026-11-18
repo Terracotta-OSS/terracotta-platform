@@ -21,7 +21,7 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.event.EventService;
-import org.terracotta.metrics.MetricService;
+import org.terracotta.platform.metrics.metric.MetricService;
 import org.terracotta.platform.metrics.metric.Counter;
 import org.terracotta.platform.metrics.metric.Gauge;
 

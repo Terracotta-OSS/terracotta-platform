@@ -34,7 +34,7 @@ public class MetricLoggerTest {
   @Before
   public void setUp() {
     service = mock(PlatformMetricService.class);
-    logger = new MetricLogger(service);
+    logger = new MetricLogger(()->service);
   }
 
   @After

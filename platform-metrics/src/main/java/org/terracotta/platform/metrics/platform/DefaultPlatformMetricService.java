@@ -18,9 +18,7 @@ package org.terracotta.platform.metrics.platform;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.event.EventService;
-import org.terracotta.metrics.MetricService;
-import org.terracotta.platform.metrics.metric.Counter;
-import org.terracotta.platform.metrics.metric.MeteredCounter;
+import org.terracotta.platform.metrics.metric.MetricService;
 import org.terracotta.platform.metrics.metric.Metric;
 import org.terracotta.platform.metrics.voltron.VoltronMetricCollector;
 import org.terracotta.server.Server;
@@ -42,11 +40,12 @@ import static org.terracotta.event.EventService.Event.PEER_JOIN;
 import static org.terracotta.event.EventService.Event.PEER_LEAVE;
 import static org.terracotta.event.EventService.Event.VOTER_JOIN;
 import static org.terracotta.event.EventService.Event.VOTER_LEAVE;
-import static org.terracotta.metrics.MetricService.Metric.CLIENTS;
-import static org.terracotta.metrics.MetricService.Metric.CONNECTIONS;
-import static org.terracotta.metrics.MetricService.Metric.ENTITY_FETCHES;
-import static org.terracotta.metrics.MetricService.Metric.PEERS;
-import static org.terracotta.metrics.MetricService.Metric.VOTERS;
+import org.terracotta.platform.metrics.metric.MeteredMetric;
+import static org.terracotta.platform.metrics.metric.MetricService.Metric.CLIENTS;
+import static org.terracotta.platform.metrics.metric.MetricService.Metric.CONNECTIONS;
+import static org.terracotta.platform.metrics.metric.MetricService.Metric.ENTITY_FETCHES;
+import static org.terracotta.platform.metrics.metric.MetricService.Metric.PEERS;
+import static org.terracotta.platform.metrics.metric.MetricService.Metric.VOTERS;
 
 /**
  * Default implementation of {@link PlatformMetricService}.
@@ -83,8 +82,8 @@ public class DefaultPlatformMetricService implements PlatformMetricService {
 
   private final Server server;
   private final VoltronMetricCollector collector;
-  private final Map<EventService.Event, MeteredCounter> meters = new ConcurrentHashMap<>();
-  private final Map<EventService.Event, Map<String, MeteredCounter>> entityTypeMeters = new ConcurrentHashMap<>();
+  private final Map<EventService.Event, MeteredMetric> meters = new ConcurrentHashMap<>();
+  private final Map<EventService.Event, Map<String, MeteredMetric>> entityTypeMeters = new ConcurrentHashMap<>();
 
   /**
    * Creates the service and registers the entity types it reports on with the {@code collector}.
@@ -152,13 +151,15 @@ public class DefaultPlatformMetricService implements PlatformMetricService {
     Stream.concat(
         meters.values().stream(),
         entityTypeMeters.values().stream().flatMap(m -> m.values().stream()))
-      .forEach(MeteredCounter::getAndReset);
+      .forEach(MeteredMetric::getAndReset);
   }
 
   // topology
   @Override
   public TreeMap<String, LogicalServerState> getStripeStates() {
     TreeMap<String, LogicalServerState> servers = new TreeMap<>(collector.getPeers());
+    //  this is no longer needed since collector tracks all servers including itself but leave it for now
+    //  consider using a different tracker from the key like server name or use TSA port instead of group port
     servers.put(server.getServerHostName() + ":" + server.getServerPort(), LogicalServerState.parse(server.getState()));
     return servers;
   }
@@ -167,16 +168,16 @@ public class DefaultPlatformMetricService implements PlatformMetricService {
     return collector.getGauge(metric).stream().mapToLong(Metric::get).findFirst().orElse(0);
   }
 
-  private Optional<MeteredCounter> findMeter(EventService.Event event) {
+  private Optional<MeteredMetric> findMeter(EventService.Event event) {
     return Optional.ofNullable(meters.computeIfAbsent(
       event,
-      key -> collector.getCounter(key).map(Counter.class::cast).map(MeteredCounter::new).orElse(null)));
+      key -> collector.getCounter(key).map(MeteredMetric::new).orElse(null)));
   }
 
-  private Optional<MeteredCounter> findMeter(EventService.Event event, String type) {
+  private Optional<MeteredMetric> findMeter(EventService.Event event, String type) {
     return Optional.ofNullable(entityTypeMeters
       .computeIfAbsent(event, key -> new ConcurrentHashMap<>())
-      .computeIfAbsent(type, key -> collector.getCounter(event, key).map(Counter.class::cast).map(MeteredCounter::new).orElse(null)));
+      .computeIfAbsent(type, key -> collector.getCounter(event, key).map(MeteredMetric::new).orElse(null)));
   }
 
   private long getMeter(EventService.Event event, boolean reset) { return findMeter(event).stream().mapToLong(meter -> meter.get(reset)).findFirst().orElse(0); }

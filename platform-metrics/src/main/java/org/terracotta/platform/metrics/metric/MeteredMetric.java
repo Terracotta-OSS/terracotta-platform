@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>
  * Backed by a monotonically increasing counter with overflow handling.
  */
-public class MeteredCounter implements Metric {
-  private final Counter counter;
+public class MeteredMetric implements Metric {
+  private final Metric counter;
   private final AtomicLong lastSnapshot;
 
   /**
@@ -33,17 +33,9 @@ public class MeteredCounter implements Metric {
    *
    * @param parent the parent counter to track deltas for
    */
-  public MeteredCounter(Counter parent) {
+  public MeteredMetric(Metric parent) {
     this.counter = parent;
     this.lastSnapshot = new AtomicLong(parent.get());
-  }
-
-  public Counter getCounter() {
-    return counter;
-  }
-
-  public void increment() {
-    counter.increment();
   }
 
   /**
