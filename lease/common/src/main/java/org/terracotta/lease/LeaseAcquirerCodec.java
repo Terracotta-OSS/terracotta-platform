@@ -17,7 +17,6 @@
 package org.terracotta.lease;
 
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.runnel.EnumMapping;
 import org.terracotta.runnel.EnumMappingBuilder;
 import org.terracotta.runnel.Struct;
@@ -40,7 +39,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   private static final EnumField<LeaseResponseType> RESPONSE_TYPE = responseStruct.field("responseType", EnumField.class);
 
   @Override
-  public byte[] encodeMessage(LeaseMessage leaseMessage) throws MessageCodecException {
+  public byte[] encodeMessage(LeaseMessage leaseMessage) {
     StructEncoder<Void> encoder = messageStruct.encoder();
     encoder.enm(MESSAGE_TYPE, leaseMessage.getType());
     leaseMessage.encode(encoder);
@@ -48,7 +47,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
+  public LeaseMessage decodeMessage(byte[] bytes) {
     StructDecoder<?> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
     // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
     // check, without allocating an Enm per decoded message
@@ -60,7 +59,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public byte[] encodeResponse(LeaseResponse leaseResponse) throws MessageCodecException {
+  public byte[] encodeResponse(LeaseResponse leaseResponse) {
     StructEncoder<Void> encoder = responseStruct.encoder();
     encoder.enm(RESPONSE_TYPE, leaseResponse.getType());
     leaseResponse.encode(encoder);
@@ -68,7 +67,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
+  public LeaseResponse decodeResponse(byte[] bytes) {
     StructDecoder<?> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
     // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
     // check, without allocating an Enm per decoded message

@@ -27,7 +27,6 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.runnel.Struct;
 import org.terracotta.runnel.decoding.StructDecoder;
 import org.terracotta.runnel.decoding.fields.ArrayField;
@@ -176,21 +175,17 @@ public class Codec implements MessageCodec<Message, Response> {
   private static final StringField STRIPE_REMOVAL_V2_CLUSTER_FIELD = STRIPE_REMOVAL_V2_STRUCT.field("cluster", StringField.class);
 
   @Override
-  public byte[] encodeMessage(Message message) throws MessageCodecException {
+  public byte[] encodeMessage(Message message) {
     LOGGER.trace("encodeMessage({})", message);
-    try {
-      return STRUCT.encoder()
+
+    return STRUCT.encoder()
           .enm(TYPE_FIELD, message.getType())
           .encode()
           .array();
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   @Override
-  public Message decodeMessage(byte[] bytes) throws MessageCodecException {
-    try {
+  public Message decodeMessage(byte[] bytes) {
       // unknown or absent types (e.g. from a future version) fail loudly via the null check,
       // without allocating an Enm per decoded message
       Type type = STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD, null);
@@ -200,16 +195,13 @@ public class Codec implements MessageCodec<Message, Response> {
       final Message message = new Message(type);
       LOGGER.trace("decodeMessage(): {}", message);
       return message;
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   @Override
-  public byte[] encodeResponse(Response response) throws MessageCodecException {
+  public byte[] encodeResponse(Response response) {
     LOGGER.trace("encodeResponse({})", response);
-    try {
-      Type type = response.getType();
+
+    Type type = response.getType();
       StructEncoder<Void> encoder = STRUCT.encoder();
       encoder.enm(TYPE_FIELD, type);
       switch (type) {
@@ -300,16 +292,12 @@ public class Codec implements MessageCodec<Message, Response> {
           throw new UnsupportedOperationException(type.name());
       }
       return encoder.encode().array();
-    } catch (RuntimeException e) {
-      LOGGER.error("encodeResponse({}): {}", response, e.getMessage(), e);
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   @Override
-  public Response decodeResponse(byte[] bytes) throws MessageCodecException {
-    try {
-      StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
+  public Response decodeResponse(byte[] bytes) {
+
+    StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
       // unknown or absent types (e.g. from a future version) fail loudly via the null check,
       // without allocating an Enm per decoded message
       Type type = decoder.enm(TYPE_FIELD, null);
@@ -376,10 +364,6 @@ public class Codec implements MessageCodec<Message, Response> {
         default:
           throw new UnsupportedOperationException(type.name());
       }
-    } catch (RuntimeException e) {
-      LOGGER.error("decodeResponse(): {}", e.getMessage(), e);
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   // the encode / decode methods below re-uses the inner mapping mechanism we have

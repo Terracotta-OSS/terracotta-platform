@@ -269,7 +269,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
 
   private String execute(boolean allowNull, Supplier<String> execution) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
     // JMXSubsystem transforms all null returns to empty strings.
-    // null returns are in the case of EntityException, InterruptedException or MessageCodecException,
+    // null returns are in the case of EntityException, InterruptedException,
     // or in the case of terminateServer or forceTerminateServer
     try {
       String result = execution.get();
@@ -277,7 +277,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
         if (allowNull) {
           return null;
         } else {
-          // a failure happened (EntityException, InterruptedException or MessageCodecException)
+          // a failure happened (EntityException, InterruptedException)
           throw new DiagnosticConnectionException();
         }
       }
