@@ -17,10 +17,10 @@
 package org.terracotta.platform.metrics;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.spi.Guardian;
 import com.tc.text.PrettyPrintable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -37,21 +37,20 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.event.EventService;
-import org.terracotta.metrics.MetricService;
+import org.terracotta.platform.metrics.metric.MetricService;
 import org.terracotta.platform.metrics.log.MetricLogger;
 import org.terracotta.platform.metrics.log.MetricLoggingTrigger;
-import org.terracotta.platform.metrics.platform.DefaultPlatformMetricService;
-import org.terracotta.platform.metrics.voltron.DefaultVoltronMetricCollector;
-import org.terracotta.platform.metrics.voltron.DelegateEventService;
-import org.terracotta.server.Server;
 
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
+import org.terracotta.monitoring.IStripeMonitoring;
+import org.terracotta.monitoring.PlatformService;
+import org.terracotta.platform.metrics.platform.DefaultPlatformMetricService;
+import org.terracotta.platform.metrics.voltron.MonitoringMetricCollector;
+import org.terracotta.server.Server;
 
 /**
  * Core service provider that provides an implementation of core's {@link MetricService} (gauges) and
@@ -69,12 +68,9 @@ public class MetricServiceProvider implements ServiceProvider, StateDumpable, Pr
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MetricServiceProvider.class);
 
-  // our metric collector (implements MetricService and EventService)
-  private final DefaultVoltronMetricCollector metricCollector = new DefaultVoltronMetricCollector();
-
+  private MonitoringMetricCollector platformMetricService;
   private UID thisNodeUID;
   private MetricLogger metricLogger;
-  private EventService eventService;
   private EventRegistration eventListener;
 
 
@@ -88,29 +84,16 @@ public class MetricServiceProvider implements ServiceProvider, StateDumpable, Pr
     thisNodeUID = topologyService.getRuntimeNodeContext().getNodeUID();
 
     // our own metric facade (as we understand them)
-    DefaultPlatformMetricService platformMetricService = new DefaultPlatformMetricService(server, metricCollector);
+    platformMetricService = new MonitoringMetricCollector(server, (sendingServer, state) -> {
+      metricLogger.logNow(MetricLoggingTrigger.TOPOLOGY_CHANGE);
+    });
+    DefaultPlatformMetricService service = new DefaultPlatformMetricService(server, platformMetricService);
 
     // periodic logger
-    metricLogger = new MetricLogger(platformMetricService);
-
-    // event service returned to core.
-    // We intercept some events to trigger an immediate logging.
-    eventService = new DelegateEventService(metricCollector) {
-      @Override
-      public void fireEvent(Event event, Map<String, String> map) {
-        switch (event) {
-          case MEMBER_STATE, PEER_STATE -> {
-            // core sends the same state event several times so avoid duplicates
-            TreeMap<String, LogicalServerState> states = platformMetricService.getStripeStates();
-            super.fireEvent(event, map);
-            if (!platformMetricService.getStripeStates().equals(states)) {
-              metricLogger.logNow(MetricLoggingTrigger.TOPOLOGY_CHANGE);
-            }
-          }
-          default -> super.fireEvent(event, map);
-        }
-      }
-    };
+    metricLogger = new MetricLogger(()->{
+      platformMetricService.snapshot();
+      return service;
+    });
 
     // listen for DC changes that could update the setting
     eventListener = dynamicConfigEventService.register(new DynamicConfigListener() {
@@ -137,12 +120,12 @@ public class MetricServiceProvider implements ServiceProvider, StateDumpable, Pr
 
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
-    if (serviceConfiguration.getServiceType() == MetricService.class) {
-      return serviceConfiguration.getServiceType().cast(metricCollector);
+    if (serviceConfiguration.getServiceType() == IStripeMonitoring.class) {
+      return serviceConfiguration.getServiceType().cast(platformMetricService);
     }
 
-    if (serviceConfiguration.getServiceType() == EventService.class) {
-      return serviceConfiguration.getServiceType().cast(eventService);
+    if (serviceConfiguration.getServiceType() == Guardian.class) {
+      return serviceConfiguration.getServiceType().cast(platformMetricService);
     }
 
     return null;
@@ -150,7 +133,7 @@ public class MetricServiceProvider implements ServiceProvider, StateDumpable, Pr
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(MetricService.class, EventService.class);
+    return Arrays.asList(IStripeMonitoring.class, Guardian.class);
   }
 
   @Override
@@ -159,12 +142,14 @@ public class MetricServiceProvider implements ServiceProvider, StateDumpable, Pr
 
   @Override
   public void addStateTo(StateDumpCollector stateDumpCollector) {
-    metricCollector.addStateTo(stateDumpCollector.subStateDumpCollector("metrics"));
+    StateDumpCollector dump = stateDumpCollector.subStateDumpCollector("metricLogger");
+    dump.addState("periodInSeconds", metricLogger.getLoggingSeconds());
+    dump.addState("lastLogtime", metricLogger.getLoggingSeconds());
   }
 
   @Override
   public Map<String, ?> getStateMap() {
-    return Collections.singletonMap("metrics", metricCollector.getStateMap());
+    return Map.of("periodInSeconds", metricLogger.getLoggingSeconds(), "lastLogTime", metricLogger.getLastLogTime());
   }
 
   private void updateLoggingPeriod(Node node) {

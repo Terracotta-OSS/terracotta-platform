@@ -161,7 +161,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
     }
 
-    throw new UnsupportedOperationException("addNode(" + String.join("/", (CharSequence[]) parents) + "/" + name + ") from server " + sender.getServerName() + ", data: " + value);
+    return false;
   }
 
   @Override
@@ -233,7 +233,7 @@ final class IStripeMonitoringPlatformListenerAdapter implements IStripeMonitorin
 
   @Override
   public void pushBestEffortsData(PlatformServer sender, String name, Serializable data) {
-    throw new UnsupportedOperationException();
+    
   }
 
 }

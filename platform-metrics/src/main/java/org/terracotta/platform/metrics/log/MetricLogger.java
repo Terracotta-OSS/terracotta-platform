@@ -26,6 +26,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Schedules and executes metrics logging.
@@ -38,14 +39,22 @@ public class MetricLogger {
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("metrics-logger"));
   private final MetricFormatter formatter = new MetricFormatter();
 
-  private final PlatformMetricService platformMetricService;
+  private final Supplier<PlatformMetricService> platformMetricService;
 
   private volatile int periodSeconds;
   private volatile long lastLogTime;
   private volatile ScheduledFuture<?> periodicTask;
 
-  public MetricLogger(PlatformMetricService platformMetricService) {
+  public MetricLogger(Supplier<PlatformMetricService> platformMetricService) {
     this.platformMetricService = platformMetricService;
+  }
+
+  public int getLoggingSeconds() {
+    return periodSeconds;
+  }
+
+  public long getLastLogTime() {
+    return lastLogTime;
   }
 
   public synchronized void setLoggingPeriod(int periodSeconds) {
@@ -130,7 +139,7 @@ public class MetricLogger {
     try {
       long currentTime = System.currentTimeMillis() / 1000;
       long secondsSinceLast = currentTime - lastLogTime;
-      LOGGER.info(formatter.format(trigger, currentTime, secondsSinceLast, platformMetricService));
+      LOGGER.info(formatter.format(trigger, currentTime, secondsSinceLast, platformMetricService.get()));
       lastLogTime = currentTime;
       if (trigger != MetricLoggingTrigger.PERIODIC) {
         LOGGER.debug("Metrics logged due to: {}", trigger);

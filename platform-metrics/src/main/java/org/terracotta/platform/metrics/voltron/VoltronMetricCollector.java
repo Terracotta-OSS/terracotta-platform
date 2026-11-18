@@ -18,7 +18,7 @@ package org.terracotta.platform.metrics.voltron;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.event.EventService;
-import org.terracotta.metrics.MetricService;
+import org.terracotta.platform.metrics.metric.MetricService;
 import org.terracotta.platform.metrics.metric.Metric;
 
 import java.util.Map;
