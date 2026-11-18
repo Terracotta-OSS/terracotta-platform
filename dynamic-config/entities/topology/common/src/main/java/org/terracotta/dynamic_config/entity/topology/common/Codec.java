@@ -177,19 +177,15 @@ public class Codec implements MessageCodec<Message, Response> {
   @Override
   public byte[] encodeMessage(Message message) {
     LOGGER.trace("encodeMessage({})", message);
-    try {
-      return STRUCT.encoder()
+
+    return STRUCT.encoder()
           .enm(TYPE_FIELD, message.getType())
           .encode()
           .array();
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   @Override
-  public Message decodeMessage(byte[] bytes) throws MessageCodecException {
-    try {
+  public Message decodeMessage(byte[] bytes) {
       // unknown or absent types (e.g. from a future version) fail loudly via the null check,
       // without allocating an Enm per decoded message
       Type type = STRUCT.decoder(ByteBuffer.wrap(bytes)).enm(TYPE_FIELD, null);
@@ -199,16 +195,13 @@ public class Codec implements MessageCodec<Message, Response> {
       final Message message = new Message(type);
       LOGGER.trace("decodeMessage(): {}", message);
       return message;
-    } catch (RuntimeException e) {
-      throw new MessageCodecException(e.getMessage(), e);
-    }
   }
 
   @Override
   public byte[] encodeResponse(Response response) {
     LOGGER.trace("encodeResponse({})", response);
-    try {
-      Type type = response.getType();
+
+    Type type = response.getType();
       StructEncoder<Void> encoder = STRUCT.encoder();
       encoder.enm(TYPE_FIELD, type);
       switch (type) {
@@ -298,79 +291,13 @@ public class Codec implements MessageCodec<Message, Response> {
         default:
           throw new UnsupportedOperationException(type.name());
       }
-      case REQ_HAS_INCOMPLETE_CHANGE:
-      case REQ_MUST_BE_RESTARTED: {
-        encoder.bool(type.name(), response.getPayload());
-        break;
-      }
-      case REQ_RUNTIME_CLUSTER:
-      case REQ_UPCOMING_CLUSTER: {
-        encoder.string(type.name(), encodeCluster(response.getPayload()));
-        break;
-      }
-      case EVENT_NODE_ADDITION: {
-        List<Object> oo = response.getPayload();
-        Cluster cluster = (Cluster) oo.get(0);
-        UID addedNodeUID = (UID) oo.get(1);
-        encoder.struct(type.name())
-            .string("stripeUID", cluster.getStripeByNode(addedNodeUID).get().getUID().toString()) // V1 (deprecated)
-            .string("node", encodeNode(cluster.getNode(addedNodeUID).get())) // V1 (deprecated)
-            .string("nodeUID", addedNodeUID.toString()) // since V2
-            .string("cluster", encodeCluster(cluster)); // since V2
-        break;
-      }
-      case EVENT_NODE_REMOVAL: {
-        List<Object> oo = response.getPayload();
-        Cluster cluster = (Cluster) oo.get(0);
-        UID stripeUID = (UID) oo.get(1);
-        Node node = (Node) oo.get(2);
-        encoder.struct(type.name())
-            .string("stripeUID", stripeUID.toString())
-            .string("node", encodeNode(node))
-            .string("cluster", encodeCluster(cluster)); // since V2
-        break;
-      }
-      case EVENT_SETTING_CHANGED: {
-        List<Object> oo = response.getPayload();
-        encoder.struct(type.name())
-            .string("configuration", encodeConfiguration((Configuration) oo.get(1)))
-            .string("cluster", encodeCluster((Cluster) oo.get(0)));
-        break;
-      }
-      case EVENT_STRIPE_ADDITION: {
-        List<Object> oo = response.getPayload();
-        Cluster cluster = (Cluster) oo.get(0);
-        UID stripeUID = (UID) oo.get(1);
-        // V1 (deprecated)
-        encoder.string(type.name(), encodeStripe(cluster.getStripe(stripeUID).get()));
-        // since V2
-        encoder.struct("EVENT_STRIPE_ADDITION_V2")
-            .string("stripeUID", stripeUID.toString())
-            .string("cluster", encodeCluster(cluster));
-        break;
-      }
-      case EVENT_STRIPE_REMOVAL: {
-        List<Object> oo = response.getPayload();
-        Cluster cluster = (Cluster) oo.get(0);
-        Stripe stripe = (Stripe) oo.get(1);
-        // V1 (deprecated)
-        encoder.string(type.name(), encodeStripe(stripe));
-        // since V2
-        encoder.struct("EVENT_STRIPE_REMOVAL_V2")
-            .string("stripe", encodeStripe(stripe))
-            .string("cluster", encodeCluster(cluster));
-        break;
-      }
-      default:
-        throw new UnsupportedOperationException(type.name());
-    }
-    return encoder.encode().array();
+      return encoder.encode().array();
   }
 
   @Override
-  public Response decodeResponse(byte[] bytes) throws MessageCodecException {
-    try {
-      StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
+  public Response decodeResponse(byte[] bytes) {
+
+    StructDecoder<?> decoder = STRUCT.decoder(ByteBuffer.wrap(bytes));
       // unknown or absent types (e.g. from a future version) fail loudly via the null check,
       // without allocating an Enm per decoded message
       Type type = decoder.enm(TYPE_FIELD, null);
@@ -437,49 +364,6 @@ public class Codec implements MessageCodec<Message, Response> {
         default:
           throw new UnsupportedOperationException(type.name());
       }
-      case REQ_HAS_INCOMPLETE_CHANGE:
-      case REQ_MUST_BE_RESTARTED:
-        return new Response(type, decoder.bool(type.name()));
-      case REQ_RUNTIME_CLUSTER:
-      case REQ_UPCOMING_CLUSTER:
-        return new Response(type, decodeCluster(decoder.string(type.name())));
-      case EVENT_NODE_ADDITION: {
-        // since V2
-        StructDecoder<?> event = decoder.struct(type.name());
-        UID nodeUID = UID.valueOf(event.string("nodeUID"));
-        Cluster cluster = decodeCluster(event.string("cluster"));
-        return new Response(type, asList(cluster, nodeUID));
-      }
-      case EVENT_NODE_REMOVAL: {
-        // since V2
-        StructDecoder<?> event = decoder.struct(type.name());
-        UID stripeUID = UID.valueOf(event.string("stripeUID"));
-        Node removedNode = decodeNode(event.string("node"));
-        Cluster cluster = decodeCluster(event.string("cluster"));
-        return new Response(type, asList(cluster, stripeUID, removedNode));
-      }
-      case EVENT_SETTING_CHANGED: {
-        StructDecoder<?> event = decoder.struct(type.name());
-        final String configuration = event.string("configuration");
-        final String cluster = event.string("cluster");
-        return new Response(type, asList(decodeCluster(cluster), decodeConfiguration(configuration)));
-      }
-      case EVENT_STRIPE_ADDITION: {
-        // since V2
-        StructDecoder<?> event = decoder.struct("EVENT_STRIPE_ADDITION_V2");
-        UID stripeUID = UID.valueOf(event.string("stripeUID"));
-        Cluster cluster = decodeCluster(event.string("cluster"));
-        return new Response(type, asList(cluster, stripeUID));
-      }
-      case EVENT_STRIPE_REMOVAL:
-        // since V2
-        StructDecoder<?> event = decoder.struct("EVENT_STRIPE_REMOVAL_V2");
-        Stripe stripe = decodeStripe(event.string("stripe"));
-        Cluster cluster = decodeCluster(event.string("cluster"));
-        return new Response(type, asList(cluster, stripe));
-      default:
-        throw new UnsupportedOperationException(type.name());
-    }
   }
 
   // the encode / decode methods below re-uses the inner mapping mechanism we have

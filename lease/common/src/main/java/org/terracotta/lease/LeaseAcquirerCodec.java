@@ -47,7 +47,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseMessage decodeMessage(byte[] bytes) throws MessageCodecException {
+  public LeaseMessage decodeMessage(byte[] bytes) {
     StructDecoder<?> decoder = messageStruct.decoder(ByteBuffer.wrap(bytes));
     // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
     // check, without allocating an Enm per decoded message
@@ -67,7 +67,7 @@ public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseRespo
   }
 
   @Override
-  public LeaseResponse decodeResponse(byte[] bytes) throws MessageCodecException {
+  public LeaseResponse decodeResponse(byte[] bytes) {
     StructDecoder<?> decoder = responseStruct.decoder(ByteBuffer.wrap(bytes));
     // unknown or absent types (e.g. from a future protocol version) fail loudly via the null
     // check, without allocating an Enm per decoded message
