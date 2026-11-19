@@ -120,4 +120,20 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
     waitForPassiveRelay(1, passiveId);
   }
+
+  @Test
+  public void testSetLogDir_passiveWithAutoRestart() {
+    waitForActive(1);
+
+    int passiveId = waitForNPassives(1, 1)[0];
+    String passive = getNodeName(1, passiveId);
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(), "-auto-restart",
+      "-setting", passive + ":log-dir=new-logs"), is(successful()));
+
+    waitForPassive(1, passiveId);
+
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", passive + ":log-dir", "-t", "index"),
+        containsOutput("stripe.1.node." + passiveId + ".log-dir=new-logs"));
+  }
 }
