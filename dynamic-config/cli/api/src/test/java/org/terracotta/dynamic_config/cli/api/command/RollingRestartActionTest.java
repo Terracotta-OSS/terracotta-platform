@@ -35,13 +35,17 @@ import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -53,6 +57,7 @@ import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.RELAY;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.cli.api.command.Injector.inject;
@@ -145,6 +150,86 @@ public class RollingRestartActionTest extends BaseTest {
     assertThat(activeRequest.getValue(), not(hasItem(suspended)));
 
     verifyNoMoreInteractions(restartService);
+  }
+
+  @Test
+  public void test_passive_is_restarted_even_if_it_is_the_only_node_to_restart_in_its_stripe() throws Exception {
+    // the passive is the only node to restart in the stripe, the active is not a restart target.
+    // calling rollingRestart directly with an explicit list, as ConfigurationMutationAction does
+    Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1", Testing.S_UIDS[1]).addNodes(passiveNode, activeNode));
+    Endpoint passive = passiveNode.determineEndpoint();
+
+    when(diagnosticServiceMock(passiveNode.getInternalHostPort()).getLogicalServerState()).thenReturn(PASSIVE);
+
+    RestartProgress passiveProgress = completedProgress(passive, PASSIVE);
+    when(restartService.restartNodesIfPassives(any(), any(), any())).thenReturn(passiveProgress);
+
+    Collection<Endpoint> cannotRestart = new LinkedHashSet<>();
+    action().rollingRestart(cluster, singletonList(passive), cannotRestart);
+
+    verify(restartService).restartNodesIfPassives(passiveRequest.capture(), any(), any());
+    verify(passiveProgress).await(any(Duration.class));
+    assertThat(passiveRequest.getValue(), contains(passive));
+    assertThat(cannotRestart, is(empty()));
+
+    verify(restartService, never()).restartNodesIfActives(any(), any(), any());
+    verifyNoMoreInteractions(restartService);
+  }
+
+  @Test
+  public void test_active_is_not_restarted_if_it_is_the_only_node_to_restart_in_its_stripe() throws Exception {
+    // the passive is not a restart target, it cannot be ensured that it will take over the active role
+    Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1", Testing.S_UIDS[1]).addNodes(activeNode, passiveNode));
+    Endpoint active = activeNode.determineEndpoint();
+
+    when(diagnosticServiceMock(activeNode.getInternalHostPort()).getLogicalServerState()).thenReturn(ACTIVE);
+
+    Collection<Endpoint> cannotRestart = new LinkedHashSet<>();
+    action().rollingRestart(cluster, singletonList(active), cannotRestart);
+
+    assertThat(cannotRestart, contains(active));
+    verifyNoMoreInteractions(restartService);
+  }
+
+  @Test
+  public void test_active_is_not_restarted_if_the_passive_becomes_unreachable_before_the_restart() throws Exception {
+    Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1", Testing.S_UIDS[1]).addNodes(activeNode, passiveNode));
+
+    when(topologyServiceMock(activeNode.getInternalHostPort()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, activeNode.getUID()));
+    when(diagnosticServiceMock(activeNode.getInternalHostPort()).getLogicalServerState()).thenReturn(ACTIVE);
+    // 1st call -> discovery of the nodes to restart. 2nd call -> state check done by the rolling restart.
+    when(diagnosticServiceMock(passiveNode.getInternalHostPort()).getLogicalServerState())
+      .thenReturn(PASSIVE)
+      .thenThrow(new IllegalStateException("node is down"));
+
+    RollingRestartAction action = action();
+    action.setNodes(singletonList(activeNode.getInternalHostPort()));
+    action.run();
+
+    verifyNoMoreInteractions(restartService);
+  }
+
+  @Test
+  public void test_active_is_not_restarted_if_the_only_other_node_is_a_relay() throws Exception {
+    // a relay node can never become active, restarting the active would cause a downtime
+    Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1", Testing.S_UIDS[1]).addNodes(activeNode, passiveNode));
+    Endpoint active = activeNode.determineEndpoint();
+    Endpoint relay = passiveNode.determineEndpoint();
+
+    when(diagnosticServiceMock(activeNode.getInternalHostPort()).getLogicalServerState()).thenReturn(ACTIVE);
+    when(diagnosticServiceMock(passiveNode.getInternalHostPort()).getLogicalServerState()).thenReturn(RELAY);
+
+    RestartProgress relayProgress = completedProgress(relay, RELAY);
+    when(restartService.restartNodesIfPassives(any(), any(), any())).thenReturn(relayProgress);
+
+    Collection<Endpoint> cannotRestart = new LinkedHashSet<>();
+    action().rollingRestart(cluster, asList(active, relay), cannotRestart);
+
+    // the relay is restarted, but the active is left untouched and reported as not restartable
+    verify(restartService).restartNodesIfPassives(passiveRequest.capture(), any(), any());
+    assertThat(passiveRequest.getValue(), contains(relay));
+    verify(restartService, never()).restartNodesIfActives(any(), any(), any());
+    assertThat(cannotRestart, contains(active));
   }
 
   private RestartProgress completedProgress(Endpoint restarted, LogicalServerState state) throws InterruptedException {
