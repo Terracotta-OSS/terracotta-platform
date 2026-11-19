@@ -624,28 +624,40 @@ public abstract class RemoteAction implements Runnable {
 
       if (onlineNodesPerStripe.isEmpty()) {
         LOGGER.warn("No node in stripe '{}' seem to be online", stripe.getName());
-
-      } else if (onlineNodesPerStripe.size() == 1) {
-        Endpoint alone = onlineNodesPerStripe.get(0);
-        LOGGER.warn("Unable to restart node: {} in stripe '{}' because this is the only online node", alone, stripe.getName());
-        cannotRestart.add(alone);
-
       } else {
+        // reachable nodes of this stripe, split by role
+        Collection<Endpoint> stripeActives = new LinkedList<>();
+        Collection<Endpoint> stripeOthers = new LinkedList<>();
+        // true if this stripe has a non-active node that can become active
+        boolean hasNodeToTakeOver = false;
         for (Endpoint endpoint : onlineNodesPerStripe) {
           // get the node state again (we are searching for actives)
-          LogicalServerState state = UNREACHABLE;
+          LogicalServerState state;
           try {
             state = getLogicalServerState(endpoint);
           } catch (RuntimeException e) {
             LOGGER.warn("Node: {} in stripe '{}' is not reachable anymore: {}", endpoint, stripe.getName(), e.getMessage(), e);
             cannotRestart.add(endpoint);
+            continue;
           }
           if (state.isActive()) {
-            actives.add(endpoint);
+            stripeActives.add(endpoint);
           } else {
-            others.add(endpoint);
+            stripeOthers.add(endpoint);
+            // a relay node can never become active, so it cannot take over if the active is restarted
+            hasNodeToTakeOver = hasNodeToTakeOver || !state.isRelay();
           }
         }
+        // An active is only restarted if a node able to become active is restarted before (otherwise the stripe is down while it restarts)
+        // non-active states can be restarted safely
+        if (!stripeActives.isEmpty() && !hasNodeToTakeOver) {
+          LOGGER.warn("Unable to restart node: {} in stripe '{}' because it is in Active state and it cannot be ensured that a " +
+            "passive node will take over. Please restart it manually.", toString(stripeActives), stripe.getName());
+          cannotRestart.addAll(stripeActives);
+        } else {
+          actives.addAll(stripeActives);
+        }
+        others.addAll(stripeOthers);
       }
     }
 
