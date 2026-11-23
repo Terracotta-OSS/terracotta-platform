@@ -111,6 +111,7 @@ include ':common:test-utilities',
 
     // testing support (angela, galvan, passthrough, etc)
     ':dynamic-config:testing:galvan',
+    ':dynamic-config:testing:gson-module',
     ':dynamic-config:testing:support',
     ':lease:testing:passthrough',
 

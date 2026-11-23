@@ -13,6 +13,7 @@ dependencies {
   implementation "com.beust:jcommander:$jcommanderVersion"
 
   testImplementation project(':common:test-utilities')
+  testImplementation project(':dynamic-config:testing:gson-module')
   testCompileOnly "org.terracotta:client-api:$terracottaCoreVersion"
   testImplementation "org.terracotta:passthrough-server:$terracottaCoreVersion"
   testImplementation "org.terracotta.internal:client-runtime:$terracottaCoreVersion"
