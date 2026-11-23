@@ -54,6 +54,7 @@ import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurat
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
 import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.json.Json;
+import org.terracotta.json.gson.GsonModule;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.server.Server;
@@ -62,10 +63,14 @@ import org.terracotta.server.StopAction;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
@@ -99,7 +104,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElse(LicenseService.UNSUPPORTED);
 
       // initialize the json system
-      Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
+      Json.Factory jsonFactory = createJsonFactory(serviceClassLoader);
 
       // Service used to manage and initialize the Nomad 2PC system
       nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, jsonFactory, server);
@@ -278,10 +283,17 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     }
   }
 
+  Json.Factory createJsonFactory(ClassLoader serviceClassLoader) {
+    Collection<Json.Module> gsonModuleList = StreamSupport.stream(ServiceLoader.
+        load(GsonModule.class, serviceClassLoader).spliterator(), false)
+      .map(Json.Module.class::cast).collect(Collectors.toList());
+    return new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()).withModules(gsonModuleList);
+  }
+
   private ClassLoader getServiceClassLoader(Server server) {
     return server.getServiceClassLoader(getClass().getClassLoader(),
         DynamicConfigExtension.class,
-        LicenseService.class);
+        LicenseService.class, GsonModule.class);
   }
 
   private static Options parseCommandLineOrExit(List<String> args) {

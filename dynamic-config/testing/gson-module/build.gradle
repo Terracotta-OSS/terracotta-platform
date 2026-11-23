@@ -1,0 +1,7 @@
+plugins {
+  id 'org.terracotta.build.convention.java-library'
+}
+
+dependencies {
+  api project(':common:json')
+}
