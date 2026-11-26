@@ -1,6 +1,6 @@
 /*
  * Copyright Terracotta, Inc.
- * Copyright IBM Corp. 2024, 2025
+ * Copyright IBM Corp. 2024, 2026
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
  */
 package org.terracotta.voltron.proxy.server;
 
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
@@ -38,12 +37,12 @@ class DelegatingSyncMessageCodec implements SyncMessageCodec<ProxyEntityMessage>
   }
 
   @Override
-  public byte[] encode(int concurrencyKey, ProxyEntityMessage message) throws MessageCodecException {
+  public byte[] encode(int concurrencyKey, ProxyEntityMessage message) {
     return messageCodec.encodeMessage(message);
   }
 
   @Override
-  public ProxyEntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+  public ProxyEntityMessage decode(int concurrencyKey, byte[] payload) {
     return messageCodec.decodeMessage(payload);
   }
 

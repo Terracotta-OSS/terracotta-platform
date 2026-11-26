@@ -19,7 +19,7 @@ package org.terracotta.diagnostic.client;
 import org.terracotta.diagnostic.common.DiagnosticException;
 
 /**
- * Thrown when the diagnostic call returns null after a failure such as EntityException, InterruptedException or MessageCodecException.
+ * Thrown when the diagnostic call returns null after a failure such as EntityException, InterruptedException.
  * <p>
  * See DiagnosticEntityClientService for implementation details.
  *
