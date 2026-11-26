@@ -225,4 +225,14 @@ public class MonitoringMetricCollector implements VoltronMetricCollector, IStrip
   public void snapshot() {
     invokeState = new InvokeStateHelper(env.queryClusterState(PlatformSystem.ENTITY_MANAGER));
   }
+
+  @Override
+  public void replayNode(PlatformServer sender, String[] parents, String name, Serializable value) {
+    // don't replay on failover
+  }
+
+  @Override
+  public boolean requiresLocalDeliveryOnPassive() {
+    return true;
+  }
 }

@@ -16,7 +16,6 @@
  */
 package org.terracotta.platform.metrics.voltron;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -31,25 +30,28 @@ public class InvokeStateHelper {
   }
 
   public long getTotalCount() {
-    long total = 0;
-    @SuppressWarnings("unchecked")
-    Collection<Map<String, ?>> entities = (Collection<Map<String, ?>>)state.get("entities");
-    for (Map<String, ?> e : entities) {
-      Object count = e.get("invokeCount");
-      if (count instanceof Long c) total += c;
-    }
-    return total;
+    Object count = decend(this.state, new String[] {"invokeRuntimes","TOTAL", "count"});
+    if (count instanceof Long c) return c;
+    return 0L;
   }
 
   public long getTypeCount(String type) {
-    long total = 0;
-    @SuppressWarnings("unchecked")
-    Collection<Map<String, ?>> entities = (Collection<Map<String, ?>>)state.get("entities");
-    for (Map<String, ?> e : entities) {
-      String typeCheck = String.valueOf(e.get("type"));
-      Object count = e.get("invokeCount");
-      if (typeCheck.equals(type) && count instanceof Long c) total += c;
+    Object count = decend(this.state, new String[] {"typeInvokeRuntimes",type,"TOTAL", "count"});
+    if (count instanceof Long c) return c;
+    return 0L;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object decend(Map<String, ?> target, String[] path) {
+    Object prospect = target;
+    for (String key : path) {
+      if (prospect instanceof Map m) {
+        target = (Map<String, Object>)m;
+      } else {
+        return null;
+      }
+      prospect = target.get(key);
     }
-    return total;
+    return prospect;
   }
 }
