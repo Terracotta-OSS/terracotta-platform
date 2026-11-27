@@ -343,11 +343,15 @@ public class SetCommand2x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_set_replica_multiple_nodes_per_stripe() {
+  public void test_set_replica_multiple_replicas_per_stripe() {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.replica=" + "true",
-      "-c", "stripe.1.node.1" + ".relay-hostname=" + "localhost1",
-      "-c", "stripe.1.node.1" + ".relay-port=" + "9411",
-      "-c", "stripe.1.node.1" + ".relay-group-port=" + "9411"),
-      allOf(is(not(successful())), containsOutput("A replica stripe can have at most 1 node")));
+        "-c", "stripe.1.node.1" + ".relay-hostname=" + "localhost1",
+        "-c", "stripe.1.node.1" + ".relay-port=" + "9411",
+        "-c", "stripe.1.node.1" + ".relay-group-port=" + "9411",
+        "-c", "stripe.1.node.2.replica=" + "true",
+        "-c", "stripe.1.node.2" + ".relay-hostname=" + "localhost2",
+        "-c", "stripe.1.node.2" + ".relay-port=" + "9412",
+        "-c", "stripe.1.node.2" + ".relay-group-port=" + "9412"),
+      allOf(is(not(successful())), containsOutput("A stripe can have at most 1 replica node")));
   }
 }
