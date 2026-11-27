@@ -47,5 +47,6 @@
   "securitySslTls": false,
   "cryptoComplianceLevel": "pqc-preferred",
   "securityWhitelist": false,
+  "securityEncDataDir": false,
   "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

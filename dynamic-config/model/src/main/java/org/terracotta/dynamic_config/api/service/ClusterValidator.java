@@ -48,6 +48,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_ENCRYPTION_DATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
@@ -424,11 +425,12 @@ public class ClusterValidator {
 
     boolean minimumRequired = cluster.getSecurityAuthc().isConfigured() ||
         cluster.getSecuritySslTls().orDefault() ||
-        cluster.getSecurityWhitelist().orDefault();
+        cluster.getSecurityWhitelist().orDefault() || cluster.getSecurityEncDataDir().orDefault();
     if (securityDirIsConfigured) {
       if (!minimumRequired) {
         throw new MalformedClusterException("When security root directories are configured across the cluster" +
-            " at least one of " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + " or " + SECURITY_WHITELIST +
+            " at least one of " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + ", " + SECURITY_WHITELIST +
+            " or " + SECURITY_ENCRYPTION_DATA_DIR +
             " must also be configured.");
       }
       if (cluster.getSecurityAuthc().is("certificate") && !cluster.getSecuritySslTls().orDefault()) {
@@ -436,7 +438,7 @@ public class ClusterValidator {
       }
     } else if (minimumRequired) {
       throw new MalformedClusterException("There are no (or will be no) security root directories configured across the cluster." +
-          " But " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + ", and/or " + SECURITY_WHITELIST +
+          " But " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + ", " + SECURITY_WHITELIST + ", or" + SECURITY_ENCRYPTION_DATA_DIR +
           " is (or will be) configured.  When no security root directories are configured" +
           " all other security settings should also be unconfigured (unset).");
     }

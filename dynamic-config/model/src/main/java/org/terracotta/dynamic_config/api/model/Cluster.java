@@ -63,6 +63,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.CRYPTO_COMPLIANCE_LEVEL;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_ENCRYPTION_DATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 
@@ -78,6 +79,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Boolean securitySslTls;
   private Boolean securityWhitelist;
   private String cryptoComplianceLevel;
+  private Boolean securityEncDataDir;
   private FailoverPriority failoverPriority;
   private Map<String, Measure<MemoryUnit>> offheapResources;
 
@@ -129,6 +131,10 @@ public class Cluster implements Cloneable, PropertyHolder {
     return OptionalConfig.of(CRYPTO_COMPLIANCE_LEVEL, cryptoComplianceLevel);
   }
 
+  public OptionalConfig<Boolean> getSecurityEncDataDir() {
+    return OptionalConfig.of(SECURITY_ENCRYPTION_DATA_DIR, securityEncDataDir);
+  }
+
   public OptionalConfig<FailoverPriority> getFailoverPriority() {
     return OptionalConfig.of(FAILOVER_PRIORITY, failoverPriority);
   }
@@ -162,6 +168,11 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public Cluster setCryptoComplianceLevel(String cryptoComplianceLevel) {
     this.cryptoComplianceLevel = cryptoComplianceLevel;
+    return this;
+  }
+
+  public Cluster setSecurityEncDataDir(Boolean securityEncDataDir) {
+    this.securityEncDataDir = securityEncDataDir;
     return this;
   }
 
@@ -291,6 +302,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         Objects.equals(securityWhitelist, that.securityWhitelist) &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
         Objects.equals(cryptoComplianceLevel, that.cryptoComplianceLevel) &&
+        Objects.equals(securityEncDataDir, that.securityEncDataDir) &&
         Objects.equals(failoverPriority, that.failoverPriority) &&
         Objects.equals(clientReconnectWindow, that.clientReconnectWindow) &&
         Objects.equals(clientLeaseDuration, that.clientLeaseDuration) &&
@@ -300,7 +312,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   @Override
   public int hashCode() {
     return Objects.hash(
-        stripes, name, securityAuthc, securitySslTls, securityWhitelist, cryptoComplianceLevel, uid,
+        stripes, name, securityAuthc, securitySslTls, securityWhitelist, cryptoComplianceLevel, securityEncDataDir, uid,
         failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, configurationLockContext
     );
   }
@@ -342,6 +354,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     clone.securitySslTls = this.securitySslTls;
     clone.securityWhitelist = this.securityWhitelist;
     clone.cryptoComplianceLevel = this.cryptoComplianceLevel;
+    clone.securityEncDataDir = this.securityEncDataDir;
     return clone;
   }
 

@@ -78,6 +78,7 @@ public class ClusterFactoryTest {
       .setSecuritySslTls(false)
       .setCryptoComplianceLevel("pqc-preferred")
       .setSecurityWhitelist(false)
+      .setSecurityEncDataDir(false)
       .setClientReconnectWindow(120, TimeUnit.SECONDS)
       .setClientLeaseDuration(150, TimeUnit.SECONDS)
       .setFailoverPriority(consistency(2))
