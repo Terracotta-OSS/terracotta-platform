@@ -69,7 +69,7 @@ public class ImportCommand1x2IT extends DynamicConfigIT {
     // test cluster validation flow
     Path configFile = copyConfigProperty("/config-property-files/1x2-replica-invalid1.properties");
     assertThat(configTool("import", "-f", configFile.toString()),
-      allOf(not(successful()), containsOutput("A replica stripe can have at most 1 node")));
+      allOf(not(successful()), containsOutput("A stripe can have at most 1 replica node")));
   }
 
   @Test

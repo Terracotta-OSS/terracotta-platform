@@ -298,6 +298,6 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void test_failed_activation_with_replica() {
     assertThat(
       configTool("activate", "-f", copyConfigProperty("/config-property-files/1x2-replica-invalid1.properties").toString(), "-n", "my-cluster"),
-      allOf(is(not(successful())), containsOutput("A replica stripe can have at most 1 node")));
+      allOf(is(not(successful())), containsOutput("A stripe can have at most 1 replica node")));
   }
 }

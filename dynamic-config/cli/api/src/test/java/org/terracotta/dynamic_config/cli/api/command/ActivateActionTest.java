@@ -254,11 +254,11 @@ public class ActivateActionTest extends BaseTest {
   }
 
   @Test
-  public void test_activation_fails_replica_cluster_with_multiple_nodes_per_stripe() {
+  public void test_activation_fails_replica_cluster_with_multiple_replicas_per_stripe() {
     Cluster replicaCluster = cluster.clone();
-    // replica is now a node-level property; mark one node in stripe2 as replica
-    // stripe2 has 2 nodes total, so the validator will reject it
-    replicaCluster.getStripeByName("stripe2").get().getNodes().get(0).setReplica(true);
+    // replica is a node-level property, mark both nodes in stripe2 as replica, a stripe can only have 1 replica node, so the validator will reject it
+    replicaCluster.getStripeByName("stripe2").get().getNodes().forEach(node -> node.setReplica(true)
+      .setRelayHostname("localhost").setRelayPort(9411).setRelayGroupPort(9412));
 
     // cluster already has stripe2 with 2 nodes (node2, node3)
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(replicaCluster, Testing.N_UIDS[1]));
@@ -271,8 +271,8 @@ public class ActivateActionTest extends BaseTest {
       },
       is(throwing(instanceOf(MalformedClusterException.class))
         .andMessage(allOf(
-          containsString("Stripe with name: stripe2 has 2 nodes"),
-          containsString("A replica stripe can have at most 1 node.")
+          containsString("Stripe with name: stripe2 has 2 replica nodes: [node2, node3]"),
+          containsString("A stripe can have at most 1 replica node.")
         )))
     );
   }

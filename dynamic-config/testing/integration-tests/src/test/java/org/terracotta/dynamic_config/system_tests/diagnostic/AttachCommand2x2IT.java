@@ -104,14 +104,18 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_attach_invalid_replica_with_another_node_in_same_stripe() {
+  public void test_attach_invalid_replica_with_another_replica_in_same_stripe() {
     stopNode(1, 1);
     waitForStopped(1, 1);
     startNode(1, 1, getNewOptions(getNode(1, 1),
       "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9410", "-relay-group-port", "9430"));
+    stopNode(1, 2);
+    waitForStopped(1, 2);
+    startNode(1, 2, getNewOptions(getNode(1, 2),
+      "-replica", "true", "-relay-hostname", "localhost", "-relay-port", "9411", "-relay-group-port", "9431"));
 
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
-      allOf(not(successful()), containsOutput("A replica stripe can have at most 1 node")));
+      allOf(not(successful()), containsOutput("A stripe can have at most 1 replica node")));
   }
 
   @Test
