@@ -47,6 +47,7 @@ public class SettingName {
   public static final String SECURITY_SSL_TLS = "ssl-tls";
   public static final String SECURITY_WHITELIST = "whitelist";
   public static final String CRYPTO_COMPLIANCE_LEVEL = "crypto-compliance";
+  public static final String SECURITY_ENCRYPTION_DATA_DIR = "enc-data-dir";
   public static final String FAILOVER_PRIORITY = "failover-priority";
   public static final String CLIENT_RECONNECT_WINDOW = "client-reconnect-window";
   public static final String CLIENT_LEASE_DURATION = "client-lease-duration";

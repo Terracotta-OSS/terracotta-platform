@@ -43,7 +43,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ClusterValidatorTest {
 
   private static final String securityDirError = "Within a cluster, all nodes must have a security root directory defined or no security root directory defined";
-  private static final String minimumSecurityError = "When security root directories are configured across the cluster at least one of authc, ssl-tls or whitelist must also be configured";
+  private static final String minimumSecurityError = "When security root directories are configured across the cluster at least one of authc, ssl-tls, whitelist or enc-data-dir must also be configured";
   private static final String certificateSslTlsError = "When authc=certificate ssl-tls must be configured";
   private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
   private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
@@ -305,6 +305,29 @@ public class ClusterValidatorTest {
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate")
         .setSecurityWhitelist(true);
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
+  }
+
+  @Test
+  public void testGoodSecurity_6() {
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+
+    Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2))
+      .setSecuritySslTls(true)
+      .setSecurityAuthc("certificate")
+      .setSecurityWhitelist(true)
+      .setSecurityEncDataDir(true);
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
+  }
+
+  @Test
+  public void testGoodSecurity_7() {
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir")).setSecurityLogDir(RawPath.valueOf("security-securitylog-dir"));
+
+    Cluster cluster = newTestCluster("foo", newTestStripe("stripe1").addNodes(node1, node2))
+      .setSecurityEncDataDir(true);
     new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 

@@ -870,6 +870,20 @@ public enum Setting {
       of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("legacy", "pqc-preferred", "pqc-strict")
   ),
+  SECURITY_ENCRYPTION_DATA_DIR(SettingName.SECURITY_ENCRYPTION_DATA_DIR,
+    of(V1, V2),
+    false,
+    always(false),
+    CLUSTER,
+    fromCluster(Cluster::getSecurityEncDataDir),
+    intoCluster((cluster, value) -> cluster.setSecurityEncDataDir(value == null ? null : Boolean.parseBoolean(value))),
+    asList(
+      when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+      when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
+    ),
+    of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
+    asList("true", "false")
+  ),
 
   // ==== Resources configuration
 

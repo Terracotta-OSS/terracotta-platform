@@ -65,6 +65,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.REPLICA_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.CRYPTO_COMPLIANCE_LEVEL;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_ENCRYPTION_DATA_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
@@ -158,6 +159,9 @@ public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-" + CRYPTO_COMPLIANCE_LEVEL}, description = "Cryptography compliance level (legacy|pqc-preferred|pqc-strict). Default: pqc-preferred")
   private String cryptoComplianceLevel;
+
+  @Parameter(names = {"-" + SECURITY_ENCRYPTION_DATA_DIR}, description= "Security encryption keys for data dirs (true|false). Default: false")
+  private String securityEncForDataDirs;
 
   @Parameter(names = {"-" + FAILOVER_PRIORITY}, description = "Failover priority setting (availability|consistency), required with more than 1 node. Default: <unset>")
   private String failoverPriority;
